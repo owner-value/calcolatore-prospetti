@@ -32,11 +32,11 @@ p{margin:.25rem 0 .75rem;color:var(--muted)}
 .panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:var(--shadow)}
 
 label span{display:block;font-size:13px;color:var(--muted);font-weight:700;margin-bottom:6px}
-input[type=number],input[type=text],input[type=date],textarea{
+input[type=number],input[type=text],input[type=date],input[type=search],textarea{
   width:100%;background:#fff;border:1px solid var(--line);border-radius:12px;
   padding:12px 14px;font-weight:600;outline:none;transition:border .15s,box-shadow .15s
 }
-input[type=number]:focus,textarea:focus,input[type=text]:focus,input[type=date]:focus{
+input[type=number]:focus,textarea:focus,input[type=text]:focus,input[type=date]:focus,input[type=search]:focus{
   border-color:var(--brand);box-shadow:0 0 0 4px rgba(14,165,233,.15)
 }
 textarea{min-height:110px;resize:vertical}
@@ -87,6 +87,77 @@ textarea{min-height:110px;resize:vertical}
 .ov-admin .row:last-child{border-bottom:0}
 .ov-admin .grp{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0 4px}
 .ov-admin input[type=number]{max-width:120px}
+
+#prospectManager .prospect-row{align-items:end;gap:12px}
+#prospectManager .prospect-refresh{display:flex;align-items:flex-end;justify-content:flex-end}
+#prospectManager .slug-input{display:flex;gap:8px;align-items:center}
+#prospectManager .slug-input input{flex:1 1 auto}
+#prospectManager .slug-input .btn{flex:0 0 auto}
+#prospectManager .property-row{align-items:end;gap:12px}
+#prospectManager .property-actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end;align-items:center}
+#prospectManager .property-actions .btn{white-space:nowrap}
+#prospectManager .prospect-buttons{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;justify-content:flex-end}
+.prospect-bottom-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px;justify-content:flex-end}
+.prospect-status{
+  display:flex;align-items:center;gap:8px;
+  font-size:13px;font-weight:600;color:#0f172a;
+  margin-top:8px;padding:10px 12px;
+  background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;
+  transition:opacity .2s;
+}
+.prospect-status:empty{display:none}
+.prospect-status::before{
+  content:"i";
+  display:inline-flex;align-items:center;justify-content:center;
+  width:18px;height:18px;border-radius:50%;
+  background:#cbd5f5;color:#1e293b;font-size:11px;font-weight:700;
+}
+.prospect-status.success{
+  color:#065f46;background:#ecfdf3;border-color:#bbf7d0;
+}
+.prospect-status.success::before{
+  content:"+";
+  background:#16a34a;color:#fff;
+}
+.prospect-status.error{
+  color:#b91c1c;background:#fef2f2;border-color:#fecaca;
+}
+.prospect-status.error::before{
+  content:"!";
+  background:#ef4444;color:#fff;
+}
+.prospect-status.info{
+  color:#0f172a;background:#f8fafc;border-color:#e2e8f0;
+}
+
+.dropdown{position:relative}
+.dropdown-toggle{
+  width:100%;background:#fff;border:1px solid var(--line);border-radius:12px;
+  padding:12px 40px 12px 14px;font-weight:600;text-align:left;
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+  cursor:pointer;transition:border .15s,box-shadow .15s,background .15s;
+}
+.dropdown-toggle::after{
+  content:"v";font-size:12px;color:var(--muted);
+}
+.dropdown-toggle:focus{
+  outline:none;border-color:var(--brand);box-shadow:0 0 0 4px rgba(14,165,233,.15);
+}
+.dropdown.is-open .dropdown-toggle{border-color:var(--brand)}
+.dropdown-menu{
+  position:absolute;top:calc(100% + 6px);left:0;width:100%;
+  background:#fff;border:1px solid #dbe3ef;border-radius:12px;
+  box-shadow:0 12px 24px rgba(15,23,42,.12);
+  padding:6px 0;display:none;z-index:20;
+  max-height:240px;overflow:auto;
+}
+.dropdown.is-open .dropdown-menu{display:block}
+.dropdown-item{
+  width:100%;text-align:left;border:0;background:transparent;
+  padding:10px 14px;font-weight:600;color:#1f2937;cursor:pointer;
+}
+.dropdown-item:hover{background:#f1f5f9}
+.dropdown-item.is-active{background:rgba(14,165,233,.14);color:#0f172a}
 
 /* righe "device" con bottone rimuovi */
 .device-row{display:grid;grid-template-columns:minmax(0,1fr) 150px auto;gap:10px;align-items:end}

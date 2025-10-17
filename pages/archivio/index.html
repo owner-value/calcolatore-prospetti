@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Archivio Proprieta · Owner Value</title>
+  <link rel="stylesheet" href="../../style.css">
+  <link rel="stylesheet" href="archivio.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="page-header">
+      <div class="header-links">
+        <a href="../../index.html">&larr; Torna al calcolatore</a>
+        <a href="../property/index.html" target="_blank" rel="noopener">Nuova proprieta</a>
+      </div>
+      <h1>Archivio Proprieta</h1>
+      <p>Seleziona una proprieta per filtrare i prospetti salvati oppure apri la scheda dedicata per gestire i dettagli dell'immobile.</p>
+      <div class="toolbar">
+        <div class="toolbar-group" style="min-width:240px">
+          <label for="propertyFilter">Proprieta</label>
+          <div class="toolbar-row">
+            <select id="propertyFilter">
+              <option value="">Tutte le proprieta</option>
+            </select>
+            <button class="btn btn-secondary" type="button" id="openPropertyBtn">Apri scheda</button>
+          </div>
+        </div>
+        <div class="toolbar-group" style="min-width:220px">
+          <label for="prospectSearch">Ricerca prospetti</label>
+          <input type="search" id="prospectSearch" placeholder="Titolo, indirizzo o slug" autocomplete="off">
+        </div>
+        <div class="toolbar-group">
+          <label>&nbsp;</label>
+          <button class="btn btn-secondary" type="button" id="refreshArchiveBtn">Aggiorna elenco</button>
+        </div>
+      </div>
+    </header>
+
+    <section class="section" id="propertySection">
+      <div id="propertyStatus" class="status"></div>
+      <div id="propertyList" class="property-grid"></div>
+    </section>
+
+    <section class="section" id="prospectSection">
+      <h2>Prospetti salvati</h2>
+      <div id="archiveStatus" class="status"></div>
+      <div id="prospectList" class="archive-list"></div>
+    </section>
+  </div>
+  <script src="archivio.js"></script>
+</body>
+</html>

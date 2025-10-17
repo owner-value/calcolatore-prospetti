@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="template.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <link rel="icon" href="/favicon.ico">
 </head>
 <body>
   <!-- BNB Calc (solo visibile a schermo, nascosto in stampa) -->
@@ -32,6 +33,54 @@
   <div class="grid cols-main">
     <!-- ============ INPUT (sinistra) ============ -->
     <div>
+      <div class="card" id="prospectManager" data-persist-ignore>
+        <h2>Gestione Prospetti</h2>
+        <p class="note">Salva le configurazioni nel backend e gestiscile dall’<a href="pages/archivio/index.html" target="_blank" rel="noopener">Archivio Proprieta</a>.</p>
+        <div class="grid cols-2 prospect-row">
+          <label><span>Prospetto salvato</span>
+            <div class="dropdown" data-dropdown="prospectSelect" data-placeholder="— Seleziona —">
+              <button class="dropdown-toggle" type="button" data-dropdown-toggle aria-haspopup="listbox" aria-expanded="false" title="Scegli un prospetto salvato">— Seleziona —</button>
+              <div class="dropdown-menu" data-dropdown-menu role="listbox"></div>
+              <input type="hidden" id="prospectSelect" value="">
+            </div>
+          </label>
+          <div class="prospect-refresh">
+            <button class="btn btn-minor" type="button" id="refreshProspectsBtn" title="Scarica di nuovo l'elenco dei prospetti salvati">Aggiorna elenco</button>
+          </div>
+        </div>
+        <div class="grid cols-2">
+          <label class="slug-field"><span>Slug</span>
+            <div class="slug-input">
+              <input type="text" id="prospectSlug" placeholder="corso-andrea-podesta">
+              <button class="btn btn-minor" type="button" id="generateSlugBtn" title="Genera automaticamente lo slug dal titolo o dall'indirizzo">Auto</button>
+            </div>
+          </label>
+          <label><span>Titolo</span>
+            <input type="text" id="prospectTitle" placeholder="Titolo prospetto">
+          </label>
+        </div>
+        <div class="grid cols-2 property-row">
+          <label><span>Proprieta collegata</span>
+            <div class="dropdown" data-dropdown="prospectProperty" data-placeholder="Nessuna proprieta">
+              <button class="dropdown-toggle" type="button" data-dropdown-toggle aria-haspopup="listbox" aria-expanded="false" title="Associa una proprieta al prospetto">Nessuna proprieta</button>
+              <div class="dropdown-menu" data-dropdown-menu role="listbox"></div>
+              <input type="hidden" id="prospectProperty" value="">
+            </div>
+          </label>
+          <div class="property-actions">
+            <button class="btn btn-minor" type="button" id="openPropertyBtn" title="Apri la scheda dettagli della proprieta selezionata in una nuova tab">Apri scheda proprieta</button>
+            <button class="btn btn-minor" type="button" id="refreshPropertiesBtn" data-role="refresh-properties" title="Ricarica l'elenco delle proprieta disponibili">Aggiorna elenco proprieta</button>
+          </div>
+        </div>
+        <div class="prospect-buttons">
+          <button class="btn" type="button" id="saveProspectBtn" data-role="save-prospect" title="Salva un nuovo prospetto o aggiorna quello selezionato">Salva / Aggiorna</button>
+          <button class="btn btn-minor" type="button" id="applyProspectInputsBtn" data-role="apply-prospect" title="Applica al calcolatore i dati del prospetto salvato">Applica dati al calcolatore</button>
+          <button class="btn btn-minor" type="button" id="resetProspectFormBtn" title="Azzera il modulo per iniziare un nuovo prospetto">Nuovo</button>
+          <a class="btn btn-minor" href="pages/archivio/index.html" target="_blank" rel="noopener">Apri archivio</a>
+        </div>
+        <div id="prospectStatus" class="prospect-status" data-role="prospect-status"></div>
+      </div>
+
       <!-- 0) Dati per report -->
       <div class="card">
         <h2>0) Dati per il Report</h2>
@@ -217,6 +266,12 @@
 - Immobile ristrutturato e pronto all'uso.</textarea>
         </label>
       </div>
+      <div class="prospect-bottom-actions" data-persist-ignore>
+        <button class="btn" type="button" id="saveProspectBtnBottom" data-role="save-prospect" title="Salva un nuovo prospetto o aggiorna quello selezionato">Salva / Aggiorna</button>
+        <button class="btn btn-minor" type="button" id="applyProspectInputsBtnBottom" data-role="apply-prospect" title="Applica al calcolatore i dati del prospetto salvato">Applica dati al calcolatore</button>
+        <button class="btn btn-minor" type="button" id="refreshPropertiesBtnBottom" data-role="refresh-properties" title="Ricarica l'elenco delle proprieta disponibili">Aggiorna elenco proprieta</button>
+      </div>
+      <div id="prospectStatusBottom" class="prospect-status" data-role="prospect-status" data-persist-ignore></div>
     </div>
 
     <!-- ============ OUTPUT (destra) ============ -->

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Scheda Proprieta · Owner Value</title>
+  <link rel="stylesheet" href="../../style.css">
+  <link rel="stylesheet" href="../archivio/archivio.css">
+  <link rel="stylesheet" href="property.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="page-header">
+      <div class="header-links">
+        <a href="../archivio/index.html">&larr; Torna all'archivio</a>
+        <a href="../../index.html" target="_blank" rel="noopener">Apri calcolatore</a>
+      </div>
+      <h1 id="propertyTitle">Nuova proprieta</h1>
+      <p>Compila i dati dell'immobile e del proprietario. Dopo il salvataggio potrai creare prospetti collegati direttamente da questa pagina.</p>
+    </header>
+
+    <section class="section">
+      <h2>Dati proprieta</h2>
+      <div class="toolbar" style="gap:20px">
+        <div class="toolbar-group" style="flex:1 1 280px">
+          <label for="propertyName">Nome proprieta</label>
+          <input type="text" id="propertyName" placeholder="Es. Porta Soprana 2">
+        </div>
+        <div class="toolbar-group" style="flex:1 1 220px">
+          <label for="propertySlug">Slug</label>
+          <div class="toolbar-row">
+            <input type="text" id="propertySlug" placeholder="porta-soprana-2">
+            <button class="btn btn-secondary" type="button" id="autoSlugBtn">Auto</button>
+          </div>
+        </div>
+      </div>
+      <div class="toolbar" style="gap:20px">
+        <div class="toolbar-group" style="flex:1 1 320px">
+          <label for="propertyAddress">Indirizzo</label>
+          <input type="text" id="propertyAddress" placeholder="Indirizzo completo">
+        </div>
+        <div class="toolbar-group" style="flex:1 1 220px">
+          <label for="propertyCity">Citta</label>
+          <input type="text" id="propertyCity" placeholder="Citta">
+        </div>
+      </div>
+      <div class="toolbar" style="gap:20px">
+        <div class="toolbar-group" style="flex:1 1 220px">
+          <label for="ownerName">Nome proprietario</label>
+          <input type="text" id="ownerName" placeholder="Nome e cognome">
+        </div>
+        <div class="toolbar-group" style="flex:1 1 220px">
+          <label for="ownerEmail">Email proprietario</label>
+          <input type="email" id="ownerEmail" placeholder="email@example.com">
+        </div>
+        <div class="toolbar-group" style="flex:1 1 220px">
+          <label for="ownerPhone">Telefono proprietario</label>
+          <input type="tel" id="ownerPhone" placeholder="+39 ...">
+        </div>
+      </div>
+      <div class="toolbar-group">
+        <label for="propertyNote">Note interne</label>
+        <textarea id="propertyNote" placeholder="Note utili sul proprietario o sull'immobile"></textarea>
+      </div>
+      <div class="property-actions">
+        <button class="btn" type="button" id="savePropertyBtn">Salva proprieta</button>
+        <button class="btn btn-secondary" type="button" id="newProspectBtn" disabled>Crea nuovo prospetto</button>
+        <button class="btn btn-danger" type="button" id="deletePropertyBtn" disabled>Elimina proprieta</button>
+      </div>
+      <div id="propertyStatus" class="status"></div>
+    </section>
+
+    <section class="section">
+      <h2>Prospetti collegati</h2>
+      <div id="prospectStatus" class="status"></div>
+      <div id="propertyProspects" class="archive-list"></div>
+    </section>
+  </div>
+  <script src="property.js"></script>
+</body>
+</html>

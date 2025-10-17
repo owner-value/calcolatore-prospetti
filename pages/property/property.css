@@ -1,0 +1,10 @@
+.property-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+  align-items:center;
+}
+
+.property-actions .btn{
+  white-space:nowrap;
+}
