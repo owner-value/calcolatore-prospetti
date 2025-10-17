@@ -1,0 +1,229 @@
+<div id="calculatorRoot">
+  <div style="display:flex;justify-content:center;margin-bottom:12px">
+    <img class="logo" src="https://cdn.prod.website-files.com/62a45e911e39a864ff1d018d/65552313c7ee9c9a8cac0251_Logo-orizzontale%202%20(1).svg"
+         onerror="this.onerror=null;this.src='https://placehold.co/150x40/0ea5e9/ffffff?text=Owner+Value';" alt="Owner Value">
+  </div>
+
+  <h1>Simulatore di Utile Netto Annuale</h1>
+  <div class="hr"></div>
+  <p>Formula: <b>Base cedolare = Lordo Affitti − OTA (solo affitti) − PM</b>. Le commissioni OTA si applicano su <b>Affitti + Pulizie</b>.</p>
+
+  <div class="grid cols-main">
+    <!-- ============ INPUT (sinistra) ============ -->
+    <div>
+      <!-- 0) Dati per report -->
+      <div class="card">
+        <h2>0) Dati per il Report</h2>
+        <div class="grid cols-3">
+          <label><span>Indirizzo — Riga 1</span>
+            <input type="text" id="indirizzoRiga1" placeholder="Corso Andrea Podestà" oninput="calculateProfit()">
+          </label>
+          <label><span>Indirizzo — Riga 2</span>
+            <input type="text" id="indirizzoRiga2" placeholder="Genova" oninput="calculateProfit()">
+          </label>
+          <label><span>Data (ISO, opzionale)</span>
+            <input type="date" id="dataISO" oninput="calculateProfit()">
+          </label>
+        </div>
+      </div>
+
+      <!-- 1) Ricavi & volume -->
+      <div class="card">
+        <h2>1) Stima Ricavi &amp; Volume</h2>
+        <div class="grid cols-3">
+          <label><span>Prezzo Medio a Notte (€)</span>
+            <input type="number" id="prezzoMedioNotte" value="168" min="0" step="1" oninput="calculateProfit()">
+          </label>
+          <label><span>Occupazione Annuale (%)</span>
+            <input type="number" id="occupazioneAnnuale" value="68" min="0" max="100" step="0.1" oninput="calculateProfit()">
+          </label>
+          <div>
+            <span style="display:block;font-size:13px;color:var(--muted);font-weight:700;margin-bottom:6px">Giorni Occupati Stimati</span>
+            <div id="outputGiorniOccupati" class="panel" style="padding:12px 14px;font-weight:800">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2a) Parametri per Soggiorno -->
+      <div class="card">
+        <h2>2a) Parametri per Soggiorno</h2>
+        <div class="grid cols-3">
+          <label><span>Durata media soggiorno (notti)</span>
+            <input type="number" id="durataMediaSoggiorno" value="3" min="1" step="1" oninput="calculateProfit()">
+          </label>
+          <label><span>Pulizie per soggiorno (€)</span>
+            <input type="number" id="puliziePerSoggiorno" value="90" min="0" step="1" oninput="calculateProfit()">
+          </label>
+          <label><span>Welcome kit per soggiorno (€)</span>
+            <input type="number" id="kitPerSoggiorno" value="5" min="0" step="1" oninput="calculateProfit()">
+          </label>
+        </div>
+      </div>
+
+      <!-- 2b) Totali annui (auto/manuale) -->
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <h2 style="margin:0">2b) Totali annui (pulizie &amp; kit)</h2>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)">
+            <input type="checkbox" id="autoCalcPerSoggiorno" checked>
+            <span>Calcola automaticamente dai soggiorni</span>
+          </label>
+        </div>
+
+        <!-- Anteprima automatica -->
+        <div id="autoFields" class="grid cols-3" style="margin-bottom:10px">
+          <div>
+            <span>Soggiorni stimati</span>
+            <div id="previewNumSoggiorni" class="panel" style="padding:12px 14px;font-weight:800">—</div>
+          </div>
+          <div>
+            <span>Pulizie annue (da soggiorni)</span>
+            <div id="previewPulizieAnnuo" class="panel" style="padding:12px 14px;font-weight:800">—</div>
+          </div>
+          <div>
+            <span>Kit annuo (da soggiorni)</span>
+            <div id="previewKitAnnuo" class="panel" style="padding:12px 14px;font-weight:800">—</div>
+          </div>
+        </div>
+
+        <!-- Campi manuali (visibili quando il toggle è OFF) -->
+        <div id="manualFields" class="grid cols-3" style="display:none">
+          <label><span>Pulizie totali annue (€)</span>
+            <input type="number" id="totalePulizieOspite" value="6905" min="0" step="1" oninput="calculateProfit()">
+          </label>
+          <label><span>Welcome Kit annuo (€)</span>
+            <input type="number" id="costoWelcomeKit" value="313" min="0" step="1" oninput="calculateProfit()">
+          </label>
+        </div>
+
+        <p class="note">Se disattivi il toggle, puoi impostare manualmente pulizie e kit annui.</p>
+      </div>
+
+      <!-- 3) Utenze & amministrazione -->
+      <div class="card">
+        <h2>3) Utenze &amp; Amministrazione</h2>
+        <div id="fixedCostsContainer" class="grid cols-4">
+          <label><span>Luce e Gas (€)</span>
+            <input type="number" id="speseLuceGas" value="1800" min="0" step="1" oninput="calculateProfit()">
+          </label>
+          <label><span>Wi-Fi / Internet (€)</span>
+            <input type="number" id="speseWifi" value="360" min="0" step="1" oninput="calculateProfit()">
+          </label>
+          <label><span>Amministrazione (€)</span>
+            <input type="number" id="speseAmministrazione" value="1560" min="0" step="1" oninput="calculateProfit()">
+          </label>
+          <label><span>Acqua / TARI (€)</span>
+            <input type="number" id="speseAcquaTari" value="0" min="0" step="1" oninput="calculateProfit()">
+          </label>
+        </div>
+        <button class="btn" style="margin-top:10px" onclick="addFixedCostField()">+ Aggiungi costo fisso extra</button>
+      </div>
+
+      <!-- 4) Commissioni -->
+      <div class="card">
+        <h2>4) Commissioni</h2>
+        <div class="grid cols-3">
+          <label><span>Commissioni OTA (%)</span>
+            <input type="number" id="percentualeOta" value="20" min="0" max="100" step="0.1" oninput="calculateProfit()">
+          </label>
+          <label><span>Commissione PM (%)</span>
+            <input type="number" id="percentualePm" value="30" min="0" max="100" step="0.1" oninput="calculateProfit()">
+          </label>
+          <label><span>Cedolare Secca (%)</span>
+            <input type="number" id="percentualeCedolare" value="21" min="0" max="100" step="0.1" oninput="calculateProfit()">
+          </label>
+        </div>
+      </div>
+
+      <!-- 5) Costi extra & Sicurezza -->
+<div class="card">
+  <h2>5) Costi extra &amp; Sicurezza</h2>
+
+  <div class="grid cols-3">
+    <label><span>Ring Intercom — setup una tantum (€)</span>
+      <input type="number" id="costoRingSetup" value="100" min="0" step="1" oninput="calculateProfit()">
+    </label>
+    <label><span>Ring Intercom — abbonamento mensile (€)</span>
+      <input type="number" id="abbonamentoMensile" value="5" min="0" step="1" oninput="calculateProfit()">
+    </label>
+    <div>
+      <span style="display:block;font-size:13px;color:var(--muted);font-weight:700;margin-bottom:6px">Totale Ring Annuale</span>
+      <div class="panel" style="padding:12px 14px;font-weight:800">
+        <div style="display:flex;justify-content:space-between;gap:10px"><span>Setup</span><span id="outRingSetup">€ 0,00</span></div>
+        <div style="display:flex;justify-content:space-between;gap:10px"><span>Abbonamento (12 mesi)</span><span id="outRingSubAnnuale">€ 0,00</span></div>
+        <div style="height:1px;background:#eef2f7;margin:8px 0"></div>
+        <div style="display:flex;justify-content:space-between;gap:10px;font-weight:900"><span>Totale Ring</span><span id="outputCostoRingAnnuale">€ 0,00</span></div>
+      </div>
+    </div>
+  </div>
+
+  <p class="note" style="margin-top:8px">Altri dispositivi / setup una tantum</p>
+  <div id="deviceCostsContainer" class="grid cols-3" style="gap:14px">
+    <!-- riga iniziale -->
+    <div class="device-row">
+      <label><span>Dispositivo extra (€)</span>
+        <input type="number" data-type="device-extra" value="110" min="0" step="1" oninput="calculateProfit()">
+      </label>
+      <div class="device-actions">
+        <button type="button" class="btn btn-minor" onclick="removeDeviceRow(this)">Rimuovi</button>
+      </div>
+    </div>
+  </div>
+  <button class="btn" style="margin-top:10px" onclick="addDeviceCostField()">+ Aggiungi dispositivo extra</button>
+</div>
+
+
+      <!-- 6) Punti di forza -->
+      <div class="card">
+        <h2>6) Punti di Forza</h2>
+        <label><span>Punti di forza (una riga per punto)</span>
+          <textarea id="puntiForza">- Ottima connettività con i mezzi pubblici.
+- Alta domanda turistica nel quartiere.
+- Immobile ristrutturato e pronto all'uso.</textarea>
+        </label>
+      </div>
+    </div>
+
+    <!-- ============ OUTPUT (destra) ============ -->
+    <div>
+      <div class="panel summary" id="summaryPanel">
+        <h2>Riepilogo</h2>
+        <div class="row"><span>Ricavo Lordo Totale (Affitti + Pulizie)</span><strong id="outputLordoTotale">€ 0,00</strong></div>
+        <div class="row"><span>Commissioni OTA (<span id="percOtaOutput">0%</span>)</span><strong class="bad" id="outputCommissioniOta">€ 0,00</strong></div>
+        <div class="row"><span>Costo PM (<span id="percPmOutput">0%</span>)</span><strong class="bad" id="outputCostoPm">€ 0,00</strong></div>
+        <div class="row"><span>Pulizie</span><strong class="bad" id="outputPulizieOspite">€ 0,00</strong></div>
+        <div class="row"><span>Welcome Kit</span><strong class="bad" id="outputWelcomeKit">€ 0,00</strong></div>
+        <div class="row"><span>Utenze Totali</span><strong class="bad" id="outputUtenzeTotali">€ 0,00</strong></div>
+        
+<div class="row"><span>Ring — setup</span><strong class="bad" id="outSumRingSetup">€ 0,00</strong></div>
+<div class="row"><span>Ring — abbonamento (12 mesi)</span><strong class="bad" id="outSumRingSubAnnuale">€ 0,00</strong></div>
+<div class="row"><span>Dispositivi di sicurezza (una tantum)</span><strong class="bad" id="outSumExtraDevices">€ 0,00</strong></div>
+
+        <div class="row"><span>Base Imponibile Cedolare</span><strong id="outputBaseImponibile">€ 0,00</strong></div>
+        <div class="row"><span>Imposta Cedolare (<span id="percCedolareOutput">0%</span>)</span><strong class="bad" id="outputImposta">€ 0,00</strong></div>
+
+        <div class="row" style="border-top:2px solid var(--brand);margin-top:6px;padding-top:12px">
+          <span style="font-weight:900">UTILE NETTO ANNUALE</span>
+          <strong style="color:var(--brand);font-size:20px" id="outputUtileNetto">€ 0,00</strong>
+        </div>
+        <div class="row"><span style="font-weight:800">Mensile</span><strong style="color:var(--brand)" id="outputUtileMensile">€ 0,00</strong></div>
+
+        <button class="btn" style="width:100%;margin-top:12px" onclick="saveToReport()">Aggiorna Report (Embed 2)</button>
+        <div class="note">Il report (Embed 2) si aggiorna anche in automatico ad ogni modifica.</div>
+
+        <!-- Admin OV dentro il riepilogo -->
+        <div class="ov-admin">
+          <div class="grp">
+            <label><span>Aliquota IRES (SRL)</span><input type="number" id="aliquotaIres" value="24" min="0" max="100" step="0.1" oninput="calculateProfit()"></label>
+            <label><span>Aliquota IRAP</span><input type="number" id="aliquotaIrap" value="3.9" min="0" max="100" step="0.1" oninput="calculateProfit()"></label>
+          </div>
+          <div class="row"><span>Commissione OV (annua)</span><strong id="outputPmLordo">€ 0,00</strong></div>
+          <div class="row"><span>Tasse OV (stima IRES+IRAP)</span><strong class="bad" id="outputPmTasse">€ 0,00</strong></div>
+          <div class="row"><span><b>Netto OV (annuo)</b></span><strong style="color:green" id="outputPmNetto">€ 0,00</strong></div>
+          <div class="row"><span>Netto OV (mensile)</span><strong id="outputPmNettoMensile">€ 0,00</strong></div>
+          <div class="note">Il netto socio dipende dalla politica di distribuzione utili (dividendi) e dal numero di soci.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
