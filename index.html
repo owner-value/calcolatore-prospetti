@@ -9,6 +9,16 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 </head>
 <body>
+  <!-- BNB Calc (solo visibile a schermo, nascosto in stampa) -->
+<div class="bnbcalc-embed">
+  <iframe
+    class="bnbcalc-iframe"
+    src="https://embed.bnbcalc.com/example?user_email=info@owner-value.com"
+    title="BNB Calc"
+    loading="lazy"
+    allow="clipboard-read; clipboard-write"
+  ></iframe>
+</div>
 <div id="calculatorRoot">
   <div style="display:flex;justify-content:center;margin-bottom:12px">
     <img class="logo" src="https://cdn.prod.website-files.com/62a45e911e39a864ff1d018d/65552313c7ee9c9a8cac0251_Logo-orizzontale%202%20(1).svg"
@@ -113,21 +123,27 @@
       <!-- 3) Utenze & amministrazione -->
       <div class="card">
         <h2>3) Utenze &amp; Amministrazione</h2>
+        <div style="max-width:220px;margin-bottom:12px">
+          <label><span>Mesi considerati</span>
+            <input type="number" id="utenzeMesi" value="12" min="0" step="1" oninput="calculateProfit()">
+          </label>
+        </div>
+        <p class="note">Inserisci importi mensili: verranno moltiplicati per il numero di mesi indicato.</p>
         <div id="fixedCostsContainer" class="grid cols-4">
-          <label><span>Luce e Gas (€)</span>
-            <input type="number" id="speseLuceGas" value="1800" min="0" step="1" oninput="calculateProfit()">
+          <label><span>Luce e Gas (€/mese)</span>
+            <input type="number" id="speseLuceGas" value="150" min="0" step="1" oninput="calculateProfit()">
           </label>
-          <label><span>Wi-Fi / Internet (€)</span>
-            <input type="number" id="speseWifi" value="360" min="0" step="1" oninput="calculateProfit()">
+          <label><span>Wi-Fi / Internet (€/mese)</span>
+            <input type="number" id="speseWifi" value="30" min="0" step="1" oninput="calculateProfit()">
           </label>
-          <label><span>Amministrazione (€)</span>
-            <input type="number" id="speseAmministrazione" value="1560" min="0" step="1" oninput="calculateProfit()">
+          <label><span>Amministrazione (€/mese)</span>
+            <input type="number" id="speseAmministrazione" value="130" min="0" step="1" oninput="calculateProfit()">
           </label>
-          <label><span>Acqua / TARI (€)</span>
+          <label><span>Acqua / TARI (€/mese)</span>
             <input type="number" id="speseAcquaTari" value="0" min="0" step="1" oninput="calculateProfit()">
           </label>
         </div>
-        <button class="btn" style="margin-top:10px" onclick="addFixedCostField()">+ Aggiungi costo fisso extra</button>
+        <button class="btn" style="margin-top:10px" onclick="addFixedCostField()">+ Aggiungi costo fisso extra mensile</button>
       </div>
 
       <!-- 4) Commissioni -->
@@ -206,7 +222,7 @@
         <div class="row"><span>Costo PM (<span id="percPmOutput">0%</span>)</span><strong class="bad" id="outputCostoPm">€ 0,00</strong></div>
         <div class="row"><span>Pulizie</span><strong class="bad" id="outputPulizieOspite">€ 0,00</strong></div>
         <div class="row"><span>Welcome Kit</span><strong class="bad" id="outputWelcomeKit">€ 0,00</strong></div>
-        <div class="row"><span>Utenze Totali</span><strong class="bad" id="outputUtenzeTotali">€ 0,00</strong></div>
+        <div class="row"><span>Utenze Totali (annue)</span><strong class="bad" id="outputUtenzeTotali">€ 0,00</strong></div>
         <div class="row"><span>Ring — setup</span><strong class="bad" id="outSumRingSetup">€ 0,00</strong></div>
         <div class="row"><span>Ring — abbonamento (12 mesi)</span><strong class="bad" id="outSumRingSubAnnuale">€ 0,00</strong></div>
         <div id="securityExtraList"></div>
@@ -355,10 +371,10 @@
       <div class="info-container">
       <table class="table">
         <tr><td>Pulizie / Noleggio biancheria</td><td id="p6-pulizie" class="big">—</td></tr>
-        <tr><td>Utenze e amministrazione<br> (luce, gas, wifi, condominio)</td><td id="p6-ua" class="big">—</td></tr>
+        <tr><td>Utenze e amministrazione<br> (luce, gas, wifi, condominio) <span class="muted" id="p6-ua-note"></span></td><td id="p6-ua" class="big">—</td></tr>
         <tr><td>Commissioni OTA <br>(20% su affitti + pulizie)</td><td id="p6-ota" class="big">—</td></tr>
         <tr><td>Kit benvenuto / consumabili</td><td id="p6-kit" class="big">—</td></tr>
-        <tr><td>Commissione Property Manager</td><td id="p6-pm" class="big">—</td></tr>
+        <tr><td>Commissione Property Manager (<span id="p6-pm-pct">—</span>)</td><td id="p6-pm" class="big">—</td></tr>
         <tr><td>Spese iniziali una tantum (sicurezza/check-in)</td><td id="p6-una" class="big">—</td></tr>
       </table>
       </div>

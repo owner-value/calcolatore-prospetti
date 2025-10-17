@@ -6,7 +6,7 @@ const $set = (id,v)=>{ const el=$g(id); if(el) el.textContent = v; };
 const num = id => { const el=$g(id); if(!el) return 0; const v=(el.value||'').toString().replace(',','.'); return +v||0; };
 
 /* ============= Campi dinamici costi fissi & dispositivi ============= */
-function addFixedCostField(label="Costo fisso extra (€)", value=0){
+function addFixedCostField(label="Costo fisso extra mensile (€)", value=0){
   const cont=$g('fixedCostsContainer'); if(!cont) return;
   const wrap=document.createElement('label');
   wrap.innerHTML=`<span>${label}</span><input type="number" data-type="fixed-extra" value="${value}" min="0" step="1">`;
@@ -102,13 +102,21 @@ function calculateProfit(){
   const costoPM = basePM * (pPM/100);
 
   // 5) Utenze fisse annuali
-  const lucegas = num('speseLuceGas');
-  const wifi    = num('speseWifi');
-  const amm     = num('speseAmministrazione');
-  const acqua   = num('speseAcquaTari');
-  const extraFixed = [...document.querySelectorAll('[data-type="fixed-extra"]')]
-    .reduce((s,i)=> s + (+i.value||0), 0);
-  const utenze = lucegas + wifi + amm + acqua + extraFixed;
+  const mesiField = $g('utenzeMesi');
+  let mesiUtenze = 12;
+  if(mesiField){
+    if(mesiField.value === '') mesiField.value = '12';
+    const parsed = Number(mesiField.value);
+    mesiUtenze = Number.isFinite(parsed) ? Math.max(0, parsed) : 12;
+  }
+  const lucegasMens = Math.max(0, num('speseLuceGas'));
+  const wifiMens    = Math.max(0, num('speseWifi'));
+  const ammMens     = Math.max(0, num('speseAmministrazione'));
+  const acquaMens   = Math.max(0, num('speseAcquaTari'));
+  const extraFixedMens = [...document.querySelectorAll('[data-type="fixed-extra"]')]
+    .reduce((s,i)=> s + Math.max(0, (+i.value||0)), 0);
+  const utenzeMensili = lucegasMens + wifiMens + ammMens + acquaMens + extraFixedMens;
+  const utenze = utenzeMensili * mesiUtenze;
 
   // 6) Sicurezza (breakdown)
   const ringSetup   = Math.max(0, num('costoRingSetup'));
@@ -190,15 +198,19 @@ function calculateProfit(){
     indirizzoRiga1: ($g('indirizzoRiga1')?.value||'').trim(),
     indirizzoRiga2: ($g('indirizzoRiga2')?.value||'').trim(),
     descrizione: '', // (se usi un campo descrizione, leggilo qui)
+    percentualePm: pPM,
     puntiDiForza: (($g('puntiForza')?.value||'').trim().split(/\r?\n/)
                     .map(s=>s.replace(/^-+\s*/,'').trim()).filter(Boolean)) || [],
     kpi:{ occupazionePct: occ, adr: adr, fatturatoLordoNettoPulizie: lordoTotale },
     spese:{
       pulizie: pulizieAnnuo,
       utenzeAmm: utenze,
+      utenzeMensili,
+      utenzeMesi: mesiUtenze,
       ota: costoOTA,
       kit: kitAnnuo,
       pm: costoPM,
+      pmPct: pPM,
       unaTantum: sicurezzaTotale,
       sicurezza:{
         ringSetup,

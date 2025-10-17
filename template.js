@@ -24,9 +24,16 @@
 
     if($('p6-pulizie')) $('p6-pulizie').textContent = eur(m?.spese?.pulizie ?? 0);
     if($('p6-ua'))      $('p6-ua').textContent      = eur(m?.spese?.utenzeAmm ?? 0);
+    if($('p6-ua-note')){
+      const mesi = m?.spese?.utenzeMesi;
+      $('p6-ua-note').textContent = (typeof mesi === 'number' && mesi > 0)
+        ? `· ${mesi} ${mesi === 1 ? 'mese' : 'mesi'}`
+        : '';
+    }
     if($('p6-ota'))     $('p6-ota').textContent     = eur(m?.spese?.ota ?? 0);
     if($('p6-kit'))     $('p6-kit').textContent     = eur(m?.spese?.kit ?? 0);
     if($('p6-pm'))      $('p6-pm').textContent      = eur(m?.spese?.pm ?? 0);
+    if($('p6-pm-pct'))   $('p6-pm-pct').textContent   = pct(m?.spese?.pmPct ?? m?.percentualePm ?? 0);
     if($('p6-una'))     $('p6-una').textContent     = eur(m?.spese?.unaTantum ?? 0);
 
     if($('p7-utile-lordo'))   $('p7-utile-lordo').textContent   = eur(m?.risultati?.utileLordo ?? 0);

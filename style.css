@@ -60,6 +60,16 @@ textarea{min-height:110px;resize:vertical}
 .good{color:var(--good)}
 .note{font-size:12px;color:var(--muted);margin-top:.35rem}
 
+  .bnbcalc-embed{max-width:800px;margin:20px auto; padding: 0 40px}
+  .bnbcalc-iframe{
+    width:100%;
+    min-height:800px;       /* tua richiesta */
+    height:70vh;            /* responsivo */
+    border:1px solid #e5e7eb;
+    border-radius:12px;
+    background:#fff;
+  }
+ 
 /* Sticky summary (solo desktop/tablet) */
 #summaryPanel{position:relative}
 @media(min-width:1024px){
@@ -87,7 +97,7 @@ textarea{min-height:110px;resize:vertical}
   .device-row .device-actions{justify-self:start}
 }
 
-@media print{ .ov-admin{display:none!important} }
+@media print{ .ov-admin{display:none!important} .bnbcalc-embed, .bnbcalc-iframe{display:none !important;}}
 
 /* Stato read-only per i campi annui quando AutoCalc è attivo */
 .readonly{background:#fafafa;color:#6b7280}
