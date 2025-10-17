@@ -1,3 +1,14 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Calcolatore Prospetti · Owner Value</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="template.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+</head>
+<body>
 <div id="calculatorRoot">
   <div style="display:flex;justify-content:center;margin-bottom:12px">
     <img class="logo" src="https://cdn.prod.website-files.com/62a45e911e39a864ff1d018d/65552313c7ee9c9a8cac0251_Logo-orizzontale%202%20(1).svg"
@@ -136,42 +147,44 @@
       </div>
 
       <!-- 5) Costi extra & Sicurezza -->
-<div class="card">
-  <h2>5) Costi extra &amp; Sicurezza</h2>
+      <div class="card">
+        <h2>5) Costi extra &amp; Sicurezza</h2>
 
-  <div class="grid cols-3">
-    <label><span>Ring Intercom — setup una tantum (€)</span>
-      <input type="number" id="costoRingSetup" value="100" min="0" step="1" oninput="calculateProfit()">
-    </label>
-    <label><span>Ring Intercom — abbonamento mensile (€)</span>
-      <input type="number" id="abbonamentoMensile" value="5" min="0" step="1" oninput="calculateProfit()">
-    </label>
-    <div>
-      <span style="display:block;font-size:13px;color:var(--muted);font-weight:700;margin-bottom:6px">Totale Ring Annuale</span>
-      <div class="panel" style="padding:12px 14px;font-weight:800">
-        <div style="display:flex;justify-content:space-between;gap:10px"><span>Setup</span><span id="outRingSetup">€ 0,00</span></div>
-        <div style="display:flex;justify-content:space-between;gap:10px"><span>Abbonamento (12 mesi)</span><span id="outRingSubAnnuale">€ 0,00</span></div>
-        <div style="height:1px;background:#eef2f7;margin:8px 0"></div>
-        <div style="display:flex;justify-content:space-between;gap:10px;font-weight:900"><span>Totale Ring</span><span id="outputCostoRingAnnuale">€ 0,00</span></div>
+        <div class="grid cols-3">
+          <label><span>Ring Intercom — setup una tantum (€)</span>
+            <input type="number" id="costoRingSetup" value="100" min="0" step="1" oninput="calculateProfit()">
+          </label>
+          <label><span>Ring Intercom — abbonamento mensile (€)</span>
+            <input type="number" id="abbonamentoMensile" value="5" min="0" step="1" oninput="calculateProfit()">
+          </label>
+          <div>
+            <span style="display:block;font-size:13px;color:var(--muted);font-weight:700;margin-bottom:6px">Totale Ring Annuale</span>
+            <div class="panel" style="padding:12px 14px;font-weight:800">
+              <div style="display:flex;justify-content:space-between;gap:10px"><span>Setup</span><span id="outRingSetup">€ 0,00</span></div>
+              <div style="display:flex;justify-content:space-between;gap:10px"><span>Abbonamento (12 mesi)</span><span id="outRingSubAnnuale">€ 0,00</span></div>
+              <div style="height:1px;background:#eef2f7;margin:8px 0"></div>
+              <div style="display:flex;justify-content:space-between;gap:10px;font-weight:900"><span>Totale Ring</span><span id="outputCostoRingAnnuale">€ 0,00</span></div>
+            </div>
+          </div>
+        </div>
+
+        <p class="note" style="margin-top:8px">Altre spese extra / dispositivi una tantum</p>
+        <div id="deviceCostsContainer" class="grid" style="gap:14px">
+          <!-- riga iniziale -->
+          <div class="device-row">
+            <label><span>Descrizione</span>
+              <input type="text" data-type="device-name" placeholder="Es. Telecamera extra" oninput="calculateProfit()">
+            </label>
+            <label><span>Importo (€)</span>
+              <input type="number" data-type="device-extra" value="110" min="0" step="1" oninput="calculateProfit()">
+            </label>
+            <div class="device-actions">
+              <button type="button" class="btn btn-minor" onclick="removeDeviceRow(this)">Rimuovi</button>
+            </div>
+          </div>
+        </div>
+        <button class="btn" style="margin-top:10px" onclick="addDeviceCostField()">+ Aggiungi spesa extra</button>
       </div>
-    </div>
-  </div>
-
-  <p class="note" style="margin-top:8px">Altri dispositivi / setup una tantum</p>
-  <div id="deviceCostsContainer" class="grid cols-3" style="gap:14px">
-    <!-- riga iniziale -->
-    <div class="device-row">
-      <label><span>Dispositivo extra (€)</span>
-        <input type="number" data-type="device-extra" value="110" min="0" step="1" oninput="calculateProfit()">
-      </label>
-      <div class="device-actions">
-        <button type="button" class="btn btn-minor" onclick="removeDeviceRow(this)">Rimuovi</button>
-      </div>
-    </div>
-  </div>
-  <button class="btn" style="margin-top:10px" onclick="addDeviceCostField()">+ Aggiungi dispositivo extra</button>
-</div>
-
 
       <!-- 6) Punti di forza -->
       <div class="card">
@@ -194,10 +207,11 @@
         <div class="row"><span>Pulizie</span><strong class="bad" id="outputPulizieOspite">€ 0,00</strong></div>
         <div class="row"><span>Welcome Kit</span><strong class="bad" id="outputWelcomeKit">€ 0,00</strong></div>
         <div class="row"><span>Utenze Totali</span><strong class="bad" id="outputUtenzeTotali">€ 0,00</strong></div>
-        
-<div class="row"><span>Ring — setup</span><strong class="bad" id="outSumRingSetup">€ 0,00</strong></div>
-<div class="row"><span>Ring — abbonamento (12 mesi)</span><strong class="bad" id="outSumRingSubAnnuale">€ 0,00</strong></div>
-<div class="row"><span>Dispositivi di sicurezza (una tantum)</span><strong class="bad" id="outSumExtraDevices">€ 0,00</strong></div>
+        <div class="row"><span>Ring — setup</span><strong class="bad" id="outSumRingSetup">€ 0,00</strong></div>
+        <div class="row"><span>Ring — abbonamento (12 mesi)</span><strong class="bad" id="outSumRingSubAnnuale">€ 0,00</strong></div>
+        <div id="securityExtraList"></div>
+        <div class="row"><span>Totale spese extra</span><strong class="bad" id="outSumExtraDevices">€ 0,00</strong></div>
+        <div class="row"><span>Totale costi sicurezza</span><strong class="bad" id="outSumSecurityTotal">€ 0,00</strong></div>
 
         <div class="row"><span>Base Imponibile Cedolare</span><strong id="outputBaseImponibile">€ 0,00</strong></div>
         <div class="row"><span>Imposta Cedolare (<span id="percCedolareOutput">0%</span>)</span><strong class="bad" id="outputImposta">€ 0,00</strong></div>
@@ -227,3 +241,173 @@
     </div>
   </div>
 </div>
+ <div class="wrap" id="reportRoot">
+  <!-- PAGINA 1 — COVER -->
+  <section class="page">
+    <div class="in">
+      <div class="logo-bar">
+        <img src="https://cdn.prod.website-files.com/62a45e911e39a864ff1d018d/65552313c7ee9c9a8cac0251_Logo-orizzontale%202%20(1).svg"
+             onerror="this.onerror=null;this.src='https://placehold.co/160x36/ff5a6f/fff?text=OwnerValue';" alt="OwnerValue">
+        <div class="date" id="p1-data">—</div>
+      </div>
+      <div class="h1">Proposta di<br>Gestione</div>
+      <p class="lead muted">offerta per l’immobile sito in</p>
+      <p class="kv"><b id="p1-indirizzo-riga1">—</b><br><b id="p1-indirizzo-riga2">—</b></p>
+      <div class="hero-band"></div>
+    </div>
+  </section>
+
+  <!-- PAGINA 2 -->
+  <section class="page">
+    <div class="in">
+      <div class="logo-bar">
+        <img src="https://cdn.prod.website-files.com/62a45e911e39a864ff1d018d/65552313c7ee9c9a8cac0251_Logo-orizzontale%202%20(1).svg" alt="">
+        <div class="date" id="p2-data">—</div>
+      </div>
+      <div class="info-container">
+      <div class="h2">Perché affidarsi a un<br>Property Manager?</div>
+      <p>Siamo specializzati nella gestione degli affitti brevi a scopo turistico a Genova e nei dintorni.</p>
+      <p>Conoscendo il mercato e il funzionamento delle piattaforme di prenotazione come Airbnb e Booking riusciamo a ottimizzare gli annunci e la gestione delle tariffe per ottenere il <b>massimo guadagno</b> per i proprietari.</p>
+      <p>Ci occupiamo delle <b>pulizie</b> in collaborazione con aziende qualificate, della <b>gestione di check-in e check-out</b> e di tutte le <b>pratiche burocratiche</b>.</p>
+      <p>Insomma una gestione completa a 360°!</p>
+    </div>
+    </div>
+  </section>
+
+  <!-- PAGINA 3 — SERVIZI CON ICONE FA -->
+  <section class="page">
+    <div class="in">
+      <div class="logo-bar">
+        <img src="https://cdn.prod.website-files.com/62a45e911e39a864ff1d018d/65552313c7ee9c9a8cac0251_Logo-orizzontale%202%20(1).svg" alt="">
+        <div class="date" id="p3-data">—</div>
+      </div>
+      <div class="h2">I nostri servizi e le<br>nostre garanzie</div>
+      <div class="hr"></div>
+      <div class="info-container">
+      <table class="table">
+        <tr>
+          <td>Creazione annuncio professionale e pubblicazione sui maggiori siti OTA</td>
+          <td class="icon-cell">
+            <i class="fa-brands fa-airbnb" aria-hidden="true" title="Airbnb"></i>
+            <i class="fa-solid fa-b" aria-hidden="true" title="Booking.com"></i>
+          </td>
+        </tr>
+        <tr>
+          <td>Servizio fotografico professionale per valorizzare la casa</td>
+          <td class="icon-cell"><i class="fa-solid fa-camera" aria-hidden="true"></i></td>
+        </tr>
+        <tr>
+          <td>Marketing online per aumentare le prenotazioni extra-OTA</td>
+          <td class="icon-cell"><i class="fa-solid fa-bullhorn" aria-hidden="true"></i></td>
+        </tr>
+        <tr>
+          <td>Completa gestione amministrativa: AlloggiatiWeb, Istat, Tourist Tax</td>
+          <td class="icon-cell"><i class="fa-solid fa-file-signature" aria-hidden="true"></i></td>
+        </tr>
+      </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGINA 4 -->
+  <section class="page">
+    <div class="in">
+      <div class="logo-bar">
+        <img src="https://cdn.prod.website-files.com/62a45e911e39a864ff1d018d/65552313c7ee9c9a8cac0251_Logo-orizzontale%202%20(1).svg" alt="">
+        <div class="date" id="p4-data">—</div>
+      </div>
+      <div class="h2">Descrizione dell’appartamento</div>
+      <p id="p4-descr" class="lead muted">—</p>
+      <div class="h3">Punti di forza:</div>
+      <div>
+      <ul id="p4-punti" class="list"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGINA 5 -->
+  <section class="page">
+    <div class="in">
+      <div class="logo-bar">
+        <img src="https://cdn.prod.website-files.com/62a45e911e39a864ff1d018d/65552313c7ee9c9a8cac0251_Logo-orizzontale%202%20(1).svg" alt="">
+        <div class="date" id="p5-data">—</div>
+      </div>
+      <div class="h2">Previsioni</div>
+      <div class="h3 muted">Statistiche</div>
+      <div class="stat"><div class="lbl">Tasso di occupazione medio</div><div id="p5-occ" class="big">—</div></div>
+      <div class="stat"><div class="lbl">Media affitto giornaliera</div><div id="p5-adr" class="big">—</div></div>
+      <div class="h3 muted" style="margin-top:26px">Reddito lordo stimato</div>
+      <div class="box"><div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="lbl">Fatturato Lordo Annuo</div><div id="p5-fatt" class="big">—</div>
+      </div></div>
+      <span class="small">Per “fatturato lordo annuo” si intende quanto ricevuto dalle piattaforme o prenotazioni dirette.</span>
+    </div>
+  </section>
+
+  <!-- PAGINA 6 -->
+  <section class="page">
+    <div class="in">
+      <div class="logo-bar">
+        <img src="https://cdn.prod.website-files.com/62a45e911e39a864ff1d018d/65552313c7ee9c9a8cac0251_Logo-orizzontale%202%20(1).svg" alt="">
+        <div class="date" id="p6-data">—</div>
+      </div>
+      <div class="h2">Previsioni di Spesa</div>
+      <div class="info-container">
+      <table class="table">
+        <tr><td>Pulizie / Noleggio biancheria</td><td id="p6-pulizie" class="big">—</td></tr>
+        <tr><td>Utenze e amministrazione<br> (luce, gas, wifi, condominio)</td><td id="p6-ua" class="big">—</td></tr>
+        <tr><td>Commissioni OTA <br>(20% su affitti + pulizie)</td><td id="p6-ota" class="big">—</td></tr>
+        <tr><td>Kit benvenuto / consumabili</td><td id="p6-kit" class="big">—</td></tr>
+        <tr><td>Commissione Property Manager</td><td id="p6-pm" class="big">—</td></tr>
+        <tr><td>Spese iniziali una tantum (sicurezza/check-in)</td><td id="p6-una" class="big">—</td></tr>
+      </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGINA 7 -->
+  <section class="page">
+    <div class="in">
+      <div class="logo-bar">
+        <img src="https://cdn.prod.website-files.com/62a45e911e39a864ff1d018d/65552313c7ee9c9a8cac0251_Logo-orizzontale%202%20(1).svg" alt="">
+        <div class="date" id="p7-data">—</div>
+      </div>
+      <div class="h2">Utile Lordo e Netto</div>
+      <div class="info-container">
+      <div class="box">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="lbl">Utile Lordo Annuo</div><div id="p7-utile-lordo" class="big">—</div>
+        </div>
+      </div>
+      <div class="box">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="lbl">Utile Netto Annuo</div><div id="p7-utile-netto" class="big">—</div>
+        </div>
+      </div>
+      <p class="center">Mensile Netto: <span id="p7-mensile-netto" class="big">—</span></p>
+      <p class="small" style="margin-top:18px">
+        *La tassazione viene calcolata sull’incasso al netto delle spese di pulizia e delle spese di gestione del Property Manager, secondo l’ottimizzazione fiscale impostata.
+      </p>
+      <div class="hr" style="border-top:1px solid #E5E7EB; margin:20px 0;"></div>
+      <div id="messaggio-stime">
+      <p style="margin:0 0 28px 0;">
+        Queste stime sono basate su un’analisi di appartamenti simili, che tiene conto di un primo anno iniziale in cui si deve costruire la reputazione positiva sui siti.
+        I risultati, sia in termini di tariffa media a notte che di tasso di occupazione, sono quindi
+        <span style="color:#FF5A6F; font-style:italic;">potenzialmente incrementabili a partire dal secondo anno.</span>
+      </p>
+      <p style="margin:0 0 28px 0;">
+        Si intende che in nessun modo sono garanzia di un risultato futuro, ma come Property Manager la nostra missione è quella di
+        <span style="font-weight:700;">massimizzare il vostro guadagno, ridurre i costi e ottimizzare la gestione.</span>
+      </p>
+      </div>
+      </div>
+    </div>
+  </section>
+  <div class="toolbar">
+  <button class="btn" onclick="window.print()">Stampa / PDF</button>
+</div>
+</div>
+<script src="script-calcolatore.js"></script>
+<script src="template.js"></script>
+</body>
+</html>

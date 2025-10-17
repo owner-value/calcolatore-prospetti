@@ -1,0 +1,58 @@
+:root{
+  --bg:#F3F4F6; --paper:#FFFFFF; --ink:#0F172A; --muted:#475569;
+  --brand:#FF5A6F; --brand-ink:#0B1220; --line:#E5E7EB; --brand-soft:#FF7A8B;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+.wrap{max-width:900px;margin:24px auto;padding:0 10px; font-size: 20px}
+.page{background:var(--paper);border:1px solid var(--line);border-radius:16px;box-shadow:0 12px 30px rgba(15,23,42,.09);margin:18px 0;overflow:hidden}
+.page .in{padding:50px;}
+.logo-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:50px}
+.date{font-weight:800;color:var(--muted)}
+.h1{font-size:64px;line-height:1.05;font-weight:900;margin:24px 0}
+.h2{font-size:42px;line-height:1.1;font-weight:900;margin:20px 0}
+.h3{font-size:22px;font-weight:900;margin:30px 0 10px}
+p{margin:10px 0;color:#111827}
+.muted{color:var(--muted)}
+.hero-band{height:120px;background:var(--brand);margin-top:46px}
+.lead{font-size:20px}
+.kv{font-size:20px}
+.kv b{font-weight:900}
+.list{margin:16px 0 0 0;padding-left:22px}
+.list li{margin:10px 0}
+.stat{border:3px solid var(--brand-soft);border-radius:16px;padding:18px 20px;display:flex;justify-content:space-between;align-items:center;margin:12px 0}
+.stat .lbl{font-size:35px}
+.box{border:3px solid var(--brand-soft);border-radius:16px;padding:18px 20px;margin:16px 0}
+.table{width:100%;border-collapse:collapse;margin:6px 0 0}
+.table tr+tr td{border-top:1px dashed #e9e9ee}
+.table td{padding:10px 0;vertical-align:top}
+.big{font-size:34px;font-weight:900}
+.center{text-align:center}
+.arrow{display:block;width:max-content;margin:30px auto 0;font-size:38px;transform:translateY(-6px)}
+.small{font-size:13px;color:var(--muted)}
+.hr{height:1px;background:var(--line);margin:16px 0}
+
+/* icone colonna destra */
+.icon-cell{white-space:nowrap;text-align:right}
+.icon-cell i{font-size:30px;margin-left:10px;opacity:.9}
+
+/* Toolbar solo a schermo */
+.toolbar{display:flex;justify-content:flex-end;gap:8px;margin:0 auto 8px;max-width:900px;padding:0 10px}
+.btn{appearance:none;border:0;background:var(--brand);color:#fff;font-weight:900;border-radius:12px;padding:10px 14px;cursor:pointer}
+.btn:active{transform:translateY(1px)}
+#messaggio-stime{font-size: 16px;}
+
+/* Stampa: solo il report, A4 */
+@media print{
+  html,body{background:#fff}
+  .toolbar,.print-footer{display:none!important}
+
+  .wrap{max-width:auto;margin:0;padding:0}
+  .page{border:0;border-radius:0;box-shadow:none;margin:0}
+
+  /* <<< QUI IL FIX: usa :last-of-type invece di :last-child >>> */
+  .page{break-after: page;}                  /* alias moderno di page-break-after */
+  .wrap > .page:last-of-type{break-after:auto;}
+
+  @page{size:A4;margin:10mm}
+}

@@ -15,19 +15,42 @@ function addFixedCostField(label="Costo fisso extra (€)", value=0){
   calculateProfit();
 }
 
-function addDeviceCostField(label="Dispositivo extra (€)", value=0){
+function addDeviceCostField(name='', amount=0){
   const cont=$g('deviceCostsContainer'); if(!cont) return;
   const row=document.createElement('div');
   row.className='device-row';
-  row.innerHTML = `
-    <label><span>${label}</span>
-      <input type="number" data-type="device-extra" value="${value}" min="0" step="1">
-    </label>
-    <div class="device-actions">
-      <button type="button" class="btn btn-minor" onclick="removeDeviceRow(this)">Rimuovi</button>
-    </div>`;
+  const labelName=document.createElement('label');
+  labelName.innerHTML='<span>Descrizione</span>';
+  const inputName=document.createElement('input');
+  inputName.type='text';
+  inputName.dataset.type='device-name';
+  inputName.placeholder='Es. Telecamera extra';
+  inputName.value=name;
+  labelName.appendChild(inputName);
+
+  const labelAmount=document.createElement('label');
+  labelAmount.innerHTML='<span>Importo (€)</span>';
+  const inputAmount=document.createElement('input');
+  inputAmount.type='number';
+  inputAmount.dataset.type='device-extra';
+  inputAmount.min='0';
+  inputAmount.step='1';
+  inputAmount.value=amount;
+  labelAmount.appendChild(inputAmount);
+
+  const actions=document.createElement('div');
+  actions.className='device-actions';
+  const btn=document.createElement('button');
+  btn.type='button';
+  btn.className='btn btn-minor';
+  btn.textContent='Rimuovi';
+  btn.addEventListener('click', function(){ removeDeviceRow(this); });
+  actions.appendChild(btn);
+
+  row.append(labelName,labelAmount,actions);
   cont.appendChild(row);
-  row.querySelector('input').addEventListener('input', calculateProfit);
+  inputName.addEventListener('input', calculateProfit);
+  inputAmount.addEventListener('input', calculateProfit);
   calculateProfit();
 }
 function removeDeviceRow(btn){
@@ -90,11 +113,19 @@ function calculateProfit(){
   // 6) Sicurezza (breakdown)
   const ringSetup   = Math.max(0, num('costoRingSetup'));
   const ringSubAnn  = Math.max(0, num('abbonamentoMensile')) * 12;
-  const extraDev    = [...document.querySelectorAll('[data-type="device-extra"]')]
-    .reduce((s,i)=> s + (+i.value||0), 0);
+  const extraDevices = [...document.querySelectorAll('.device-row')].map(row=>{
+    const nameInput = row.querySelector('[data-type="device-name"]');
+    const amountInput = row.querySelector('[data-type="device-extra"]');
+    const amount = Math.max(0, +(amountInput?.value || 0));
+    const rawLabel = (nameInput?.value || '').trim();
+    const label = rawLabel || 'Spesa extra';
+    return { label, amount };
+  }).filter(item => item.amount > 0);
+
+  const extraDev = extraDevices.reduce((sum, item) => sum + item.amount, 0);
 
   const ringTotale  = ringSetup + ringSubAnn;
-  const dispositivi = ringSetup + ringSubAnn + extraDev;
+  const sicurezzaTotale = ringTotale + extraDev;
 
   // Output sezione 5 (box locale)
   $set('outRingSetup', fmtEUR(ringSetup));
@@ -105,13 +136,28 @@ function calculateProfit(){
   $set('outSumRingSetup', fmtEUR(ringSetup));
   $set('outSumRingSubAnnuale', fmtEUR(ringSubAnn));
   $set('outSumExtraDevices', fmtEUR(extraDev));
+  const extraList = $g('securityExtraList');
+  if(extraList){
+    extraList.innerHTML = '';
+    extraDevices.forEach(({label, amount})=>{
+      const row=document.createElement('div');
+      row.className='row';
+      const span=document.createElement('span');
+      span.textContent=label;
+      const strong=document.createElement('strong');
+      strong.className='bad';
+      strong.textContent=fmtEUR(amount);
+      row.append(span,strong);
+      extraList.appendChild(row);
+    });
+  }
 
   // 7) Base imponibile & imposta cedolare
   const baseImponibile = Math.max(lordoAffitti - otaAffitti - costoPM, 0);
   const imposta = baseImponibile * (pCed/100);
 
   // 8) Totali e utile
-  const costiOperativi = costoOTA + costoPM + pulizieAnnuo + utenze + kitAnnuo + dispositivi;
+  const costiOperativi = costoOTA + costoPM + pulizieAnnuo + utenze + kitAnnuo + sicurezzaTotale;
   const utileAnn = lordoTotale - costiOperativi - imposta;
   const utileMese = utileAnn / 12;
 
@@ -124,6 +170,7 @@ function calculateProfit(){
   $set('outputBaseImponibile', fmtEUR(baseImponibile));
   $set('percCedolareOutput', fmtPct(pCed));        $set('outputImposta', fmtEUR(imposta));
   $set('outputUtileNetto', fmtEUR(utileAnn));      $set('outputUtileMensile', fmtEUR(utileMese));
+  $set('outSumSecurityTotal', fmtEUR(sicurezzaTotale));
 
   // 10) Owner Value (SRL) — stima IRES + IRAP
   const ires = ($g('aliquotaIres') ? num('aliquotaIres') : 24) / 100;
@@ -152,9 +199,16 @@ function calculateProfit(){
       ota: costoOTA,
       kit: kitAnnuo,
       pm: costoPM,
-      unaTantum: dispositivi
+      unaTantum: sicurezzaTotale,
+      sicurezza:{
+        ringSetup,
+        ringSubAnn,
+        extraDev,
+        totale: sicurezzaTotale,
+        extraDettagli: extraDevices
+      }
     },
-    risultati:{ utileLordo: lordoTotale - (costoOTA + pulizieAnnuo + utenze + kitAnnuo + dispositivi),
+    risultati:{ utileLordo: lordoTotale - (costoOTA + pulizieAnnuo + utenze + kitAnnuo + sicurezzaTotale),
                 utileNetto: utileAnn,
                 mensileNetto: utileMese }
   });

@@ -1,5 +1,5 @@
 :root{
-  --brand:#0EA5E9; --brand-600:#0284C7;
+  --brand:#ff5a6f; --brand-600:#ee3d55;
   --ink:#0f172a; --muted:#64748b;
   --line:#e5e7eb; --bg:#f7f8fb; --card:#fff;
   --bad:#B4231A; --good:#059669;
@@ -79,7 +79,13 @@ textarea{min-height:110px;resize:vertical}
 .ov-admin input[type=number]{max-width:120px}
 
 /* righe "device" con bottone rimuovi */
-.device-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end}
+.device-row{display:grid;grid-template-columns:minmax(0,1fr) 150px auto;gap:10px;align-items:end}
+.device-row .device-actions{display:flex;justify-content:flex-end}
+.device-row input[data-type="device-extra"]{width:100%}
+@media(max-width:640px){
+  .device-row{grid-template-columns:1fr}
+  .device-row .device-actions{justify-self:start}
+}
 
 @media print{ .ov-admin{display:none!important} }
 
