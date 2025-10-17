@@ -14,7 +14,7 @@ html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Inter,sys
 .h3{font-size:22px;font-weight:900;margin:30px 0 10px}
 p{margin:10px 0;color:#111827}
 .muted{color:var(--muted)}
-.hero-band{height:120px;background:var(--brand);margin-top:46px}
+.hero-band{height:120px;background:var(--brand);margin-top:46px;display:block}
 .lead{font-size:20px}
 .kv{font-size:20px}
 .kv b{font-weight:900}
@@ -48,7 +48,9 @@ p{margin:10px 0;color:#111827}
   .toolbar,.print-footer{display:none!important}
 
   .wrap{max-width:auto;margin:0;padding:0}
-  .page{border:0;border-radius:0;box-shadow:none;margin:0}
+  .page{border:0;border-radius:0;box-shadow:none;margin:0;position:relative}
+
+  .hero-band{height:120px;background:var(--brand);margin-top:46px;display:block}
 
   /* <<< QUI IL FIX: usa :last-of-type invece di :last-child >>> */
   .page{break-after: page;}                  /* alias moderno di page-break-after */

@@ -97,6 +97,14 @@ textarea{min-height:110px;resize:vertical}
   .device-row .device-actions{justify-self:start}
 }
 
+.spese-header{align-items:center;margin:8px 0 12px;gap:16px}
+.spese-title{font-size:13px;color:var(--muted);font-weight:700}
+.spese-input{justify-self:end;width:100%}
+@media(max-width:640px){
+  .spese-header{grid-template-columns:1fr}
+  .spese-input{justify-self:start;max-width:none}
+}
+
 @media print{ .ov-admin{display:none!important} .bnbcalc-embed, .bnbcalc-iframe{display:none !important;}}
 
 /* Stato read-only per i campi annui quando AutoCalc è attivo */

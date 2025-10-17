@@ -24,7 +24,7 @@ function addDeviceCostField(name='', amount=0){
   const inputName=document.createElement('input');
   inputName.type='text';
   inputName.dataset.type='device-name';
-  inputName.placeholder='Es. Telecamera extra';
+  inputName.placeholder='Spesa Extra';
   inputName.value=name;
   labelName.appendChild(inputName);
 
@@ -76,13 +76,43 @@ function calculateProfit(){
   const puliziePerStay = Math.max(0, num('puliziePerSoggiorno'));
   const kitPerStay     = Math.max(0, num('kitPerSoggiorno'));
 
-  const pulizieAnnuo = stays * puliziePerStay;
-  const kitAnnuo     = stays * kitPerStay;
+  const autoCheckbox = $g('autoCalcPerSoggiorno');
+  const autoCalc = autoCheckbox ? autoCheckbox.checked : true;
+
+  const autoFields = $g('autoFields');
+  const manualFields = $g('manualFields');
+  if(autoFields){
+    if(autoCalc){
+      autoFields.style.removeProperty('display');
+    }else{
+      autoFields.style.display = 'none';
+    }
+  }
+  if(manualFields){
+    manualFields.style.display = autoCalc ? 'none' : 'grid';
+  }
+
+  let pulizieAnnuo;
+  let kitAnnuo;
+
+  if(autoCalc){
+    pulizieAnnuo = stays * puliziePerStay;
+    kitAnnuo     = stays * kitPerStay;
+  }else{
+    pulizieAnnuo = Math.max(0, num('totalePulizieOspite'));
+    kitAnnuo     = Math.max(0, num('costoWelcomeKit'));
+  }
 
   // Preview sezione 2b (solo se presenti)
-  $set('previewNumSoggiorni', stays.toString());
-  $set('previewPulizieAnnuo', fmtEUR(pulizieAnnuo));
-  $set('previewKitAnnuo', fmtEUR(kitAnnuo));
+  if(autoCalc){
+    $set('previewNumSoggiorni', stays.toString());
+    $set('previewPulizieAnnuo', fmtEUR(pulizieAnnuo));
+    $set('previewKitAnnuo', fmtEUR(kitAnnuo));
+  }else{
+    $set('previewNumSoggiorni', '—');
+    $set('previewPulizieAnnuo', '—');
+    $set('previewKitAnnuo', '—');
+  }
 
   // 3) Lordi
   const lordoAffitti = adr * giorni;
@@ -98,7 +128,7 @@ function calculateProfit(){
   const otaPulizie = pulizieAnnuo * (pOTA/100);
   const costoOTA   = otaAffitti + otaPulizie;
 
-  const basePM = Math.max(lordoAffitti - otaAffitti, 0);
+  const basePM = Math.max(lordoTotale - costoOTA, 0);
   const costoPM = basePM * (pPM/100);
 
   // 5) Utenze fisse annuali
@@ -130,7 +160,8 @@ function calculateProfit(){
     return { label, amount };
   }).filter(item => item.amount > 0);
 
-  const extraDev = extraDevices.reduce((sum, item) => sum + item.amount, 0);
+  const unaTantumManuali = Math.max(0, num('speseUnaTantumManuali'));
+  const extraDev = unaTantumManuali + extraDevices.reduce((sum, item) => sum + item.amount, 0);
 
   const ringTotale  = ringSetup + ringSubAnn;
   const sicurezzaTotale = ringTotale + extraDev;
@@ -143,21 +174,33 @@ function calculateProfit(){
   // Output riepilogo sicurezza
   $set('outSumRingSetup', fmtEUR(ringSetup));
   $set('outSumRingSubAnnuale', fmtEUR(ringSubAnn));
-  $set('outSumExtraDevices', fmtEUR(extraDev));
   const extraList = $g('securityExtraList');
   if(extraList){
     extraList.innerHTML = '';
-    extraDevices.forEach(({label, amount})=>{
+    if(unaTantumManuali > 0){
       const row=document.createElement('div');
       row.className='row';
       const span=document.createElement('span');
-      span.textContent=label;
+      span.textContent='Kit Sicurezza';
       const strong=document.createElement('strong');
       strong.className='bad';
-      strong.textContent=fmtEUR(amount);
+      strong.textContent=fmtEUR(unaTantumManuali);
       row.append(span,strong);
       extraList.appendChild(row);
-    });
+    }
+    if(extraDevices.length){
+      extraDevices.forEach(({label, amount})=>{
+        const row=document.createElement('div');
+        row.className='row';
+        const span=document.createElement('span');
+        span.textContent=label;
+        const strong=document.createElement('strong');
+        strong.className='bad';
+        strong.textContent=fmtEUR(amount);
+        row.append(span,strong);
+        extraList.appendChild(row);
+      });
+    }
   }
 
   // 7) Base imponibile & imposta cedolare
@@ -178,7 +221,6 @@ function calculateProfit(){
   $set('outputBaseImponibile', fmtEUR(baseImponibile));
   $set('percCedolareOutput', fmtPct(pCed));        $set('outputImposta', fmtEUR(imposta));
   $set('outputUtileNetto', fmtEUR(utileAnn));      $set('outputUtileMensile', fmtEUR(utileMese));
-  $set('outSumSecurityTotal', fmtEUR(sicurezzaTotale));
 
   // 10) Owner Value (SRL) — stima IRES + IRAP
   const ires = ($g('aliquotaIres') ? num('aliquotaIres') : 24) / 100;
@@ -215,9 +257,9 @@ function calculateProfit(){
       sicurezza:{
         ringSetup,
         ringSubAnn,
-        extraDev,
-        totale: sicurezzaTotale,
-        extraDettagli: extraDevices
+        extraManuale: unaTantumManuali,
+        extraDettagli: extraDevices,
+        totale: sicurezzaTotale
       }
     },
     risultati:{ utileLordo: lordoTotale - (costoOTA + pulizieAnnuo + utenze + kitAnnuo + sicurezzaTotale),

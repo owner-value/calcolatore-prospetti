@@ -23,18 +23,39 @@
     if($('p5-fatt')) $('p5-fatt').textContent = eur(m?.kpi?.fatturatoLordoNettoPulizie ?? 0);
 
     if($('p6-pulizie')) $('p6-pulizie').textContent = eur(m?.spese?.pulizie ?? 0);
-    if($('p6-ua'))      $('p6-ua').textContent      = eur(m?.spese?.utenzeAmm ?? 0);
-    if($('p6-ua-note')){
-      const mesi = m?.spese?.utenzeMesi;
-      $('p6-ua-note').textContent = (typeof mesi === 'number' && mesi > 0)
-        ? `· ${mesi} ${mesi === 1 ? 'mese' : 'mesi'}`
-        : '';
-    }
+    const uaVal = m?.spese?.utenzeAmm ?? 0;
+    if($('p6-ua'))      $('p6-ua').textContent      = eur(uaVal);
+    const uaRow = $('p6-ua-row');
+    if(uaRow){ uaRow.style.display = uaVal > 0 ? '' : 'none'; }
     if($('p6-ota'))     $('p6-ota').textContent     = eur(m?.spese?.ota ?? 0);
     if($('p6-kit'))     $('p6-kit').textContent     = eur(m?.spese?.kit ?? 0);
     if($('p6-pm'))      $('p6-pm').textContent      = eur(m?.spese?.pm ?? 0);
     if($('p6-pm-pct'))   $('p6-pm-pct').textContent   = pct(m?.spese?.pmPct ?? m?.percentualePm ?? 0);
-    if($('p6-una'))     $('p6-una').textContent     = eur(m?.spese?.unaTantum ?? 0);
+    if($('p6-una')){
+      const sicurezza = m?.spese?.sicurezza || {};
+      const parts = [];
+      if(typeof sicurezza.extraManuale === 'number' && sicurezza.extraManuale > 0){
+        parts.push(eur(sicurezza.extraManuale));
+      }
+      (sicurezza.extraDettagli || []).forEach(item => {
+        if(!item || typeof item.amount !== 'number' || item.amount <= 0) return;
+        const label = item.label || 'Spesa extra';
+        parts.push(`${label}: ${eur(item.amount)}`);
+      });
+      $('p6-una').textContent = parts.length ? parts.join(' • ') : '—';
+    }
+    const unaLabel = $('p6-una-label');
+    if(unaLabel){
+      const sicurezza = m?.spese?.sicurezza || {};
+      const firstLabel = (sicurezza.extraDettagli && sicurezza.extraDettagli[0] && sicurezza.extraDettagli[0].label) || '';
+      if(firstLabel){
+        unaLabel.textContent = firstLabel;
+      }else if(sicurezza.extraManuale > 0){
+        unaLabel.textContent = 'Kit Sicurezza';
+      }else{
+        unaLabel.textContent = '';
+      }
+    }
 
     if($('p7-utile-lordo'))   $('p7-utile-lordo').textContent   = eur(m?.risultati?.utileLordo ?? 0);
     if($('p7-utile-netto'))   $('p7-utile-netto').textContent   = eur(m?.risultati?.utileNetto ?? 0);
