@@ -1,4 +1,5 @@
 /* ============= Helpers ============= */
+const DEFAULT_TITLE = document.title || 'Calcolatore Prospetti · Owner Value';
 const fmtEUR = n => (new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'})).format(+n||0);
 const fmtPct = n => `${(+n||0).toFixed(1)}%`;
 const $g = id => document.getElementById(id);
@@ -64,6 +65,9 @@ function calculateProfit(){
   const di=$g('dataISO'); if(di && !di.value){ di.value = new Date().toISOString().slice(0,10); }
 
   // 1) Ricavi base
+  const indirizzo1 = ($g('indirizzoRiga1')?.value || '').trim();
+  document.title = indirizzo1 ? `Prospetto: ${indirizzo1}` : DEFAULT_TITLE;
+
   const adr = num('prezzoMedioNotte') || 168;
   const occ = num('occupazioneAnnuale') || 68; // %
   const giorni = Math.round(365 * (occ/100));
