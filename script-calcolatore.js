@@ -851,8 +851,29 @@ const prospectManager = (() => {
       setStatus('Seleziona prima un prospetto da applicare', 'error', options);
       return false;
     }
-    const state = currentProspect?.datiJson?.formState;
-    if(state){
+
+    let payload = currentProspect?.datiJson;
+    if(typeof payload === 'string'){
+      try{
+        payload = JSON.parse(payload);
+        currentProspect.datiJson = payload;
+      }catch(err){
+        console.warn('Impossibile leggere datiJson del prospetto', err);
+        payload = null;
+      }
+    }
+
+    let state = payload?.formState;
+    if(typeof state === 'string'){
+      try{
+        state = JSON.parse(state);
+      }catch(err){
+        console.warn('Impossibile leggere formState salvato', err);
+        state = null;
+      }
+    }
+
+    if(state && typeof state === 'object'){
       restoreFormValues(state);
       const propSlug = state?.propertySlug || currentProspect?.property?.slug || '';
       if(elements.property){
@@ -864,6 +885,7 @@ const prospectManager = (() => {
       setStatus('Dati applicati al calcolatore', 'success', options);
       return true;
     }
+
     setStatus('Il prospetto non contiene dati del calcolatore salvati', 'error', options);
     return false;
   };
