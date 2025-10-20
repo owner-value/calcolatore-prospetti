@@ -442,7 +442,8 @@ function calculateProfit(){
   $set('outputUtenzeTotali', fmtEUR(utenze));
   $set('outputBaseImponibile', fmtEUR(baseImponibile));
   $set('percCedolareOutput', fmtPct(pCed));        $set('outputImposta', fmtEUR(imposta));
-  $set('p6-ota-percent', fmtPct(pCed));
+  $set('p6-cedolare-percent', fmtPct(pCed));       $set('p6-cedolare', fmtEUR(imposta));
+  $set('p6-ota-percent', fmtPct(pOTA));
   $set('outputUtileNetto', fmtEUR(utileAnn));      $set('outputUtileMensile', fmtEUR(utileMese));
 
   // 10) Owner Value (SRL) — stima IRES + IRAP
