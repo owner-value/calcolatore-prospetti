@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
@@ -272,6 +274,7 @@ app.delete('/api/properties/:slug', async (req, res) => {
   }
 });
 
-app.listen(3001, () => {
-  console.log('API listening on http://localhost:3001');
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => {
+  console.log(`API listening on http://localhost:${PORT}`);
 });
