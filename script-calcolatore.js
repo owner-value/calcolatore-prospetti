@@ -11,7 +11,7 @@ const LOCAL_API = 'http://localhost:3001';
 
 const API_BASE_URL = (
   window.CALCOLATORE_API ||
-  (['localhost', '127.0.0.1'].includes(location.hostname) || location.protocol === 'file:' ? LOCAL_API : DEFAULT_PROD_API)
+  (['https://calcolatore-prospetti.onrender.com'].includes(location.hostname) || location.protocol === 'file:' ? LOCAL_API : DEFAULT_PROD_API)
 ).replace(/\/$/, '');
 
 const PROSPECTS_ENDPOINT = `${API_BASE_URL}/api/prospetti`;
