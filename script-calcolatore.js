@@ -21,6 +21,8 @@ const slugify = (str = '') => str
 
 let latestModel = null;
 let propertiesCache = [];
+let baseDocumentTitle = document.title || DEFAULT_TITLE;
+let printTitleRestore = null;
 
 async function loadProperties(force=false){
   if(!force && propertiesCache.length) return propertiesCache;
@@ -271,6 +273,7 @@ function calculateProfit(){
   // 1) Ricavi base
   const indirizzo1 = ($g('indirizzoRiga1')?.value || '').trim();
   document.title = indirizzo1 ? `Prospetto: ${indirizzo1}` : DEFAULT_TITLE;
+  baseDocumentTitle = document.title;
 
   const adr = num('prezzoMedioNotte') || 168;
   const occ = num('occupazioneAnnuale') || 68; // %
@@ -477,6 +480,57 @@ function calculateProfit(){
 
   saveToReport(reportModel);
 }
+
+function formatItalianDate(iso){
+  const source = iso ? new Date(iso) : new Date();
+  if(Number.isNaN(source.getTime())) return '';
+  return source.toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'});
+}
+
+function syncReportDates(iso){
+  const formatted = formatItalianDate(iso);
+  if(!formatted) return;
+  ['p1-data','p2-data','p3-data','p4-data','p5-data','p6-data','p7-data'].forEach(id=>{
+    const el = $g(id);
+    if(el) el.textContent = formatted;
+  });
+}
+
+function prepareReportForPrint(force=false){
+  const input = $g('dataISO');
+  let shouldRecalc = !!force;
+  if(input){
+    const today = new Date().toISOString().slice(0,10);
+    if(force || !input.value){
+      if(input.value !== today){
+        input.value = today;
+        shouldRecalc = true;
+      }
+    }
+  }
+  const isoValue = input?.value || new Date().toISOString().slice(0,10);
+  syncReportDates(isoValue);
+  if(shouldRecalc) calculateProfit();
+  const formattedDate = formatItalianDate(isoValue);
+  if(formattedDate){
+    const base = baseDocumentTitle || DEFAULT_TITLE;
+    const cleanBase = base.replace(/\s+-\s+\d{2}\s+\w+\s+\d{4}$/i, '');
+    if(!printTitleRestore) printTitleRestore = document.title;
+    document.title = `${cleanBase} - ${formattedDate}`;
+  }
+}
+
+function printWithDate(){
+  prepareReportForPrint(true);
+  requestAnimationFrame(() => setTimeout(() => window.print(), 20));
+}
+
+window.printWithDate = printWithDate;
+window.addEventListener('beforeprint', () => prepareReportForPrint(false));
+window.addEventListener('afterprint', () => {
+  document.title = baseDocumentTitle || DEFAULT_TITLE;
+  printTitleRestore = null;
+});
 
 /* ============= Bridge storage ============= */
 function saveToReport(model){
@@ -928,7 +982,7 @@ const prospectManager = (() => {
       if(config.autoApply){
         const applied = applyInputs({ silent: config.autoPrint });
         if(applied && config.autoPrint){
-          setTimeout(() => window.print(), 600);
+          setTimeout(() => printWithDate(), 600);
         }
       }else{
         setStatus('Prospetto caricato. Usa "Applica dati" per ripristinare i valori.', 'info');
