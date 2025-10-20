@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node app.js",
     "dev": "node app.js",
-    "migrate:deploy": "prisma migrate deploy"
+    "migrate:deploy": "prisma migrate deploy",
+    "migrate:sqlite": "node scripts/migrate-sqlite-to-postgres.js"
   },
   "keywords": [],
   "author": "",
