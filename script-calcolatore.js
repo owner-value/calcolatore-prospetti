@@ -1,7 +1,11 @@
 /* ============= Helpers ============= */
 const DEFAULT_TITLE = document.title || 'Calcolatore Prospetti · Owner Value';
 const fmtEUR = n => (new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'})).format(+n||0);
-const fmtPct = n => `${(+n||0).toFixed(1)}%`;
+const fmtPct = n => {
+  const value = Number.isFinite(+n) ? +n : 0;
+  const formatted = value.toFixed(1);
+  return `${formatted.endsWith('.0') ? formatted.slice(0, -2) : formatted}%`;
+};
 const $g = id => document.getElementById(id);
 const $set = (id,v)=>{ const el=$g(id); if(el) el.textContent = v; };
 const num = id => { const el=$g(id); if(!el) return 0; const v=(el.value||'').toString().replace(',','.'); return +v||0; };
