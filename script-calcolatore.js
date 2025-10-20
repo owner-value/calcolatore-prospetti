@@ -6,7 +6,14 @@ const $g = id => document.getElementById(id);
 const $set = (id,v)=>{ const el=$g(id); if(el) el.textContent = v; };
 const num = id => { const el=$g(id); if(!el) return 0; const v=(el.value||'').toString().replace(',','.'); return +v||0; };
 
-const API_BASE_URL = (window.CALCOLATORE_API || 'http://localhost:3001').replace(/\/$/, '');
+const DEFAULT_PROD_API = 'https://calcolatore-prospetti.onrender.com';
+const LOCAL_API = 'http://localhost:3001';
+
+const API_BASE_URL = (
+  window.CALCOLATORE_API ||
+  (['localhost', '127.0.0.1'].includes(location.hostname) || location.protocol === 'file:' ? LOCAL_API : DEFAULT_PROD_API)
+).replace(/\/$/, '');
+
 const PROSPECTS_ENDPOINT = `${API_BASE_URL}/api/prospetti`;
 const PROPERTIES_ENDPOINT = `${API_BASE_URL}/api/properties`;
 const slugify = (str = '') => str
