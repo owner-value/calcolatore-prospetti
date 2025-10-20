@@ -36,6 +36,19 @@
       <div class="card" id="prospectManager" data-persist-ignore>
         <h2>Gestione Prospetti</h2>
         <p class="note">Salva le configurazioni nel backend e gestiscile dall’<a href="pages/archivio/index.html" target="_blank" rel="noopener">Archivio Proprieta</a>.</p>
+        <div class="grid cols-2 property-row">
+          <label><span>Proprieta collegata</span>
+            <div class="dropdown" data-dropdown="prospectProperty" data-placeholder="Nessuna proprieta">
+              <button class="dropdown-toggle" type="button" data-dropdown-toggle aria-haspopup="listbox" aria-expanded="false" title="Associa una proprieta al prospetto">Nessuna proprieta</button>
+              <div class="dropdown-menu" data-dropdown-menu role="listbox"></div>
+              <input type="hidden" id="prospectProperty" value="">
+            </div>
+          </label>
+          <div class="property-actions">
+            <button class="btn btn-minor" type="button" id="openPropertyBtn" title="Apri la scheda dettagli della proprieta selezionata in una nuova tab">Apri scheda proprieta</button>
+            <button class="btn btn-minor" type="button" id="refreshPropertiesBtn" data-role="refresh-properties" title="Ricarica l'elenco delle proprieta disponibili">Aggiorna elenco proprieta</button>
+          </div>
+        </div>
         <div class="grid cols-2 prospect-row">
           <label><span>Prospetto salvato</span>
             <div class="dropdown" data-dropdown="prospectSelect" data-placeholder="— Seleziona —">
@@ -58,19 +71,6 @@
           <label><span>Titolo</span>
             <input type="text" id="prospectTitle" placeholder="Titolo prospetto">
           </label>
-        </div>
-        <div class="grid cols-2 property-row">
-          <label><span>Proprieta collegata</span>
-            <div class="dropdown" data-dropdown="prospectProperty" data-placeholder="Nessuna proprieta">
-              <button class="dropdown-toggle" type="button" data-dropdown-toggle aria-haspopup="listbox" aria-expanded="false" title="Associa una proprieta al prospetto">Nessuna proprieta</button>
-              <div class="dropdown-menu" data-dropdown-menu role="listbox"></div>
-              <input type="hidden" id="prospectProperty" value="">
-            </div>
-          </label>
-          <div class="property-actions">
-            <button class="btn btn-minor" type="button" id="openPropertyBtn" title="Apri la scheda dettagli della proprieta selezionata in una nuova tab">Apri scheda proprieta</button>
-            <button class="btn btn-minor" type="button" id="refreshPropertiesBtn" data-role="refresh-properties" title="Ricarica l'elenco delle proprieta disponibili">Aggiorna elenco proprieta</button>
-          </div>
         </div>
         <div class="prospect-buttons">
           <button class="btn" type="button" id="saveProspectBtn" data-role="save-prospect" title="Salva un nuovo prospetto o aggiorna quello selezionato">Salva / Aggiorna</button>
