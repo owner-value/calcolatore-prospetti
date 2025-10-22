@@ -162,6 +162,12 @@ app.post('/api/prospetti', upload.single('pdf'), async (req, res) => {
   try {
     const { metadata } = req.body;
     if (!metadata) return res.status(400).json({ error: 'Missing metadata' });
+    // Debug: log incoming cedolare if present to help trace client/server mismatch
+    try{
+      const tmp = JSON.parse(metadata);
+      const cedVal = tmp?.formState?.fields?.percentualeCedolare ?? tmp?.percentualeCedolare ?? null;
+      console.log('POST /api/prospetti incoming percentualeCedolare =', cedVal);
+    }catch(e){ console.warn('Unable to parse metadata for debug logging', e); }
     const data = JSON.parse(metadata);
     const indirizzo1 = (data.indirizzoRiga1 || '').trim();
     const slug = slugify(data.slug || indirizzo1);

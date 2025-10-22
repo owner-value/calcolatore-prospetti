@@ -1,0 +1,48 @@
+name: Trigger Render deploy and wait
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy-and-wait:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Trigger Render deployment via API (if secrets set)
+        if: ${{ secrets.RENDER_API_KEY != '' && secrets.RENDER_SERVICE_ID != '' }}
+        run: |
+          set -e
+          echo "Triggering Render deploy for service $RENDER_SERVICE_ID"
+          RESP=$(curl -s -X POST "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys" \
+            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{}')
+          echo "Render API response: $RESP"
+
+      - name: Read Render URL from links.json
+        id: read
+        run: |
+          URL=$(node -e "const L=require('./backend/config/links.json'); console.log((L['calcolatore-prospetti'] && L['calcolatore-prospetti'].render) || '')")
+          echo "RENDER_URL=$URL" >> $GITHUB_OUTPUT
+
+      - name: Poll /_health until 200
+        if: steps.read.outputs.RENDER_URL != ''
+        run: |
+          set -e
+          URL=${{ steps.read.outputs.RENDER_URL }}
+          echo "Polling $URL/_health"
+          for i in $(seq 1 40); do
+            HTTP=$(curl -s -o /dev/null -w "%{http_code}" "$URL/_health" || echo 000)
+            echo "try=$i status=$HTTP"
+            if [ "$HTTP" = "200" ]; then
+              echo "Healthy"
+              curl -s $URL/_version || true
+              exit 0
+            fi
+            sleep 6
+          done
+          echo "Timeout waiting for $URL/_health" >&2
+          exit 1

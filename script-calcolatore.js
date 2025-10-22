@@ -665,6 +665,35 @@ const prospectManager = (() => {
     });
   };
 
+  // Small UI toast helper for visible notifications
+  const showToast = (message, ms = 3000) => {
+    try{
+      let toast = document.getElementById('ov-toast');
+      if(!toast){
+        toast = document.createElement('div');
+        toast.id = 'ov-toast';
+        toast.style.position = 'fixed';
+        toast.style.right = '16px';
+        toast.style.bottom = '16px';
+        toast.style.padding = '10px 14px';
+        toast.style.background = 'rgba(16,185,129,0.95)';
+        toast.style.color = '#fff';
+        toast.style.borderRadius = '6px';
+        toast.style.boxShadow = '0 4px 16px rgba(2,6,23,0.2)';
+        toast.style.zIndex = 99999;
+        toast.style.fontWeight = '700';
+        document.body.appendChild(toast);
+      }
+      toast.textContent = message;
+      toast.style.opacity = '1';
+      if(toast._timeout) clearTimeout(toast._timeout);
+      toast._timeout = setTimeout(()=>{
+        toast.style.transition = 'opacity 300ms ease';
+        toast.style.opacity = '0';
+      }, ms);
+    }catch(e){ console.warn('showToast failed', e); }
+  };
+
   const getSelectedProperty = () => {
     const dropdownValue = elements.propertyDropdown?.getValue?.() || '';
     const fallback = elements.property?.value || '';
@@ -826,6 +855,8 @@ const prospectManager = (() => {
     fd.append('metadata', JSON.stringify(metadata));
 
     try{
+      // Debug: log the cedolare value being saved so we can trace mismatches
+      try{ console.log('Saving prospect metadata.percentualeCedolare =', metadata?.formState?.fields?.percentualeCedolare); }catch(e){}
       setStatus('Salvataggio in corso...', 'info');
       const res = await fetch(PROSPECTS_ENDPOINT, { method: 'POST', body: fd });
       if(!res.ok){
@@ -880,7 +911,20 @@ const prospectManager = (() => {
     }
 
     if(state && typeof state === 'object'){
+      // restore fields normally
       restoreFormValues(state);
+      // Defensive fix: ensure critical numeric inputs (cedolare) are explicitly applied
+      try{
+        const cedVal = state?.fields?.percentualeCedolare ?? state?.percentualeCedolare ?? null;
+        const cedEl = $g('percentualeCedolare');
+        if(cedVal !== null && cedEl){
+          // log for debugging and apply value
+          console.log('Applying percentualeCedolare from saved state:', cedVal, 'currentInputBefore:', cedEl.value);
+          cedEl.value = cedVal;
+        }
+      }catch(e){ console.warn('Error applying percentualeCedolare defensive fix', e); }
+      // ensure outputs recalc with the explicit value
+      try{ calculateProfit(); }catch(e){ console.warn('calculateProfit() failed after applying saved state', e); }
       const propSlug = state?.propertySlug || currentProspect?.property?.slug || '';
       if(elements.property){
         populatePropertySelect(elements.property, propSlug);
@@ -889,6 +933,8 @@ const prospectManager = (() => {
         }
       }
       setStatus('Dati applicati al calcolatore', 'success', options);
+      // show a visible toast so users notice the apply succeeded
+      showToast('Dati applicati al calcolatore', 3000);
       return true;
     }
 
