@@ -561,10 +561,8 @@ window.addEventListener('beforeprint', () => {
   prepareReportForPrint(false);
 
   // blank the document title so browser native header doesn't include address
-  try{
-    window.__ov_prev_title = document.title;
-    document.title = '';
-  }catch(e){}
+  // Do not blank the document title here — keep the title so the browser
+  // can propose a human-friendly filename when saving as PDF.
 
   // aggressively hide known transient/status elements and any element
   // that contains the exact status text we show when applying data.
