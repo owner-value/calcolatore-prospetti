@@ -554,9 +554,20 @@ function printWithDate(){
 }
 
 window.printWithDate = printWithDate;
-window.addEventListener('beforeprint', () => prepareReportForPrint(false));
+// Ensure we suppress title updates and hide transient UI when printing.
+window.addEventListener('beforeprint', () => {
+  try{ window.__ov_noTitle = true; }catch(e){}
+  prepareReportForPrint(false);
+  // also hide transient UI like toast/status to avoid printing them
+  const toast = document.getElementById('ov-toast'); if(toast) toast.style.display = 'none';
+  const pm = document.getElementById('prospectManager'); if(pm) pm.style.display = 'none';
+});
 window.addEventListener('afterprint', () => {
+  try{ window.__ov_noTitle = false; }catch(e){}
   document.title = baseDocumentTitle || DEFAULT_TITLE;
+  // restore any hidden UI we hid for print
+  const toast = document.getElementById('ov-toast'); if(toast) toast.style.removeProperty('display');
+  const pm = document.getElementById('prospectManager'); if(pm) pm.style.removeProperty('display');
   printTitleRestore = null;
 });
 
@@ -1106,6 +1117,20 @@ document.addEventListener('DOMContentLoaded', () => {
     el.addEventListener('change', calculateProfit);
   });
   calculateProfit();
+
+  // Inject a small print stylesheet to hide UI controls and transient elements
+  // which should not appear in the exported PDF.
+  try{
+    const css = `@media print {
+      #ov-toast, #prospectManager, .prospect-status, .btn, .device-actions, .dropdown, [data-dropdown-menu], .dropdown-item { display: none !important; }
+      /* avoid printing obvious controls and links */
+      a[href]:after { content: none !important; }
+    }`;
+    const style = document.createElement('style');
+    style.setAttribute('data-generated-by','script-calcolatore:print');
+    style.appendChild(document.createTextNode(css));
+    document.head.appendChild(style);
+  }catch(e){ console.warn('Could not inject print stylesheet', e); }
   const params = new URLSearchParams(window.location.search);
   const initialSlug = params.get('slug') || '';
   const initialProperty = params.get('property') || '';
