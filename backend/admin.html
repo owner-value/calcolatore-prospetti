@@ -1,0 +1,42 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Short Links Admin</title>
+  <style>body{font-family:Arial;margin:20px}label{display:block;margin-top:8px}input,textarea{width:100%;padding:6px}</style>
+</head>
+<body>
+  <h1>Short Links Admin</h1>
+  <form id="frm">
+    <label>Key (short id)</label>
+    <input id="key" />
+    <label>Render URL</label>
+    <input id="render" />
+    <label>GitHub URL</label>
+    <input id="github" />
+    <label>Project page</label>
+    <input id="project_page" />
+    <label>Notes</label>
+    <textarea id="notes"></textarea>
+    <button type="submit">Save</button>
+  </form>
+  <pre id="out"></pre>
+  <script>
+    const form = document.getElementById('frm');
+    const out = document.getElementById('out');
+    form.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const body = {
+        key: document.getElementById('key').value,
+        render: document.getElementById('render').value,
+        github: document.getElementById('github').value,
+        project_page: document.getElementById('project_page').value,
+        notes: document.getElementById('notes').value,
+      };
+      const r = await fetch('/_links', { method: 'POST', headers:{ 'Content-Type':'application/json'}, body: JSON.stringify(body)});
+      const j = await r.json();
+      out.textContent = JSON.stringify(j, null, 2);
+    });
+  </script>
+</body>
+</html>

@@ -78,6 +78,38 @@ app.get('/r/:key', (req, res) => {
   return res.redirect(302, target);
 });
 
+// Admin API: add or update a link entry
+app.post('/_links', async (req, res) => {
+  try {
+    const body = req.body || {};
+    const key = (body.key || '').toString().trim();
+    if (!key) return res.status(400).json({ error: 'Missing key' });
+    const entry = {
+      render: body.render || '',
+      github: body.github || '',
+      project_page: body.project_page || '',
+      notes: body.notes || '',
+    };
+
+    const linksPath = path.join(__dirname, 'config', 'links.json');
+    let links = {};
+    try { links = fs.existsSync(linksPath) ? JSON.parse(fs.readFileSync(linksPath, 'utf8') || '{}') : {}; } catch(e) { links = {}; }
+    links[key] = entry;
+    fs.writeFileSync(linksPath, JSON.stringify(links, null, 2));
+    // refresh in-memory
+    PROJECT_LINKS = links;
+    res.json({ ok: true, key, entry });
+  } catch (err) {
+    console.error('Failed to write links.json', err);
+    res.status(500).json({ error: 'Unable to save' });
+  }
+});
+
+// Tiny admin page to add links without editing files
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
 // Health check (useful for Render and uptime probes)
 app.get('/_health', (req, res) => {
   res.json({ ok: true, uptime: process.uptime() });
