@@ -1,0 +1,145 @@
+
+> backend@1.0.0 start
+> node app.js
+
+Starting API (pid=27653)
+PORT: 3001
+DATABASE_URL present: true
+Prisma connected successfully
+app keys: [
+  '_events',         '_eventsCount',         '_maxListeners',
+  'setMaxListeners', 'getMaxListeners',      'emit',
+  'addListener',     'on',                   'prependListener',
+  'once',            'prependOnceListener',  'removeListener',
+  'off',             'removeAllListeners',   'listeners',
+  'rawListeners',    'listenerCount',        'eventNames',
+  'init',            'defaultConfiguration', 'handle',
+  'use',             'route',                'engine',
+  'param',           'set',                  'path',
+  'enabled',         'disabled',             'enable',
+  'disable',         'acl',                  'bind',
+  'checkout',        'connect',              'copy',
+  'delete',          'get',                  'head',
+  'link',            'lock',                 'm-search',
+  'merge',           'mkactivity',           'mkcalendar',
+  'mkcol',           'move',                 'notify',
+  'options',         'patch',                'post',
+  'propfind',        'proppatch',            'purge',
+  'put',             'query',                'rebind',
+  'report',          'search',               'source',
+  'subscribe',       'trace',                'unbind',
+  'unlink',          'unlock',               'unsubscribe',
+  'all',             'render',               'listen',
+  'request',         'response',             'cache',
+  'engines',         'settings',             'locals',
+  'mountpath',       'router'
+]
+typeof app.get: function
+typeof app.use: function
+app._router exists: false
+app.router exists: true
+router.stack length: 20
+router.stack summary: [
+  { idx: 0, name: 'corsMiddleware', route: null, regexp: 'undefined' },
+  { idx: 1, name: 'jsonParser', route: null, regexp: 'undefined' },
+  { idx: 2, name: 'serveStatic', route: null, regexp: 'undefined' },
+  { idx: 3, name: '<anonymous>', route: null, regexp: 'undefined' },
+  {
+    idx: 4,
+    name: 'handle',
+    route: { path: '/_version', methods: [Array] },
+    regexp: 'undefined'
+  },
+  {
+    idx: 5,
+    name: 'handle',
+    route: { path: '/_links', methods: [Array] },
+    regexp: 'undefined'
+  },
+  {
+    idx: 6,
+    name: 'handle',
+    route: { path: '/r/:key', methods: [Array] },
+    regexp: 'undefined'
+  },
+  {
+    idx: 7,
+    name: 'handle',
+    route: { path: '/_links', methods: [Array] },
+    regexp: 'undefined'
+  },
+  {
+    idx: 8,
+    name: 'handle',
+    route: { path: '/admin', methods: [Array] },
+    regexp: 'undefined'
+  },
+  {
+    idx: 9,
+    name: 'handle',
+    route: { path: '/_health', methods: [Array] },
+    regexp: 'undefined'
+  },
+  {
+    idx: 10,
+    name: 'handle',
+    route: { path: '/api/prospetti', methods: [Array] },
+    regexp: 'undefined'
+  },
+  {
+    idx: 11,
+    name: 'handle',
+    route: { path: '/api/prospetti/:slug', methods: [Array] },
+    regexp: 'undefined'
+  },
+  {
+    idx: 12,
+    name: 'handle',
+    route: { path: '/api/prospetti/:slug/pdf', methods: [Array] },
+    regexp: 'undefined'
+  },
+  {
+    idx: 13,
+    name: 'handle',
+    route: { path: '/api/prospetti', methods: [Array] },
+    regexp: 'undefined'
+  },
+  {
+    idx: 14,
+    name: 'handle',
+    route: { path: '/api/prospetti/:slug', methods: [Array] },
+    regexp: 'undefined'
+  },
+  {
+    idx: 15,
+    name: 'handle',
+    route: { path: '/api/prospetti/:slug', methods: [Array] },
+    regexp: 'undefined'
+  },
+  {
+    idx: 16,
+    name: 'handle',
+    route: { path: '/api/properties', methods: [Array] },
+    regexp: 'undefined'
+  },
+  {
+    idx: 17,
+    name: 'handle',
+    route: { path: '/api/properties/:slug', methods: [Array] },
+    regexp: 'undefined'
+  },
+  {
+    idx: 18,
+    name: 'handle',
+    route: { path: '/api/properties', methods: [Array] },
+    regexp: 'undefined'
+  },
+  {
+    idx: 19,
+    name: 'handle',
+    route: { path: '/api/properties/:slug', methods: [Array] },
+    regexp: 'undefined'
+  }
+]
+API listening on http://localhost:3001
+INCOMING GET /_health
