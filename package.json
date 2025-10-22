@@ -7,6 +7,9 @@
   },
   "scripts": {
     "start": "node backend/app.js",
-    "postinstall": "cd backend && npm install --no-audit --no-fund"
+    "start:local": "sh ./scripts/start-local.sh",
+    "version:check": "sh ./scripts/show-version.sh",
+    "deploy:push": "sh ./scripts/push-and-deploy.sh",
+    "postinstall": "cd backend && npm install --no-audit --no-fund && npm run write-commit"
   }
 }

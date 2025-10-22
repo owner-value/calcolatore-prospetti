@@ -6,6 +6,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { PrismaClient } = require('@prisma/client');
+const child_process = require('child_process');
 
 const prisma = new PrismaClient();
 const app = express();
@@ -21,6 +22,60 @@ app.use('/files', express.static(storageDir));
 app.use((req, res, next) => {
   try { console.log('INCOMING', req.method, req.path); } catch(e){}
   next();
+});
+
+// Load links config (unique links for projects)
+let PROJECT_LINKS = {};
+try{
+  const linksPath = path.join(__dirname, 'config', 'links.json');
+  if (fs.existsSync(linksPath)) {
+    PROJECT_LINKS = JSON.parse(fs.readFileSync(linksPath, 'utf8')) || {};
+  }
+}catch(e){ console.warn('Unable to load links config', e); }
+
+// Version endpoint: commit SHA (if available) and runtime info
+let COMMIT_SHA = null;
+try{
+  // prefer commit.json produced at build time
+  const commitPath = path.join(__dirname, 'config', 'commit.json');
+  if (fs.existsSync(commitPath)){
+    const cj = JSON.parse(fs.readFileSync(commitPath, 'utf8') || '{}');
+    COMMIT_SHA = cj.commit || null;
+  }
+}catch(e){ /* ignore */ }
+if (!COMMIT_SHA) {
+  COMMIT_SHA = process.env.COMMIT_SHA || null;
+}
+if (!COMMIT_SHA) {
+  try {
+    // try to get git short sha from repo root as fallback
+    COMMIT_SHA = child_process.execSync('git rev-parse --short HEAD', { cwd: path.join(__dirname, '..'), stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+  } catch (e) {
+    COMMIT_SHA = null;
+  }
+}
+
+app.get('/_version', (req, res) => {
+  res.json({ commit: COMMIT_SHA, node: process.version });
+});
+
+app.get('/_links', (req, res) => {
+  // returns configured project links; useful to get shareable unique URLs
+  res.json(PROJECT_LINKS || {});
+});
+
+// Short redirect route: /r/:key -> configured link (render/project_page/github)
+app.get('/r/:key', (req, res) => {
+  const key = req.params.key;
+  const info = PROJECT_LINKS[key];
+  if (!info) return res.status(404).json({ error: 'Not found' });
+  // prefer render, then project_page, then github
+  const target = info.render || info.project_page || info.github;
+  if (!target) return res.status(404).json({ error: 'No URL configured for this key' });
+  // allow optional query param 't' to select a different target (github|render|project_page)
+  const t = (req.query.t || '').toString();
+  if (t && info[t]) return res.redirect(302, info[t]);
+  return res.redirect(302, target);
 });
 
 // Health check (useful for Render and uptime probes)
@@ -317,8 +372,17 @@ async function start() {
       console.log('router.stack summary:', stackSummary.slice(0,50));
     }catch(e){ console.warn('Unable to enumerate app/router details', e); }
 
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
       console.log(`API listening on http://localhost:${PORT}`);
+    });
+
+    server.on('error', (err) => {
+      if (err && err.code === 'EADDRINUSE') {
+        console.error(`Port ${PORT} already in use (EADDRINUSE)`);
+      }
+      console.error('Server listen error:', err);
+      // exit so supervising platform (Render / local) surfaces the failure
+      process.exit(1);
     });
   } catch (err) {
     console.error('Failed to start server:', err);

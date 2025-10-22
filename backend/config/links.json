@@ -1,0 +1,13 @@
+{
+  "calcolatore-prospetti": {
+    "render": "https://calcolatore-prospetti.onrender.com",
+    "github": "https://github.com/owner-value/calcolatore-prospetti",
+    "project_page": "",
+    "notes": "Main project links; edit backend/config/links.json to add others."
+  },
+  "other-project": {
+    "render": "https://example-other.onrender.com",
+    "github": "https://github.com/owner-value/other-project",
+    "notes": "Add your projects here following the same structure."
+  }
+}

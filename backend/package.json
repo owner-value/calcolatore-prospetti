@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node app.js",
     "dev": "node app.js",
+    "write-commit": "sh ./scripts/write-commit.sh",
     "migrate:deploy": "prisma migrate deploy",
     "migrate:sqlite": "node scripts/migrate-sqlite-to-postgres.js"
   },
