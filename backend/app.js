@@ -17,6 +17,17 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use('/files', express.static(storageDir));
 
+// Debug: log each incoming request path
+app.use((req, res, next) => {
+  try { console.log('INCOMING', req.method, req.path); } catch(e){}
+  next();
+});
+
+// Health check (useful for Render and uptime probes)
+app.get('/_health', (req, res) => {
+  res.json({ ok: true, uptime: process.uptime() });
+});
+
 const slugify = (str = '') =>
   str
     .toString()
@@ -275,6 +286,54 @@ app.delete('/api/properties/:slug', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`API listening on http://localhost:${PORT}`);
+
+// Better startup sequence with Prisma connection and helpful logs for Render
+async function start() {
+  try {
+    console.log(`Starting API (pid=${process.pid})`);
+    console.log('PORT:', PORT);
+    console.log('DATABASE_URL present:', !!process.env.DATABASE_URL);
+    await prisma.$connect();
+    console.log('Prisma connected successfully');
+
+    // Debug: inspect app object and registered router
+    try{
+      console.log('app keys:', Object.keys(app).slice(0,80));
+      console.log('typeof app.get:', typeof app.get);
+      console.log('typeof app.use:', typeof app.use);
+      const router = app._router || app.router || null;
+      console.log('app._router exists:', !!app._router);
+      console.log('app.router exists:', !!app.router);
+      const stack = (router && router.stack) || [];
+      console.log('router.stack length:', stack.length);
+      const stackSummary = stack.map((mw, idx) => {
+        return {
+          idx,
+          name: mw.name || '<anonymous>',
+          route: mw.route ? { path: mw.route.path, methods: Object.keys(mw.route.methods || {}) } : null,
+          regexp: mw.regexp && mw.regexp.toString ? mw.regexp.toString() : String(mw.regexp),
+        };
+      });
+      console.log('router.stack summary:', stackSummary.slice(0,50));
+    }catch(e){ console.warn('Unable to enumerate app/router details', e); }
+
+    app.listen(PORT, () => {
+      console.log(`API listening on http://localhost:${PORT}`);
+    });
+  } catch (err) {
+    console.error('Failed to start server:', err);
+    // Ensure crash so Render shows failure and restarts
+    process.exit(1);
+  }
+}
+
+// Global handlers to surface errors in logs
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled Rejection at:', reason);
 });
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception thrown:', err);
+  process.exit(1);
+});
+
+start();

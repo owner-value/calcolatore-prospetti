@@ -1,4 +1,10 @@
-const API_BASE_URL = (window.CALCOLATORE_API || 'http://localhost:3001').replace(/\/$/, '');
+// Prefer an explicitly set global, otherwise detect production vs local like the main script
+const DEFAULT_PROD_API = 'https://calcolatore-prospetti.onrender.com';
+const LOCAL_API = 'http://localhost:3001';
+const API_BASE_URL = (
+  window.CALCOLATORE_API ||
+  (['https://calcolatore-prospetti.onrender.com'].includes(location.hostname) || location.protocol === 'file:' ? LOCAL_API : DEFAULT_PROD_API)
+).replace(/\/$/, '');
 const PROPERTIES_ENDPOINT = `${API_BASE_URL}/api/properties`;
 const PROSPECTS_ENDPOINT = `${API_BASE_URL}/api/prospetti`;
 
