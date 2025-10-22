@@ -524,13 +524,10 @@ function prepareReportForPrint(force=false){
   const isoValue = input?.value || new Date().toISOString().slice(0,10);
   syncReportDates(isoValue);
   if(shouldRecalc) calculateProfit();
-  const formattedDate = formatItalianDate(isoValue);
-  if(formattedDate){
-    const base = baseDocumentTitle || DEFAULT_TITLE;
-    const cleanBase = base.replace(/\s+-\s+\d{2}\s+\w+\s+\d{4}$/i, '');
-    if(!printTitleRestore) printTitleRestore = document.title;
-    document.title = `${cleanBase} - ${formattedDate}`;
-  }
+  // Do not change document.title before printing — browsers include title and timestamp
+  // in the native header/footer of printed PDFs. We prefer to show the date in-page
+  // (see elements with ids like 'p1-data') and instruct users to disable browser
+  // headers/footers if they want a clean PDF.
 }
 
 function printWithDate(){
