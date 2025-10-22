@@ -283,7 +283,13 @@ function calculateProfit(){
 
   // 1) Ricavi base
   const indirizzo1 = ($g('indirizzoRiga1')?.value || '').trim();
-  document.title = indirizzo1 ? `Prospetto: ${indirizzo1}` : DEFAULT_TITLE;
+  // Respect a runtime flag that suppresses changing document.title (used when
+  // preparing the page for printing). Browsers include the page title and
+  // timestamp in native print headers/footers, so we avoid setting the title
+  // while printing to keep PDFs clean.
+  if(!window.__ov_noTitle){
+    document.title = indirizzo1 ? `Prospetto: ${indirizzo1}` : DEFAULT_TITLE;
+  }
   baseDocumentTitle = document.title;
 
   const adr = num('prezzoMedioNotte') || 168;
@@ -523,11 +529,23 @@ function prepareReportForPrint(force=false){
   }
   const isoValue = input?.value || new Date().toISOString().slice(0,10);
   syncReportDates(isoValue);
-  if(shouldRecalc) calculateProfit();
-  // Do not change document.title before printing — browsers include title and timestamp
-  // in the native header/footer of printed PDFs. We prefer to show the date in-page
-  // (see elements with ids like 'p1-data') and instruct users to disable browser
-  // headers/footers if they want a clean PDF.
+  if(shouldRecalc){
+    // Temporarily suppress document.title updates while recalculating so the
+    // browser doesn't pick up a dynamic title for its native print header.
+    const prevTitle = document.title;
+    try{
+      window.__ov_noTitle = true;
+      calculateProfit();
+    }finally{
+      window.__ov_noTitle = false;
+      // restore the previous title immediately
+      document.title = prevTitle;
+      baseDocumentTitle = prevTitle || DEFAULT_TITLE;
+    }
+  }
+  // Note: native browser headers/footers (page numbers, date/time, title) are
+  // controlled by the browser and cannot be removed programmatically. Ask users
+  // to disable headers/footers in the print dialog for a clean PDF.
 }
 
 function printWithDate(){
