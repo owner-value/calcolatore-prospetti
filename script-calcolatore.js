@@ -1110,10 +1110,13 @@ const prospectManager = (() => {
     elements.resetBtn?.addEventListener('click', () => resetForm());
     elements.slugBtn?.addEventListener('click', autoSlug);
 
-    resetForm({ silent: true });
-    await refreshList(config.initialSlug, { silent: true });
+  resetForm({ silent: true });
+  // TEMPORARY FIX: always refresh the full prospect list on init so saved
+  // prospects are visible regardless of property filter. Remove when root
+  // cause (filter/select mismatch) is resolved.
+  await refreshList('', { silent: false });
 
-    if(config.initialSlug){
+  if(config.initialSlug){
       const prospect = await loadProspect(config.initialSlug, { silent: true, setSelect: true });
       if(!prospect){
         setStatus('Il prospetto richiesto non è stato trovato.', 'error');
