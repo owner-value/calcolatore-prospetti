@@ -51,3 +51,5 @@
 ::1 - - [22/Oct/2025 18:53:44] "GET /script-calcolatore.js HTTP/1.1" 304 -
 ::1 - - [22/Oct/2025 18:58:03] "GET / HTTP/1.1" 200 -
 ::1 - - [22/Oct/2025 18:58:03] "GET /script-calcolatore.js HTTP/1.1" 200 -
+::1 - - [22/Oct/2025 18:58:48] "GET / HTTP/1.1" 200 -
+::1 - - [22/Oct/2025 18:58:48] "GET /script-calcolatore.js HTTP/1.1" 304 -
