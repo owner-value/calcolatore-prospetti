@@ -557,17 +557,52 @@ window.printWithDate = printWithDate;
 // Ensure we suppress title updates and hide transient UI when printing.
 window.addEventListener('beforeprint', () => {
   try{ window.__ov_noTitle = true; }catch(e){}
+  // ensure we prepare the report (dates, recalc) before print
   prepareReportForPrint(false);
-  // also hide transient UI like toast/status to avoid printing them
-  const toast = document.getElementById('ov-toast'); if(toast) toast.style.display = 'none';
-  const pm = document.getElementById('prospectManager'); if(pm) pm.style.display = 'none';
+
+  // blank the document title so browser native header doesn't include address
+  try{
+    window.__ov_prev_title = document.title;
+    document.title = '';
+  }catch(e){}
+
+  // aggressively hide known transient/status elements and any element
+  // that contains the exact status text we show when applying data.
+  try{
+    const toHide = [];
+    const selectors = ['#ov-toast','#prospectManager','.prospect-status','#prospectStatus','#prospectStatusBottom','[data-role="prospect-status"]'];
+    selectors.forEach(s => {
+      document.querySelectorAll(s).forEach(el => { toHide.push(el); });
+    });
+    // hide any element whose text contains the status message
+    const statusText = 'Dati applicati al calcolatore';
+    document.querySelectorAll('body *').forEach(el => {
+      if(el.children && el.children.length) return; // prefer leaf nodes
+      const txt = (el.textContent || '').trim();
+      if(txt === statusText) toHide.push(el);
+    });
+    // dedupe and store previous display values for restoration
+    window.__ov_print_hidden = [];
+    toHide.forEach(el => {
+      if(!el || !el.style) return;
+      if(window.__ov_print_hidden.some(h => h.el === el)) return;
+      window.__ov_print_hidden.push({ el, display: el.style.display || '' });
+      el.style.display = 'none';
+    });
+  }catch(e){ console.warn('beforeprint hiding failed', e); }
 });
+
 window.addEventListener('afterprint', () => {
   try{ window.__ov_noTitle = false; }catch(e){}
-  document.title = baseDocumentTitle || DEFAULT_TITLE;
-  // restore any hidden UI we hid for print
-  const toast = document.getElementById('ov-toast'); if(toast) toast.style.removeProperty('display');
-  const pm = document.getElementById('prospectManager'); if(pm) pm.style.removeProperty('display');
+  try{ document.title = window.__ov_prev_title || baseDocumentTitle || DEFAULT_TITLE; }catch(e){}
+  try{
+    if(Array.isArray(window.__ov_print_hidden)){
+      window.__ov_print_hidden.forEach(item => {
+        try{ item.el.style.display = item.display || ''; }catch(e){}
+      });
+    }
+    window.__ov_print_hidden = null;
+  }catch(e){ console.warn('afterprint restore failed', e); }
   printTitleRestore = null;
 });
 
