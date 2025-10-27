@@ -1,3 +1,41 @@
+// Bootstrap API override from query/hash/localStorage.
+(function(){
+  if(typeof window === 'undefined') return;
+  const STORAGE_KEY = 'calcolatore:api-base';
+  const sanitize = value => {
+    if(!value) return '';
+    const raw = value.toString().trim();
+    if(!raw) return '';
+    try{
+      const parsed = new URL(raw);
+      if(parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return '';
+    }catch(err){
+      return '';
+    }
+    return raw.replace(/\/$/, '');
+  };
+  const apply = value => {
+    const clean = sanitize(value);
+    if(!clean) return false;
+    window.CALCOLATORE_API = clean;
+    try{ localStorage.setItem(STORAGE_KEY, clean); }catch(err){}
+    return true;
+  };
+  if(apply(window.CALCOLATORE_API)) return;
+  try{
+    const currentUrl = new URL(window.location.href);
+    const q = currentUrl.searchParams.get('api');
+    if(q && apply(q)) return;
+  }catch(err){}
+  const hash = window.location.hash || '';
+  const match = hash.match(/[?&#]api=([^&]+)/);
+  if(match && apply(decodeURIComponent(match[1]))) return;
+  try{
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if(stored) apply(stored);
+  }catch(err){}
+})();
+
 // Prefer an explicitly set global, otherwise detect production vs local like the main script
 const DEFAULT_PROD_API = 'https://calcolatore-prospetti.onrender.com';
 const LOCAL_API = 'http://localhost:3001';

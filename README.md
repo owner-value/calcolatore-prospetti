@@ -15,11 +15,11 @@ Quick guide
 npm install
 ```
 
-2) Start the backend locally (auto-selects a free port between 3002..3010)
+2) Start the backend locally (auto-selects a free port between 3002..3010 and opens the frontend)
 
 ```bash
 npm run start:local
-# The script prints the chosen port (e.g. "Starting backend on port 3006").
+# The script prints the chosen port, backend PID, and opens index.html pointing at the chosen API.
 ```
 
 3) Check backend health, version and configured project links
@@ -51,6 +51,39 @@ git push origin main
 
 # Then poll the live health endpoint yourself
 curl -s -o /dev/null -w "%{http_code}" https://calcolatore-prospetti.onrender.com/_health
+```
+
+Utility commands (debug)
+
+List all prospects in the connected database:
+
+```bash
+cd backend
+node <<'NODE'
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+prisma.prospect.findMany({ include: { property: true } })
+  .then(rows => {
+    console.log('Prospects:', rows.length);
+    console.log(rows.map(r => r.slug));
+  })
+  .catch(err => {
+    console.error('Error', err);
+  })
+  .finally(() => prisma.$disconnect());
+NODE
+```
+
+Check the live API for saved prospects:
+
+```bash
+curl -s https://calcolatore-prospetti.onrender.com/api/prospetti | jq
+```
+
+Remove a temporary test prospect from the live API (replace the slug if needed):
+
+```bash
+curl -s -X DELETE https://calcolatore-prospetti.onrender.com/api/prospetti/test-salvataggio | jq
 ```
 
 Notes about Render and automatic commit detection

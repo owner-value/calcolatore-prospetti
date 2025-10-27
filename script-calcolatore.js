@@ -1,3 +1,41 @@
+// Bootstrap API override from query/hash/localStorage for local dev convenience.
+(function(){
+  if(typeof window === 'undefined') return;
+  const STORAGE_KEY = 'calcolatore:api-base';
+  const sanitize = value => {
+    if(!value) return '';
+    const raw = value.toString().trim();
+    if(!raw) return '';
+    try{
+      const parsed = new URL(raw);
+      if(parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return '';
+    }catch(err){
+      return '';
+    }
+    return raw.replace(/\/$/, '');
+  };
+  const apply = value => {
+    const clean = sanitize(value);
+    if(!clean) return false;
+    window.CALCOLATORE_API = clean;
+    try{ localStorage.setItem(STORAGE_KEY, clean); }catch(err){}
+    return true;
+  };
+  if(apply(window.CALCOLATORE_API)) return;
+  try{
+    const currentUrl = new URL(window.location.href);
+    const q = currentUrl.searchParams.get('api');
+    if(q && apply(q)) return;
+  }catch(err){}
+  const hash = window.location.hash || '';
+  const match = hash.match(/[?&#]api=([^&]+)/);
+  if(match && apply(decodeURIComponent(match[1]))) return;
+  try{
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if(stored) apply(stored);
+  }catch(err){}
+})();
+
 /* ============= Helpers ============= */
 const DEFAULT_TITLE = document.title || 'Calcolatore Prospetti · Owner Value';
 const fmtEUR = n => (new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'})).format(+n||0);
@@ -707,7 +745,26 @@ function restoreFormValues(state){
 const prospectManager = (() => {
   let elements = {};
   let currentProspect = null;
+  let knownProspects = [];
   let config = { initialSlug: '', initialProperty: '', autoApply: false, autoPrint: false };
+
+  const ensureUniqueSlugValue = (candidate, currentSlug = '') => {
+    const normalized = slugify(candidate || '');
+    if(!normalized) return '';
+    const used = new Set(Array.isArray(knownProspects) ? knownProspects.map(item => item.slug) : []);
+    if(currentSlug) used.delete(currentSlug);
+    if(!used.has(normalized)) return normalized;
+
+    const match = normalized.match(/^(.*?)(?:-(\d+))?$/);
+    const root = match && match[1] ? match[1] : normalized;
+    let counter = match && match[2] ? (parseInt(match[2], 10) || 1) + 1 : 2;
+    let candidateSlug = `${root}-${counter}`;
+    while(used.has(candidateSlug)){
+      counter += 1;
+      candidateSlug = `${root}-${counter}`;
+    }
+    return candidateSlug;
+  };
 
   const setStatus = (message = '', type = 'info', options = {}) => {
     if(options.silent) return;
@@ -797,9 +854,10 @@ const prospectManager = (() => {
       const propertySlug = getSelectedProperty();
       if(!silent) setStatus('Caricamento elenco prospetti...', 'info');
       const url = propertySlug ? `${PROSPECTS_ENDPOINT}?property=${encodeURIComponent(propertySlug)}` : PROSPECTS_ENDPOINT;
-      const res = await fetch(url);
+  const res = await fetch(url);
       if(!res.ok) throw new Error(`Status ${res.status}`);
       const data = await res.json();
+  knownProspects = Array.isArray(data) ? data.slice() : [];
       const dropdownOptions = [{ label: '— Seleziona —', value: '' }];
       data.forEach(item => {
         const labelParts = [item.titolo || item.indirizzo1 || item.slug];
@@ -888,10 +946,16 @@ const prospectManager = (() => {
     const providedSlug = elements.slug?.value?.trim();
     const model = ensureModel();
     const fallbackSource = elements.title?.value?.trim() || model?.indirizzoRiga1 || '';
-    const slug = slugify(providedSlug || fallbackSource);
+    let slug = slugify(providedSlug || fallbackSource);
     if(!slug){
       setStatus('Inserisci un indirizzo o un titolo per generare lo slug', 'error');
       return;
+    }
+    const resolvedSlug = ensureUniqueSlugValue(slug, currentProspect?.slug || '');
+    let slugAdjustedMessage = '';
+    if(resolvedSlug && resolvedSlug !== slug){
+      slug = resolvedSlug;
+      slugAdjustedMessage = `Slug duplicato rilevato. Utilizzo automatico di "${slug}".`;
     }
     if(elements.slug) elements.slug.value = slug;
     const formState = gatherFormValues();
@@ -935,7 +999,10 @@ const prospectManager = (() => {
         elements.select.value = saved.slug;
       }
       fillProspectFields(saved);
-      setStatus('Prospetto salvato correttamente', 'success');
+      if(slugAdjustedMessage){
+        showToast(slugAdjustedMessage, 5000);
+      }
+      setStatus(slugAdjustedMessage ? `Prospetto salvato correttamente. ${slugAdjustedMessage}` : 'Prospetto salvato correttamente', 'success');
     }catch(err){
       console.error(err);
       setStatus('Errore durante il salvataggio del prospetto', 'error');
