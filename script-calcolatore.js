@@ -955,19 +955,57 @@ const prospectManager = (() => {
     let slugAdjustedMessage = '';
     if(resolvedSlug && resolvedSlug !== slug){
       slug = resolvedSlug;
-      slugAdjustedMessage = `Slug duplicato rilevato. Utilizzo automatico di "${slug}".`;
+      slugAdjustedMessage = `Slug già utilizzato. Impostato automaticamente su "${slug}".`;
+    }
+    const propertySlug = getSelectedProperty();
+    const propertyInfo = findProperty(propertySlug);
+    const propertySlugs = new Set();
+    if(Array.isArray(propertiesCache)){
+      propertiesCache.forEach(prop => {
+        if(prop && prop.slug){
+          propertySlugs.add(prop.slug);
+        }
+      });
+    }
+    if(propertySlug){
+      propertySlugs.add(propertySlug);
+    }
+
+    if(propertySlugs.has(slug)){
+      if(currentProspect && currentProspect.slug === slug){
+        setStatus('Lo slug del prospetto coincide con quello di una proprietà esistente. Modificalo prima di salvare.', 'error');
+        return;
+      }
+
+      const used = new Set(propertySlugs);
+      if(Array.isArray(knownProspects)){
+        knownProspects.forEach(item => {
+          if(item && item.slug){
+            used.add(item.slug);
+          }
+        });
+      }
+
+      const match = slug.match(/^(.*?)(?:-(\d+))?$/);
+      const root = match && match[1] ? match[1] : slug;
+      let counter = match && match[2] ? (parseInt(match[2], 10) || 1) + 1 : 2;
+      let candidateSlug = `${root}-${counter}`;
+      while(used.has(candidateSlug)){
+        counter += 1;
+        candidateSlug = `${root}-${counter}`;
+      }
+      slug = candidateSlug;
+      slugAdjustedMessage = `Slug già utilizzato da una proprietà. Impostato automaticamente su "${slug}".`;
     }
     if(elements.slug) elements.slug.value = slug;
     const formState = gatherFormValues();
-    const propertySlug = getSelectedProperty();
-    const propertyInfo = findProperty(propertySlug);
     const metadata = {
       slug,
       titolo: elements.title?.value?.trim() || model?.indirizzoRiga1 || slug,
       indirizzoRiga1: formState?.fields?.indirizzoRiga1 || model?.indirizzoRiga1 || '',
       indirizzoRiga2: formState?.fields?.indirizzoRiga2 || model?.indirizzoRiga2 || '',
       dataISO: formState?.fields?.dataISO || model?.dataISO || '',
-      propertySlug,
+  propertySlug,
       propertyName: propertyInfo?.nome || '',
       modello: model,
       formState,
@@ -983,8 +1021,15 @@ const prospectManager = (() => {
       setStatus('Salvataggio in corso...', 'info');
       const res = await fetch(PROSPECTS_ENDPOINT, { method: 'POST', body: fd });
       if(!res.ok){
-        const errText = await res.text();
-        throw new Error(errText || `Status ${res.status}`);
+        let payload;
+        try{
+          payload = await res.json();
+        }catch(parseErr){
+          const fallbackText = await res.text();
+          payload = { error: fallbackText || `Status ${res.status}` };
+        }
+        const errMessage = payload?.error || payload?.message || `Status ${res.status}`;
+        throw new Error(errMessage);
       }
       const saved = await res.json();
       currentProspect = saved;
@@ -1005,7 +1050,7 @@ const prospectManager = (() => {
       setStatus(slugAdjustedMessage ? `Prospetto salvato correttamente. ${slugAdjustedMessage}` : 'Prospetto salvato correttamente', 'success');
     }catch(err){
       console.error(err);
-      setStatus('Errore durante il salvataggio del prospetto', 'error');
+      setStatus(`Errore durante il salvataggio del prospetto: ${err?.message || 'richiesta non riuscita'}`, 'error');
     }
   };
 

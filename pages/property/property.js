@@ -76,6 +76,19 @@ const getProperty = async slug => {
   }
 };
 
+const getProspect = async slug => {
+  if(!slug) return null;
+  try{
+    const res = await fetch(`${PROSPECTS_ENDPOINT}/${encodeURIComponent(slug)}`);
+    if(res.status === 404) return null;
+    if(!res.ok) throw new Error(`Status ${res.status}`);
+    return await res.json();
+  }catch(err){
+    console.error('Errore recupero prospetto', err);
+    return null;
+  }
+};
+
 const ensureUniqueSlug = async (candidate, originalSlug='') => {
   let base = slugify(candidate);
   if(!base) return '';
@@ -83,9 +96,12 @@ const ensureUniqueSlug = async (candidate, originalSlug='') => {
   let attempts = 0;
   while(true){
     if(originalSlug && slug === originalSlug) return slug;
-    const existing = await getProperty(slug);
-    if(!existing) return slug;
-    if(originalSlug && existing.slug === originalSlug) return slug;
+    const [existingProperty, existingProspect] = await Promise.all([
+      getProperty(slug),
+      getProspect(slug),
+    ]);
+    if(!existingProperty && !existingProspect) return slug;
+    if(originalSlug && (existingProperty?.slug === originalSlug || existingProspect?.slug === originalSlug)) return slug;
     attempts += 1;
     const suffix = attempts > 5 ? Date.now().toString(36) : Math.random().toString(36).slice(2,6);
     slug = `${base}-${suffix}`;
@@ -267,8 +283,15 @@ const saveProperty = async () => {
       body: JSON.stringify(payload),
     });
     if(!res.ok){
-      const txt = await res.text();
-      throw new Error(txt || `Status ${res.status}`);
+      let payloadErr;
+      try{
+        payloadErr = await res.json();
+      }catch(parseErr){
+        const txt = await res.text();
+        payloadErr = { error: txt || `Status ${res.status}` };
+      }
+      const message = payloadErr?.error || payloadErr?.message || `Status ${res.status}`;
+      throw new Error(message);
     }
     const saved = await res.json();
     currentSlug = saved.slug;
@@ -285,7 +308,7 @@ const saveProperty = async () => {
     await loadProperty(saved.slug);
   }catch(err){
     console.error(err);
-    setStatus('propertyStatus', 'Errore durante il salvataggio.', 'error');
+    setStatus('propertyStatus', `Errore durante il salvataggio: ${err?.message || 'richiesta non riuscita'}.`, 'error');
   }
 };
 

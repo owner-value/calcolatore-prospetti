@@ -13,6 +13,26 @@ const app = express();
 const storageDir = path.join(__dirname, 'storage');
 if (!fs.existsSync(storageDir)) fs.mkdirSync(storageDir, { recursive: true });
 const upload = multer({ dest: storageDir });
+const auditLogPath = path.join(storageDir, 'audit-log.jsonl');
+
+const appendAuditEntry = (event = {}) => {
+  const payload = {
+    timestamp: new Date().toISOString(),
+    ...event,
+  };
+  try {
+    fs.appendFileSync(auditLogPath, `${JSON.stringify(payload)}\n`, 'utf8');
+  } catch (err) {
+    console.warn('Unable to write audit log entry', err);
+  }
+};
+
+const extractClientIp = (req) => {
+  const header = req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || '';
+  if (Array.isArray(header)) return header[0] || '';
+  if (typeof header === 'string' && header.includes(',')) return header.split(',')[0].trim();
+  return header?.toString().trim() || req.socket?.remoteAddress || '';
+};
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
@@ -115,6 +135,29 @@ app.get('/_health', (req, res) => {
   res.json({ ok: true, uptime: process.uptime() });
 });
 
+app.get('/api/audit/logs', (req, res) => {
+  try {
+    if (!fs.existsSync(auditLogPath)) {
+      return res.json([]);
+    }
+    const limitRaw = parseInt(req.query.limit, 10);
+    const limit = Number.isNaN(limitRaw) ? 200 : Math.min(Math.max(limitRaw, 1), 500);
+    const contents = fs.readFileSync(auditLogPath, 'utf8');
+    const lines = contents.split('\n').filter(Boolean);
+    const slice = lines.slice(-limit).map(line => {
+      try {
+        return JSON.parse(line);
+      } catch (err) {
+        return { raw: line, parseError: true };
+      }
+    });
+    res.json(slice);
+  } catch (err) {
+    console.error('Unable to read audit log', err);
+    res.status(500).json({ error: 'Unable to read audit log' });
+  }
+});
+
 const slugify = (str = '') =>
   str
     .toString()
@@ -191,6 +234,17 @@ app.post('/api/prospetti', upload.single('pdf'), async (req, res) => {
       }
     }
 
+    if (propertySlug && slug === propertySlug) {
+      return res.status(400).json({ error: 'Lo slug del prospetto non può coincidere con lo slug della proprietà selezionata' });
+    }
+
+    const conflictingProperty = await prisma.property.findUnique({ where: { slug } });
+    if (conflictingProperty) {
+      return res.status(400).json({ error: 'Slug già utilizzato da una proprietà. Scegli uno slug diverso per il prospetto' });
+    }
+
+    const existingProspect = await prisma.prospect.findUnique({ where: { slug } });
+
     const baseData = {
       titolo: data.titolo || indirizzo1 || slug,
       indirizzo1,
@@ -221,6 +275,17 @@ app.post('/api/prospetti', upload.single('pdf'), async (req, res) => {
       include: { property: true },
     });
 
+    appendAuditEntry({
+      action: 'prospect.upsert',
+      slug,
+      mode: existingProspect ? 'update' : 'create',
+      propertySlug: saved?.property?.slug || '',
+      requestMethod: req.method,
+      requestPath: req.originalUrl,
+      ip: extractClientIp(req),
+      userAgent: (req.headers['user-agent'] || '').toString(),
+    });
+
     res.json(saved);
   } catch (err) {
     console.error(err);
@@ -233,7 +298,7 @@ app.delete('/api/prospetti/:slug', async (req, res) => {
     const slug = req.params.slug;
     if (!slug) return res.status(400).json({ error: 'Missing slug' });
 
-    const prospect = await prisma.prospect.findUnique({ where: { slug } });
+  const prospect = await prisma.prospect.findUnique({ where: { slug }, include: { property: true } });
     if (!prospect) return res.status(404).json({ error: 'Not found' });
 
     if (prospect.pdfPath) {
@@ -242,6 +307,16 @@ app.delete('/api/prospetti/:slug', async (req, res) => {
         try { fs.unlinkSync(filePath); } catch (err) { console.warn('Unable to delete file', err); }
       }
     }
+
+    appendAuditEntry({
+      action: 'prospect.delete',
+      slug,
+  propertySlug: prospect?.property?.slug || '',
+      requestMethod: req.method,
+      requestPath: req.originalUrl,
+      ip: extractClientIp(req),
+      userAgent: (req.headers['user-agent'] || '').toString(),
+    });
 
     await prisma.prospect.delete({ where: { slug } });
     res.json({ success: true });
@@ -264,6 +339,9 @@ app.patch('/api/prospetti/:slug', async (req, res) => {
     if (propertySlug) {
       propertyRecord = await prisma.property.findUnique({ where: { slug: propertySlug } });
       if (!propertyRecord) return res.status(400).json({ error: 'Property not found' });
+      if (propertySlug === slug) {
+        return res.status(400).json({ error: 'Lo slug del prospetto non può coincidere con lo slug della proprietà selezionata' });
+      }
     }
 
     let datiJson = prospect.datiJson;
@@ -286,6 +364,16 @@ app.patch('/api/prospetti/:slug', async (req, res) => {
       where: { slug },
       data: updatePayload,
       include: { property: true },
+    });
+
+    appendAuditEntry({
+      action: 'prospect.patch',
+      slug,
+      propertySlug: updated?.property?.slug || '',
+      requestMethod: req.method,
+      requestPath: req.originalUrl,
+      ip: extractClientIp(req),
+      userAgent: (req.headers['user-agent'] || '').toString(),
     });
 
     res.json(updated);
@@ -335,6 +423,13 @@ app.post('/api/properties', async (req, res) => {
       note: body.note?.toString().trim() || '',
     };
 
+    const conflictingProspect = await prisma.prospect.findUnique({ where: { slug } });
+    if (conflictingProspect) {
+      return res.status(400).json({ error: 'Slug già utilizzato da un prospetto. Scegli uno slug diverso per la proprietà' });
+    }
+
+    const existingProperty = await prisma.property.findUnique({ where: { slug } });
+
     const saved = await prisma.property.upsert({
       where: { slug },
       update: {
@@ -347,6 +442,16 @@ app.post('/api/properties', async (req, res) => {
         note: payload.note,
       },
       create: payload,
+    });
+
+    appendAuditEntry({
+      action: 'property.upsert',
+      slug,
+      mode: existingProperty ? 'update' : 'create',
+      requestMethod: req.method,
+      requestPath: req.originalUrl,
+      ip: extractClientIp(req),
+      userAgent: (req.headers['user-agent'] || '').toString(),
     });
 
     res.json(saved);
@@ -369,6 +474,15 @@ app.delete('/api/properties/:slug', async (req, res) => {
     if (property.prospects.length > 0) {
       return res.status(400).json({ error: 'Property has prospects and cannot be deleted' });
     }
+
+    appendAuditEntry({
+      action: 'property.delete',
+      slug,
+      requestMethod: req.method,
+      requestPath: req.originalUrl,
+      ip: extractClientIp(req),
+      userAgent: (req.headers['user-agent'] || '').toString(),
+    });
 
     await prisma.property.delete({ where: { slug } });
     res.json({ success: true });
