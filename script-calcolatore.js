@@ -586,9 +586,32 @@ function prepareReportForPrint(force=false){
   // to disable headers/footers in the print dialog for a clean PDF.
 }
 
-function printWithDate(){
+function printWithDate(options = {}){
+  const { forceAsync = false } = options;
   prepareReportForPrint(true);
-  requestAnimationFrame(() => setTimeout(() => window.print(), 20));
+  const triggerPrint = () => {
+    try{
+      window.print();
+    }catch(err){
+      console.warn('window.print() failed', err);
+    }
+  };
+
+  const userActivation = (() => {
+    try{
+      const ua = navigator && navigator.userActivation;
+      return !!(ua && ua.isActive);
+    }catch(err){
+      return false;
+    }
+  })();
+
+  if(!forceAsync && userActivation){
+    triggerPrint();
+    return;
+  }
+
+  requestAnimationFrame(() => setTimeout(triggerPrint, 20));
 }
 
 window.printWithDate = printWithDate;
