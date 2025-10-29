@@ -93,6 +93,8 @@ Notes about Render and automatic commit detection
   - Start command: `npm start` (this runs `node backend/app.js` in production)
   - Health check path: `/_health`
   - Enable Auto Deploy from GitHub (so every push triggers a deploy)
+- Audit log events sono ora persistiti nella tabella `AuditLog` del database e sono leggibili via `GET /api/audit/logs?limit=200`.
+- Quando deployi una nuova versione assicurati di eseguire `npm run migrate:deploy` (o lascia che Render lo faccia in fase di build) per creare la tabella `AuditLog` e le altre migrazioni Prisma.
 
 Short links and redirects
 - The short links are stored in `backend/config/links.json`. Example key: `calcolatore-prospetti` maps to your Render URL.
@@ -137,6 +139,21 @@ npm run backup -- --file ./backups/personale.json
 ```
 
 Per ripristinare i dati puoi importare manualmente il JSON (scrivendo uno script inverso) oppure salvare i record via interfaccia.
+
+Ripristino da backup (restore)
+
+Carica nuovamente un file creato con `npm run backup`:
+
+```bash
+npm run restore -- --file backend/storage/backups/backup-YYYYMMDD-HHMMSS.json
+
+# Opzioni utili
+#   --dry-run    mostra cosa verrebbe ripristinato senza toccare il database
+#   --truncate   cancella tutte le proprietà/prospetti prima di ripristinare (richiede conferma)
+#   --force      salta la richiesta di conferma insieme a --truncate
+```
+
+Lo script esegue upsert: aggiorna i record esistenti con lo stesso slug oppure li crea se mancanti. I prospetti vengono ricollegati alla proprietà indicata nel backup (in caso di slug mancante, restano scollegati).
 
 Troubleshooting
 - If `curl http://localhost:3001/_health` returns 404, another process is likely occupying port 3001. Use `npm run start:local` instead or free the port:

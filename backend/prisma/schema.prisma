@@ -36,3 +36,18 @@ model Property {
   updatedAt    DateTime    @updatedAt
   prospects    Prospect[]
 }
+
+model AuditLog {
+  id            Int      @id @default(autoincrement())
+  createdAt     DateTime @default(now())
+  action        String
+  slug          String?
+  propertySlug  String?
+  requestMethod String?
+  requestPath   String?
+  ip            String?
+  userAgent     String?
+  meta          Json?
+
+  @@index([createdAt], name: "AuditLog_createdAt_idx")
+}

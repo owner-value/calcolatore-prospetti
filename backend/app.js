@@ -13,18 +13,23 @@ const app = express();
 const storageDir = path.join(__dirname, 'storage');
 if (!fs.existsSync(storageDir)) fs.mkdirSync(storageDir, { recursive: true });
 const upload = multer({ dest: storageDir });
-const auditLogPath = path.join(storageDir, 'audit-log.jsonl');
-
 const appendAuditEntry = (event = {}) => {
+  const timestamp = new Date().toISOString();
+  const action = (event.action || '').toString() || 'unknown';
   const payload = {
-    timestamp: new Date().toISOString(),
-    ...event,
+    action,
+    slug: event.slug ? event.slug.toString() : null,
+    propertySlug: event.propertySlug ? event.propertySlug.toString() : null,
+    requestMethod: event.requestMethod ? event.requestMethod.toString() : null,
+    requestPath: event.requestPath ? event.requestPath.toString() : null,
+    ip: event.ip ? event.ip.toString() : null,
+    userAgent: event.userAgent ? event.userAgent.toString() : null,
+    meta: { ...event, timestamp },
   };
-  try {
-    fs.appendFileSync(auditLogPath, `${JSON.stringify(payload)}\n`, 'utf8');
-  } catch (err) {
-    console.warn('Unable to write audit log entry', err);
-  }
+
+  prisma.auditLog.create({ data: payload }).catch(err => {
+    console.warn('Unable to persist audit log entry', err);
+  });
 };
 
 const extractClientIp = (req) => {
@@ -135,24 +140,25 @@ app.get('/_health', (req, res) => {
   res.json({ ok: true, uptime: process.uptime() });
 });
 
-app.get('/api/audit/logs', (req, res) => {
+app.get('/api/audit/logs', async (req, res) => {
   try {
-    if (!fs.existsSync(auditLogPath)) {
-      return res.json([]);
-    }
     const limitRaw = parseInt(req.query.limit, 10);
     const limit = Number.isNaN(limitRaw) ? 200 : Math.min(Math.max(limitRaw, 1), 500);
-    const contents = fs.readFileSync(auditLogPath, 'utf8');
-    const lines = contents.split('\n').filter(Boolean);
-    const slice = lines.slice(-limit).map(line => {
-      try {
-        return JSON.parse(line);
-      } catch (err) {
-        return { raw: line, parseError: true };
-      }
+    const filterAction = (req.query.action || '').toString().trim();
+
+    const rows = await prisma.auditLog.findMany({
+      where: filterAction ? { action: filterAction } : undefined,
+      orderBy: { createdAt: 'desc' },
+      take: limit,
     });
-    res.json(slice);
+
+    res.json(rows);
   } catch (err) {
+    const missingTable = err?.code === 'P2021' || /auditlog/i.test(err?.message || '');
+    if (missingTable) {
+      res.json([]);
+      return;
+    }
     console.error('Unable to read audit log', err);
     res.status(500).json({ error: 'Unable to read audit log' });
   }
@@ -447,6 +453,7 @@ app.post('/api/properties', async (req, res) => {
     appendAuditEntry({
       action: 'property.upsert',
       slug,
+      propertySlug: slug,
       mode: existingProperty ? 'update' : 'create',
       requestMethod: req.method,
       requestPath: req.originalUrl,
@@ -513,6 +520,7 @@ app.delete('/api/properties/:slug', async (req, res) => {
     appendAuditEntry({
       action: 'property.delete',
       slug,
+      propertySlug: slug,
       detachedProspects: detachedCount,
       requestMethod: req.method,
       requestPath: req.originalUrl,
