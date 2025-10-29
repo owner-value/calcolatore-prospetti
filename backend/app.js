@@ -471,13 +471,49 @@ app.delete('/api/properties/:slug', async (req, res) => {
       include: { prospects: true },
     });
     if (!property) return res.status(404).json({ error: 'Not found' });
+
+    let detachedCount = 0;
     if (property.prospects.length > 0) {
-      return res.status(400).json({ error: 'Property has prospects and cannot be deleted' });
+      for (const prospect of property.prospects) {
+        let updatedJson = prospect.datiJson;
+        if (updatedJson && typeof updatedJson === 'object' && !Array.isArray(updatedJson)) {
+          updatedJson = JSON.parse(JSON.stringify(updatedJson));
+          updatedJson.propertySlug = '';
+          updatedJson.propertyName = '';
+          if (updatedJson.formState && typeof updatedJson.formState === 'object') {
+            updatedJson.formState = {
+              ...updatedJson.formState,
+              propertySlug: '',
+              propertyName: '',
+            };
+          }
+        }
+
+        await prisma.prospect.update({
+          where: { id: prospect.id },
+          data: {
+            property: { disconnect: true },
+            ...(updatedJson ? { datiJson: updatedJson } : {}),
+          },
+        });
+
+        appendAuditEntry({
+          action: 'prospect.detach-property',
+          slug: prospect.slug,
+          propertySlug: property.slug,
+          requestMethod: req.method,
+          requestPath: req.originalUrl,
+          ip: extractClientIp(req),
+          userAgent: (req.headers['user-agent'] || '').toString(),
+        });
+        detachedCount += 1;
+      }
     }
 
     appendAuditEntry({
       action: 'property.delete',
       slug,
+      detachedProspects: detachedCount,
       requestMethod: req.method,
       requestPath: req.originalUrl,
       ip: extractClientIp(req),
@@ -485,7 +521,7 @@ app.delete('/api/properties/:slug', async (req, res) => {
     });
 
     await prisma.property.delete({ where: { slug } });
-    res.json({ success: true });
+    res.json({ success: true, detachedProspects: detachedCount });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Internal server error' });

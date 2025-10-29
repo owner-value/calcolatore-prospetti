@@ -45,6 +45,23 @@ const API_BASE_URL = (
 ).replace(/\/$/, '');
 const PROPERTIES_ENDPOINT = `${API_BASE_URL}/api/properties`;
 const PROSPECTS_ENDPOINT = `${API_BASE_URL}/api/prospetti`;
+const ENCODED_API_BASE = encodeURIComponent(API_BASE_URL);
+const appendApiToHref = (url = '') => {
+  const href = `${url || ''}`;
+  if(!API_BASE_URL) return href;
+  const [base, hash = ''] = href.split('#');
+  const parts = hash ? hash.split('&').filter(Boolean) : [];
+  if(parts.some(part => part.startsWith('api='))) return href;
+  parts.push(`api=${ENCODED_API_BASE}`);
+  return `${base}#${parts.join('&')}`;
+};
+const applyApiToLinks = (root = document) => {
+  if(!root || typeof root.querySelectorAll !== 'function') return;
+  root.querySelectorAll('[data-append-api-link]').forEach(anchor => {
+    const href = anchor.getAttribute('href') || '';
+    anchor.setAttribute('href', appendApiToHref(href));
+  });
+};
 
 const $ = id => document.getElementById(id);
 
@@ -159,6 +176,7 @@ const renderProspects = (items = []) => {
   if(!container) return;
   if(!items.length){
     container.innerHTML = '<div class="archive-empty">Nessun prospetto collegato.</div>';
+    applyApiToLinks(container);
     return;
   }
 
@@ -169,6 +187,8 @@ const renderProspects = (items = []) => {
     const indirizzo = [item.indirizzo1, item.indirizzo2].filter(Boolean).join(' - ');
     const indirizzoHtml = escapeHtml(indirizzo);
     const updated = fmtDate(item.updatedAt);
+    const calcUrl = appendApiToHref(`../../index.html?slug=${slugEnc}&apply=1`);
+    const printUrl = appendApiToHref(`../../index.html?slug=${slugEnc}&apply=1&print=1`);
     return `
       <article class="prospect-card">
         <header>
@@ -186,8 +206,8 @@ const renderProspects = (items = []) => {
           </div>
         </div>
         <div class="prospect-actions">
-          <a class="btn" href="../../index.html?slug=${slugEnc}&apply=1" target="_blank" rel="noopener">Apri nel calcolatore</a>
-          <a class="btn btn-secondary" href="../../index.html?slug=${slugEnc}&apply=1&print=1" target="_blank" rel="noopener">Apri e stampa</a>
+          <a class="btn" href="${calcUrl}" target="_blank" rel="noopener">Apri nel calcolatore</a>
+          <a class="btn btn-secondary" href="${printUrl}" target="_blank" rel="noopener">Apri e stampa</a>
           <button class="btn btn-danger" type="button" data-action="delete-prospect" data-slug="${slugEsc}">Elimina</button>
         </div>
       </article>
@@ -195,6 +215,7 @@ const renderProspects = (items = []) => {
   });
 
   container.innerHTML = cards.join('');
+  applyApiToLinks(container);
 };
 
 const handleProspectDelete = async slug => {
@@ -317,22 +338,37 @@ const deleteProperty = async () => {
     setStatus('propertyStatus', 'Nessuna proprieta da eliminare.', 'error');
     return;
   }
-  const ok = window.confirm(`Eliminare la proprieta "${currentSlug}"? L'operazione non puo essere annullata.`);
+  const prospectCount = Array.isArray(currentProperty?.prospects) ? currentProperty.prospects.length : 0;
+  const extraWarning = prospectCount > 0
+    ? `\n\nAttenzione: ${prospectCount === 1 ? '1 prospetto' : `${prospectCount} prospetti`} collegati verranno spostati nella sezione "Prospetti senza proprieta".`
+    : '';
+  const ok = window.confirm(`Eliminare la proprieta "${currentSlug}"? L'operazione non puo essere annullata.${extraWarning}`);
   if(!ok) return;
   try{
     setStatus('propertyStatus', 'Eliminazione in corso...', 'info');
     const res = await fetch(`${PROPERTIES_ENDPOINT}/${encodeURIComponent(currentSlug)}`, { method: 'DELETE' });
     if(!res.ok){
-      const txt = await res.text();
-      throw new Error(txt || `Status ${res.status}`);
+      const raw = await res.text();
+      let message = raw || `Status ${res.status}`;
+      try{
+        const payload = raw ? JSON.parse(raw) : null;
+        if(payload && typeof payload === 'object'){
+          message = payload.error || payload.message || message;
+        }
+      }catch(parseErr){ /* ignore */ }
+      throw new Error(message);
     }
-    setStatus('propertyStatus', 'Proprieta eliminata.', 'success');
+    const result = await res.json().catch(() => ({ success: true }));
+    const detached = Number.isFinite(+result?.detachedProspects) ? +result.detachedProspects : 0;
+    const extra = detached > 0 ? ` ${detached === 1 ? '1 prospetto spostato' : `${detached} prospetti spostati`} nella sezione senza proprieta.` : '';
+    setStatus('propertyStatus', `Proprieta eliminata.${extra}`, 'success');
     setTimeout(() => {
-      window.location.href = '../archivio/index.html';
-    }, 600);
+      window.location.href = appendApiToHref('../archivio/index.html');
+    }, 700);
   }catch(err){
     console.error(err);
-    setStatus('propertyStatus', 'Impossibile eliminare la proprieta. Verifica che non abbia prospetti collegati.', 'error');
+    const message = err?.message || 'Impossibile eliminare la proprieta.';
+    setStatus('propertyStatus', message, 'error');
   }
 };
 
@@ -351,7 +387,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   $('newProspectBtn')?.addEventListener('click', () => {
     if(!currentSlug) return;
-    const url = `../../index.html?property=${encodeURIComponent(currentSlug)}`;
+    const url = appendApiToHref(`../../index.html?property=${encodeURIComponent(currentSlug)}`);
     window.open(url, '_blank');
   });
 
@@ -364,5 +400,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  applyApiToLinks();
   loadProperty(currentSlug);
 });

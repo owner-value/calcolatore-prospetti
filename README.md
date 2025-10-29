@@ -120,6 +120,24 @@ Add new links
 
 Optionally I can implement a `POST /_links` API to add links programmatically.
 
+5) Backup del database (properties + prospetti)
+
+Esegui uno snapshot in JSON del database connesso (rispetta la variabile `DATABASE_URL`):
+
+```bash
+npm run backup
+# oppure: npm run backup -- --stdout > backup.json   # stampa su stdout
+```
+
+Il comando crea un file `backend/storage/backups/backup-YYYYMMDD-HHMMSS.json` con l'elenco completo di proprietà e prospetti. Puoi cambiare cartella o nome file usando:
+
+```bash
+npm run backup -- --dir ./backups-personali
+npm run backup -- --file ./backups/personale.json
+```
+
+Per ripristinare i dati puoi importare manualmente il JSON (scrivendo uno script inverso) oppure salvare i record via interfaccia.
+
 Troubleshooting
 - If `curl http://localhost:3001/_health` returns 404, another process is likely occupying port 3001. Use `npm run start:local` instead or free the port:
 
@@ -139,4 +157,4 @@ Done — minimal goal
 - With this README you should be able to run local dev, check the local and remote version, push and confirm Render shows the new commit. If you want any of the optional automations above, tell me which and I'll implement it next.
 
 ---
-Last edited: 2025-10-22
+Last edited: 2025-10-29

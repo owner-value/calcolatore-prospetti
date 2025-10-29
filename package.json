@@ -12,6 +12,7 @@
   "push:live": "sh ./scripts/push-live.sh",
     "version:check": "sh ./scripts/show-version.sh",
     "deploy:push": "sh ./scripts/push-and-deploy.sh",
+    "backup": "cd backend && npm run backup",
     "postinstall": "cd backend && npm install --no-audit --no-fund && npm run write-commit"
   }
 }

@@ -58,6 +58,23 @@ const API_BASE_URL = (
 
 const PROSPECTS_ENDPOINT = `${API_BASE_URL}/api/prospetti`;
 const PROPERTIES_ENDPOINT = `${API_BASE_URL}/api/properties`;
+const ENCODED_API_BASE = encodeURIComponent(API_BASE_URL);
+const appendApiToHref = (url = '') => {
+  const href = `${url || ''}`;
+  if(!API_BASE_URL) return href;
+  const [base, hash = ''] = href.split('#');
+  const parts = hash ? hash.split('&').filter(Boolean) : [];
+  if(parts.some(part => part.startsWith('api='))) return href;
+  parts.push(`api=${ENCODED_API_BASE}`);
+  return `${base}#${parts.join('&')}`;
+};
+const applyApiToLinks = (root = document) => {
+  if(!root || typeof root.querySelectorAll !== 'function') return;
+  root.querySelectorAll('[data-append-api-link]').forEach(anchor => {
+    const href = anchor.getAttribute('href') || '';
+    anchor.setAttribute('href', appendApiToHref(href));
+  });
+};
 const slugify = (str = '') => str
   .toString()
   .trim()
@@ -839,6 +856,14 @@ const prospectManager = (() => {
     return (dropdownValue || fallback || '').trim();
   };
 
+  const updatePropertyActionState = () => {
+    const hasSelection = !!getSelectedProperty();
+    if(elements.propertyOpenBtn){
+      elements.propertyOpenBtn.disabled = !hasSelection;
+      elements.propertyOpenBtn.setAttribute('aria-disabled', hasSelection ? 'false' : 'true');
+    }
+  };
+
   const getSelectedProspect = () => {
     const dropdownValue = elements.selectDropdown?.getValue?.() || '';
     const fallback = elements.select?.value || '';
@@ -855,6 +880,7 @@ const prospectManager = (() => {
       if(!elements.propertyDropdown){
         elements.property.value = propSlug || '';
       }
+      updatePropertyActionState();
     }
   };
 
@@ -1125,6 +1151,7 @@ const prospectManager = (() => {
         if(!elements.propertyDropdown){
           elements.property.value = propSlug || '';
         }
+        updatePropertyActionState();
       }
       setStatus('Dati applicati al calcolatore', 'success', options);
       // show a visible toast so users notice the apply succeeded
@@ -1157,6 +1184,7 @@ const prospectManager = (() => {
       refreshBtn: document.getElementById('refreshProspectsBtn'),
       property: document.getElementById('prospectProperty'),
       propertyDropdown: getDropdown('prospectProperty'),
+  createPropertyBtn: document.getElementById('createPropertyBtn'),
       propertyOpenBtn: document.getElementById('openPropertyBtn'),
       propertyRefreshBtns: Array.from(document.querySelectorAll('[data-role="refresh-properties"]')),
       slug: document.getElementById('prospectSlug'),
@@ -1184,7 +1212,8 @@ const prospectManager = (() => {
     }catch(err){
       console.error('Errore caricamento proprieta', err);
     }
-    populatePropertySelect(elements.property, config.initialProperty);
+  populatePropertySelect(elements.property, config.initialProperty);
+  updatePropertyActionState();
 
     const handleProspectChange = slug => {
       if(slug){
@@ -1200,6 +1229,7 @@ const prospectManager = (() => {
     }
 
     const handlePropertyChange = () => {
+      updatePropertyActionState();
       refreshList('', { silent: false });
     };
     if(elements.propertyDropdown){
@@ -1208,9 +1238,17 @@ const prospectManager = (() => {
       elements.property?.addEventListener('change', handlePropertyChange);
     }
 
+    elements.createPropertyBtn?.addEventListener('click', () => {
+      window.open(appendApiToHref('pages/property/index.html'), '_blank');
+    });
+
     elements.propertyOpenBtn?.addEventListener('click', () => {
       const slug = getSelectedProperty();
-      const url = slug ? `pages/property/index.html?slug=${encodeURIComponent(slug)}` : 'pages/property/index.html';
+      if(!slug){
+        setStatus('Seleziona una proprieta collegata per aprire la scheda.', 'error');
+        return;
+      }
+      const url = appendApiToHref(`pages/property/index.html?slug=${encodeURIComponent(slug)}`);
       window.open(url, '_blank');
     });
 
@@ -1223,6 +1261,7 @@ const prospectManager = (() => {
         try{
           await loadProperties(true);
           populatePropertySelect(elements.property, previousSelection);
+          updatePropertyActionState();
           setStatus('Elenco proprieta aggiornato.', 'success');
         }catch(err){
           console.error(err);
@@ -1249,22 +1288,23 @@ const prospectManager = (() => {
   await refreshList(config.initialSlug, { silent: true });
 
   if(config.initialSlug){
-      const prospect = await loadProspect(config.initialSlug, { silent: true, setSelect: true });
-      if(!prospect){
-        setStatus('Il prospetto richiesto non è stato trovato.', 'error');
-        return;
-      }
-      if(config.autoApply){
-        const applied = applyInputs({ silent: config.autoPrint });
-        if(applied && config.autoPrint){
-          setTimeout(() => printWithDate(), 600);
-        }
-      }else{
-        setStatus('Prospetto caricato. Usa "Applica dati" per ripristinare i valori.', 'info');
+    const prospect = await loadProspect(config.initialSlug, { silent: true, setSelect: true });
+    if(!prospect){
+      setStatus('Il prospetto richiesto non è stato trovato.', 'error');
+      return;
+    }
+    if(config.autoApply){
+      const applied = applyInputs({ silent: config.autoPrint });
+      if(applied && config.autoPrint){
+        setTimeout(() => printWithDate({ forceAsync: true }), 600);
       }
     }else{
-      setStatus('Modulo pronto per un nuovo prospetto', 'info');
+      setStatus('Prospetto caricato. Usa "Applica dati" per ripristinare i valori.', 'info');
     }
+  }else{
+    setStatus('Modulo pronto per un nuovo prospetto', 'info');
+  }
+  updatePropertyActionState();
   };
 
   return {
@@ -1285,6 +1325,7 @@ document.addEventListener('DOMContentLoaded', () => {
     el.addEventListener('change', calculateProfit);
   });
   calculateProfit();
+  applyApiToLinks();
 
   // Inject a small print stylesheet to hide UI controls and transient elements
   // which should not appear in the exported PDF.

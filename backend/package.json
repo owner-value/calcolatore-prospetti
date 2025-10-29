@@ -8,7 +8,8 @@
     "dev": "node app.js",
     "write-commit": "sh ./scripts/write-commit.sh",
     "migrate:deploy": "prisma migrate deploy",
-    "migrate:sqlite": "node scripts/migrate-sqlite-to-postgres.js"
+    "migrate:sqlite": "node scripts/migrate-sqlite-to-postgres.js",
+    "backup": "node scripts/backup-data.js"
   },
   "keywords": [],
   "author": "",

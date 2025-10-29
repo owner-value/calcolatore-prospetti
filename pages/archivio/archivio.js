@@ -45,6 +45,23 @@ const API_BASE_URL = (
 ).replace(/\/$/, '');
 const PROPERTIES_ENDPOINT = `${API_BASE_URL}/api/properties`;
 const PROSPECTS_ENDPOINT = `${API_BASE_URL}/api/prospetti`;
+const ENCODED_API_BASE = encodeURIComponent(API_BASE_URL);
+const appendApiToHref = (url = '') => {
+  const href = `${url || ''}`;
+  if(!API_BASE_URL) return href;
+  const [base, hash = ''] = href.split('#');
+  const parts = hash ? hash.split('&').filter(Boolean) : [];
+  if(parts.some(part => part.startsWith('api='))) return href;
+  parts.push(`api=${ENCODED_API_BASE}`);
+  return `${base}#${parts.join('&')}`;
+};
+const applyApiToLinks = (root = document) => {
+  if(!root || typeof root.querySelectorAll !== 'function') return;
+  root.querySelectorAll('[data-append-api-link]').forEach(anchor => {
+    const href = anchor.getAttribute('href') || '';
+    anchor.setAttribute('href', appendApiToHref(href));
+  });
+};
 
 const $ = id => document.getElementById(id);
 
@@ -103,6 +120,8 @@ const buildProspectCard = (item, opts = {}) => {
   const indirizzo = [item.indirizzo1, item.indirizzo2].filter(Boolean).join(' - ');
   const indirizzoHtml = escapeHtml(indirizzo);
   const updated = fmtDate(item.updatedAt);
+  const calcUrl = appendApiToHref(`../../index.html?slug=${slugEnc}&apply=1`);
+  const printUrl = appendApiToHref(`../../index.html?slug=${slugEnc}&apply=1&print=1`);
   const propertyLabel = item.property?.nome || item.property?.slug || 'Nessuna proprieta';
   const propertyHtml = escapeHtml(propertyLabel);
   const currentPropertySlug = item.property?.slug || '';
@@ -142,8 +161,8 @@ const buildProspectCard = (item, opts = {}) => {
         </div>
       </div>
       <div class="prospect-actions">
-        <a class="btn" href="../../index.html?slug=${slugEnc}&apply=1" target="_blank" rel="noopener">Apri nel calcolatore</a>
-        <a class="btn btn-secondary" href="../../index.html?slug=${slugEnc}&apply=1&print=1" target="_blank" rel="noopener">Apri e stampa</a>
+        <a class="btn" href="${calcUrl}" target="_blank" rel="noopener">Apri nel calcolatore</a>
+        <a class="btn btn-secondary" href="${printUrl}" target="_blank" rel="noopener">Apri e stampa</a>
         <button class="btn btn-danger" type="button" data-action="delete-prospect" data-slug="${slugEsc}">Elimina</button>
       </div>
     </article>
@@ -175,6 +194,7 @@ const applyProspectFilter = () => {
 
   if(!prospects.length){
     list.innerHTML = '<div class="archive-empty">Nessun prospetto salvato.</div>';
+    applyApiToLinks(list);
     return;
   }
 
@@ -182,6 +202,7 @@ const applyProspectFilter = () => {
     const filtered = filterBySearch(prospects);
     html = filtered.length ? filtered.map(item => buildProspectCard(item)).join('') : `<div class="archive-empty">Nessun prospetto corrisponde alla ricerca "${escapeHtml(searchTerm.trim())}".</div>`;
     list.innerHTML = html;
+    applyApiToLinks(list);
     return;
   }
 
@@ -200,6 +221,7 @@ const applyProspectFilter = () => {
     : '<div class="archive-empty">Nessun prospetto non assegnato.</div>';
 
   list.innerHTML = html;
+  applyApiToLinks(list);
 };
 
 const renderProperties = () => {
@@ -229,8 +251,8 @@ const renderProperties = () => {
     const ownerParts = [item.ownerNome, item.ownerEmail, item.ownerTelefono].filter(Boolean);
     const owner = ownerParts.length ? escapeHtml(ownerParts.join(' - ')) : 'Nessun dato proprietario';
     const count = item._count?.prospects || 0;
-    const propertyLink = `../property/index.html?slug=${encodeURIComponent(item.slug)}`;
-    const createLink = `../../index.html?property=${encodeURIComponent(item.slug)}&prefill=${encodeURIComponent(JSON.stringify({indirizzoRiga1: item.indirizzo || '', indirizzoRiga2: item.citta || ''}))}`;
+    const propertyLink = appendApiToHref(`../property/index.html?slug=${encodeURIComponent(item.slug)}`);
+    const createLink = appendApiToHref(`../../index.html?property=${encodeURIComponent(item.slug)}&prefill=${encodeURIComponent(JSON.stringify({indirizzoRiga1: item.indirizzo || '', indirizzoRiga2: item.citta || ''}))}`);
     return `
       <article class="property-card" data-slug="${escapeHtml(item.slug)}">
         <header>
@@ -245,13 +267,14 @@ const renderProperties = () => {
         <div class="property-actions">
           <a class="btn" href="${propertyLink}" target="_blank" rel="noopener">Apri scheda</a>
           <a class="btn btn-secondary" href="${createLink}" target="_blank" rel="noopener">Crea prospetto</a>
-          <button class="btn btn-danger" type="button" data-action="delete-property" data-slug="${escapeHtml(item.slug)}"${count ? ' disabled' : ''}>Elimina</button>
+          <button class="btn btn-danger" type="button" data-action="delete-property" data-slug="${escapeHtml(item.slug)}" data-prospect-count="${count}">Elimina</button>
         </div>
       </article>
     `;
   });
 
   container.innerHTML = cards.join('');
+  applyApiToLinks(container);
 };
 
 const fetchProperties = async () => {
@@ -334,28 +357,43 @@ const handleProspectDelete = async slug => {
   }
 };
 
-const handlePropertyDelete = async slug => {
+const handlePropertyDelete = async (slug, prospectCount = 0) => {
   const slugTrim = (slug || '').trim();
   if(!slugTrim) return;
-  const ok = window.confirm(`Eliminare la proprieta "${slugTrim}"? L'operazione non puo essere annullata.`);
+  const count = Number.isFinite(+prospectCount) ? +prospectCount : 0;
+  const prospectsNote = count > 0
+    ? `\n\nAttenzione: ${count === 1 ? '1 prospetto' : count + ' prospetti'} collegati verranno spostati nella sezione "Prospetti senza proprieta".`
+    : '';
+  const ok = window.confirm(`Eliminare la proprieta "${slugTrim}"? L'operazione non puo essere annullata.${prospectsNote}`);
   if(!ok) return;
 
   try{
     setStatus('propertyStatus', 'Eliminazione proprieta in corso...', 'info');
     const res = await fetch(`${PROPERTIES_ENDPOINT}/${encodeURIComponent(slugTrim)}`, { method: 'DELETE' });
     if(!res.ok){
-      const txt = await res.text();
-      throw new Error(txt || `Status ${res.status}`);
+      const raw = await res.text();
+      let message = raw || `Status ${res.status}`;
+      try{
+        const payload = raw ? JSON.parse(raw) : null;
+        if(payload && typeof payload === 'object'){
+          message = payload.error || payload.message || message;
+        }
+      }catch(parseErr){ /* ignore parse errors */ }
+      throw new Error(message);
     }
+    const result = await res.json().catch(() => ({ success: true }));
     if(selectedProperty === slugTrim){
       selectedProperty = '';
     }
     await fetchProperties();
     await fetchProspects();
-    setStatus('propertyStatus', 'Proprieta eliminata correttamente.', 'success');
+    const detached = Number.isFinite(+result?.detachedProspects) ? +result.detachedProspects : 0;
+    const extra = detached > 0 ? ` ${detached === 1 ? '1 prospetto spostato' : `${detached} prospetti spostati`} nella sezione senza proprieta.` : '';
+    setStatus('propertyStatus', `Proprieta eliminata correttamente.${extra}`, 'success');
   }catch(err){
     console.error(err);
-    setStatus('propertyStatus', 'Impossibile eliminare la proprieta. Verifica che non abbia prospetti associati.', 'error');
+    const message = err?.message || 'Eliminazione non riuscita.';
+    setStatus('propertyStatus', message, 'error');
   }
 };
 
@@ -402,14 +440,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   $('openPropertyBtn')?.addEventListener('click', () => {
     const slug = $('propertyFilter')?.value || '';
-    const url = slug ? `../property/index.html?slug=${encodeURIComponent(slug)}` : '../property/index.html';
+    const url = slug
+      ? appendApiToHref(`../property/index.html?slug=${encodeURIComponent(slug)}`)
+      : appendApiToHref('../property/index.html');
     window.open(url, '_blank');
   });
 
   $('propertyList')?.addEventListener('click', e => {
     const btn = e.target.closest('[data-action="delete-property"]');
-    if(btn && !btn.disabled){
-      handlePropertyDelete(btn.dataset.slug);
+    if(btn){
+      const count = parseInt(btn.dataset.prospectCount || '0', 10) || 0;
+      handlePropertyDelete(btn.dataset.slug, count);
     }
   });
 
@@ -435,6 +476,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const params = new URLSearchParams(window.location.search);
   selectedProperty = params.get('property') || '';
+
+  applyApiToLinks();
 
   fetchProperties().then(() => {
     if(selectedProperty){
