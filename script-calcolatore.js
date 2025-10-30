@@ -1295,8 +1295,14 @@ const prospectManager = (() => {
     }
     if(config.autoApply){
       const applied = applyInputs({ silent: config.autoPrint });
-      if(applied && config.autoPrint){
-        setTimeout(() => printWithDate({ forceAsync: true }), 600);
+      if(config.autoPrint){
+        const triggerPrint = () => setTimeout(() => printWithDate({ forceAsync: true }), 600);
+        if(applied){
+          triggerPrint();
+        }else{
+          console.warn('Auto stampa: nessun dato applicato, stampa stato corrente.');
+          triggerPrint();
+        }
       }
     }else{
       setStatus('Prospetto caricato. Usa "Applica dati" per ripristinare i valori.', 'info');
