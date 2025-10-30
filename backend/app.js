@@ -13,24 +13,36 @@ const app = express();
 const storageDir = path.join(__dirname, 'storage');
 if (!fs.existsSync(storageDir)) fs.mkdirSync(storageDir, { recursive: true });
 const upload = multer({ dest: storageDir });
-const appendAuditEntry = (event = {}) => {
-  const timestamp = new Date().toISOString();
-  const action = (event.action || '').toString() || 'unknown';
-  const payload = {
-    action,
-    slug: event.slug ? event.slug.toString() : null,
-    propertySlug: event.propertySlug ? event.propertySlug.toString() : null,
-    requestMethod: event.requestMethod ? event.requestMethod.toString() : null,
-    requestPath: event.requestPath ? event.requestPath.toString() : null,
-    ip: event.ip ? event.ip.toString() : null,
-    userAgent: event.userAgent ? event.userAgent.toString() : null,
-    meta: { ...event, timestamp },
-  };
+const appendAuditEntry = (() => {
+  let warnedMissingClient = false;
+  return (event = {}) => {
+    const auditClientAvailable = prisma && prisma.auditLog && typeof prisma.auditLog.create === 'function';
+    if (!auditClientAvailable) {
+      if (!warnedMissingClient) {
+        console.warn('Audit log Prisma client not available; skipping audit persistence. Run `npx prisma generate` and redeploy.');
+        warnedMissingClient = true;
+      }
+      return;
+    }
 
-  prisma.auditLog.create({ data: payload }).catch(err => {
-    console.warn('Unable to persist audit log entry', err);
-  });
-};
+    const timestamp = new Date().toISOString();
+    const action = (event.action || '').toString() || 'unknown';
+    const payload = {
+      action,
+      slug: event.slug ? event.slug.toString() : null,
+      propertySlug: event.propertySlug ? event.propertySlug.toString() : null,
+      requestMethod: event.requestMethod ? event.requestMethod.toString() : null,
+      requestPath: event.requestPath ? event.requestPath.toString() : null,
+      ip: event.ip ? event.ip.toString() : null,
+      userAgent: event.userAgent ? event.userAgent.toString() : null,
+      meta: { ...event, timestamp },
+    };
+
+    prisma.auditLog.create({ data: payload }).catch(err => {
+      console.warn('Unable to persist audit log entry', err);
+    });
+  };
+})();
 
 const extractClientIp = (req) => {
   const header = req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || '';
@@ -142,6 +154,11 @@ app.get('/_health', (req, res) => {
 
 app.get('/api/audit/logs', async (req, res) => {
   try {
+    if (!prisma || !prisma.auditLog || typeof prisma.auditLog.findMany !== 'function') {
+      res.json([]);
+      return;
+    }
+
     const limitRaw = parseInt(req.query.limit, 10);
     const limit = Number.isNaN(limitRaw) ? 200 : Math.min(Math.max(limitRaw, 1), 500);
     const filterAction = (req.query.action || '').toString().trim();
