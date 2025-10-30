@@ -10,7 +10,8 @@
     "migrate:deploy": "prisma migrate deploy",
     "migrate:sqlite": "node scripts/migrate-sqlite-to-postgres.js",
     "backup": "node scripts/backup-data.js",
-    "restore": "node scripts/restore-data.js"
+    "restore": "node scripts/restore-data.js",
+    "postinstall": "prisma generate"
   },
   "keywords": [],
   "author": "",
