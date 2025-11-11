@@ -3,6 +3,9 @@
   const $ = id => document.getElementById(id);
   const eur = n => (new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR',maximumFractionDigits:0})).format(+n||0);
   const pct = n => `${Math.round(+n||0)}%`;
+  const CACHE_KEY = 'ownervalue:model';
+  const DEFAULT_PROD_API = 'https://calcolatore-prospetti.onrender.com';
+  const LOCAL_API = 'http://localhost:3001';
 
   function render(m){
     if(!m || typeof m!=='object') return;
@@ -69,14 +72,100 @@
     if($('p7-mensile-netto')) $('p7-mensile-netto').textContent = eur(m?.risultati?.mensileNetto ?? 0);
   }
 
-  function loadAndRender(){
+  const sanitizeBase = base => (base || '').toString().replace(/\/$/, '');
+
+  function resolveApiBase(){
     try{
-      const raw = localStorage.getItem('ownervalue:model');
-      if(!raw) return;
-      render(JSON.parse(raw));
-    }catch(e){ console.error('Report: model non valido', e); }
+      if(typeof window !== 'undefined'){
+        const override = (window.CALCOLATORE_API || '').toString().trim();
+        if(override) return sanitizeBase(override);
+      }
+    }catch(err){ /* ignore */ }
+    try{
+      if(typeof API_BASE_URL !== 'undefined' && API_BASE_URL){
+        return sanitizeBase(API_BASE_URL);
+      }
+    }catch(err){ /* ignore */ }
+    try{
+      const host = (typeof window !== 'undefined' && window.location && window.location.hostname) || '';
+      if(['localhost','127.0.0.1','0.0.0.0'].includes(host)) return LOCAL_API;
+    }catch(err){ /* ignore */ }
+    return DEFAULT_PROD_API;
   }
 
-  document.addEventListener('DOMContentLoaded', loadAndRender);
-  window.addEventListener('storage', loadAndRender);
+  function extractModel(payload){
+    if(!payload) return null;
+    let data = payload.datiJson ?? payload.modello ?? payload.model ?? payload;
+    if(typeof data === 'string'){
+      try{ data = JSON.parse(data); }
+      catch(err){ console.warn('Report: datiJson non valido', err); return null; }
+    }
+    if(!data || typeof data !== 'object') return null;
+    if(Array.isArray(data)) return null;
+    const model = data.modello && typeof data.modello === 'object' ? data.modello : data;
+    return model && typeof model === 'object' ? model : null;
+  }
+
+  function persistModel(model){
+    if(!model) return;
+    try{ localStorage.setItem(CACHE_KEY, JSON.stringify(model)); }
+    catch(err){ console.warn('Report: impossibile salvare il modello in locale', err); }
+  }
+
+  function loadFromCache(){
+    try{
+      const raw = localStorage.getItem(CACHE_KEY);
+      if(!raw) return false;
+      render(JSON.parse(raw));
+      return true;
+    }catch(e){ console.error('Report: model non valido', e); }
+    return false;
+  }
+
+  async function fetchAndRender(slug){
+    if(!slug) return false;
+    const base = resolveApiBase();
+    const url = `${base}/api/prospetti/${encodeURIComponent(slug)}`;
+    try{
+      const res = await fetch(url, { credentials: 'omit' });
+      if(!res.ok){
+        console.warn('Report: caricamento prospetto fallito', res.status, url);
+        return false;
+      }
+      const payload = await res.json();
+      const model = extractModel(payload);
+      if(!model){
+        console.warn('Report: nessun modello valido nel prospetto caricato');
+        return false;
+      }
+      render(model);
+      persistModel(model);
+      return true;
+    }catch(err){
+      console.error('Report: errore nel recupero del prospetto', err);
+      return false;
+    }
+  }
+
+  function handleStorage(event){
+    if(event && event.key && event.key !== CACHE_KEY) return;
+    loadFromCache();
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const fallbackUsed = loadFromCache();
+    try{
+      const params = new URLSearchParams(window.location.search);
+      const slug = params.get('slug') || '';
+      if(slug){
+        fetchAndRender(slug).then(success => {
+          if(!success && !fallbackUsed){
+            console.warn('Report: utilizzo del modello locale di fallback');
+          }
+        });
+      }
+    }catch(err){ console.error('Report: errore nel parsing degli URL params', err); }
+  });
+
+  window.addEventListener('storage', handleStorage);
 })();
