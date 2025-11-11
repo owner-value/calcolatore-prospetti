@@ -36,16 +36,58 @@
   }catch(err){}
 })();
 
-// Prefer an explicitly set global, otherwise detect production vs local like the main script
+// Prefer an explicitly set global, otherwise auto-detect and fall back between production/local
 const DEFAULT_PROD_API = 'https://calcolatore-prospetti.onrender.com';
 const LOCAL_API = 'http://localhost:3001';
-const API_BASE_URL = (
-  window.CALCOLATORE_API ||
-  (['https://calcolatore-prospetti.onrender.com'].includes(location.hostname) || location.protocol === 'file:' ? LOCAL_API : DEFAULT_PROD_API)
-).replace(/\/$/, '');
-const PROPERTIES_ENDPOINT = `${API_BASE_URL}/api/properties`;
-const PROSPECTS_ENDPOINT = `${API_BASE_URL}/api/prospetti`;
-const ENCODED_API_BASE = encodeURIComponent(API_BASE_URL);
+
+const sanitizeBaseUrl = value => {
+  if(!value) return '';
+  return value.toString().trim().replace(/\/$/, '');
+};
+
+const isLocalHost = (() => {
+  try{
+    return ['localhost','127.0.0.1','0.0.0.0'].includes(location.hostname);
+  }catch(err){
+    return false;
+  }
+})();
+
+const API_CANDIDATES = (() => {
+  const list = [];
+  const push = value => {
+    const clean = sanitizeBaseUrl(value);
+    if(clean && !list.includes(clean)) list.push(clean);
+  };
+  if(window.CALCOLATORE_API){
+    push(window.CALCOLATORE_API);
+  }
+  push(DEFAULT_PROD_API);
+  push(LOCAL_API);
+  return list.length ? list : [DEFAULT_PROD_API];
+})();
+
+const API_STORAGE_KEY = 'calcolatore:api-base';
+const DEAD_API_BASES = new Set();
+
+let apiCandidateIndex = 0;
+let API_BASE_URL = API_CANDIDATES[apiCandidateIndex];
+let ENCODED_API_BASE = encodeURIComponent(API_BASE_URL);
+
+function setActiveApiBase(base){
+  const clean = sanitizeBaseUrl(base);
+  if(!clean || clean === API_BASE_URL) return;
+  API_BASE_URL = clean;
+  ENCODED_API_BASE = encodeURIComponent(API_BASE_URL);
+  try{ applyApiToLinks(); }catch(err){ /* ignore */ }
+}
+
+function getApiBase(){
+  return API_BASE_URL;
+}
+
+const PROPERTIES_PATH = '/api/properties';
+const PROSPECTS_PATH = '/api/prospetti';
 const appendApiToHref = (url = '') => {
   const href = `${url || ''}`;
   if(!API_BASE_URL) return href;
@@ -62,6 +104,78 @@ const applyApiToLinks = (root = document) => {
     anchor.setAttribute('href', appendApiToHref(href));
   });
 };
+
+async function apiFetch(path = '', options = {}){
+  const total = API_CANDIDATES.length;
+  const startIndex = apiCandidateIndex % total;
+  let lastError = null;
+  let lastResponse = null;
+
+  const RETRY_STATUSES = new Set([404, 500, 502, 503, 504]);
+  const shouldRetryStatus = status => RETRY_STATUSES.has(status);
+
+  const markBaseAsDead = base => {
+    if(!base) return;
+    DEAD_API_BASES.add(base);
+    try{
+      const override = sanitizeBaseUrl(window.CALCOLATORE_API || '');
+      if(override && override === base){
+        try{ localStorage.removeItem(API_STORAGE_KEY); }catch(err){ /* ignore */ }
+        try{ delete window.CALCOLATORE_API; }catch(err){ /* ignore */ }
+      }
+    }catch(err){ /* ignore */ }
+  };
+
+  const ensureOptions = opts => {
+    if(!opts || typeof opts !== 'object') return {};
+    const cloned = { ...opts };
+    if(opts.headers && typeof opts.headers === 'object'){
+      cloned.headers = opts.headers instanceof Headers ? new Headers(opts.headers) : { ...opts.headers };
+    }
+    return cloned;
+  };
+
+  for(let offset = 0; offset < total; offset++){
+    const idx = (startIndex + offset) % total;
+    const base = API_CANDIDATES[idx];
+    if(!base || DEAD_API_BASES.has(base)){
+      continue;
+    }
+    const isAbsolute = /^https?:\/\//i.test(path);
+    const normalizedPath = isAbsolute
+      ? path
+      : path.startsWith('/') ? path : `/${path}`;
+    const url = isAbsolute ? normalizedPath : `${base}${normalizedPath}`;
+    try{
+      const response = await fetch(url, ensureOptions(options));
+      if(response.ok){
+        setActiveApiBase(base);
+        apiCandidateIndex = idx;
+        return response;
+      }
+
+      lastResponse = response;
+      const isLastAttempt = (offset === total - 1);
+      if(isLastAttempt || !shouldRetryStatus(response.status)){
+        setActiveApiBase(base);
+        apiCandidateIndex = idx;
+        return response;
+      }
+    }catch(err){
+      lastError = err;
+      const isNetworkError = err && (err.name === 'TypeError' || err instanceof TypeError || err.name === 'AbortError');
+      if(isNetworkError){
+        markBaseAsDead(base);
+      }
+      if(!isNetworkError || offset === total - 1){
+        throw err;
+      }
+    }
+  }
+
+  if(lastResponse) return lastResponse;
+  throw lastError || new Error('API request failed');
+}
 
 const $ = id => document.getElementById(id);
 
@@ -280,7 +394,7 @@ const renderProperties = () => {
 const fetchProperties = async () => {
   try{
     setStatus('propertyStatus', 'Caricamento proprieta...', 'info');
-    const res = await fetch(PROPERTIES_ENDPOINT);
+  const res = await apiFetch(PROPERTIES_PATH);
     if(!res.ok) throw new Error(`Status ${res.status}`);
     properties = await res.json();
     renderProperties();
@@ -316,7 +430,7 @@ const fetchProperties = async () => {
 const fetchProspects = async () => {
   try{
     setStatus('archiveStatus', 'Caricamento prospetti...', 'info');
-    const res = await fetch(PROSPECTS_ENDPOINT);
+  const res = await apiFetch(PROSPECTS_PATH);
     if(!res.ok) throw new Error(`Status ${res.status}`);
     prospects = await res.json();
     applyProspectFilter();
@@ -343,7 +457,13 @@ const handleProspectDelete = async slug => {
 
   try{
     setStatus('archiveStatus', 'Eliminazione prospetto in corso...', 'info');
-    const res = await fetch(`${PROSPECTS_ENDPOINT}/${encodeURIComponent(slugTrim)}`, { method: 'DELETE' });
+    const res = await apiFetch(`${PROSPECTS_PATH}/${encodeURIComponent(slugTrim)}`, { method: 'DELETE' });
+    if(res.status === 404){
+      await fetchProspects();
+      await fetchProperties();
+      setStatus('archiveStatus', 'Il prospetto era già stato eliminato.', 'success');
+      return;
+    }
     if(!res.ok){
       const txt = await res.text();
       throw new Error(txt || `Status ${res.status}`);
@@ -353,7 +473,8 @@ const handleProspectDelete = async slug => {
     setStatus('archiveStatus', 'Prospetto eliminato correttamente.', 'success');
   }catch(err){
     console.error(err);
-    setStatus('archiveStatus', 'Errore durante l\'eliminazione del prospetto.', 'error');
+    const message = (err && err.message) ? err.message : 'Errore durante l\'eliminazione del prospetto.';
+    setStatus('archiveStatus', message, 'error');
   }
 };
 
@@ -369,7 +490,16 @@ const handlePropertyDelete = async (slug, prospectCount = 0) => {
 
   try{
     setStatus('propertyStatus', 'Eliminazione proprieta in corso...', 'info');
-    const res = await fetch(`${PROPERTIES_ENDPOINT}/${encodeURIComponent(slugTrim)}`, { method: 'DELETE' });
+    const res = await apiFetch(`${PROPERTIES_PATH}/${encodeURIComponent(slugTrim)}`, { method: 'DELETE' });
+    if(res.status === 404){
+      if(selectedProperty === slugTrim){
+        selectedProperty = '';
+      }
+      await fetchProperties();
+      await fetchProspects();
+      setStatus('propertyStatus', 'La proprieta era già stata rimossa.', 'success');
+      return;
+    }
     if(!res.ok){
       const raw = await res.text();
       let message = raw || `Status ${res.status}`;
@@ -392,7 +522,7 @@ const handlePropertyDelete = async (slug, prospectCount = 0) => {
     setStatus('propertyStatus', `Proprieta eliminata correttamente.${extra}`, 'success');
   }catch(err){
     console.error(err);
-    const message = err?.message || 'Eliminazione non riuscita.';
+    const message = (err && err.message) ? err.message : 'Eliminazione non riuscita.';
     setStatus('propertyStatus', message, 'error');
   }
 };
@@ -402,7 +532,7 @@ const handleProspectAssign = async (slug, propertySlug) => {
   if(!slugTrim) return;
   try{
     setStatus('archiveStatus', 'Aggiornamento in corso...', 'info');
-    const res = await fetch(`${PROSPECTS_ENDPOINT}/${encodeURIComponent(slugTrim)}`, {
+  const res = await apiFetch(`${PROSPECTS_PATH}/${encodeURIComponent(slugTrim)}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ propertySlug }),

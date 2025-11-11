@@ -22,6 +22,16 @@ npm run start:local
 # The script prints the chosen port, backend PID, and opens index.html pointing at the chosen API.
 ```
 
+2b) Servire solo il frontend via HTTP (evita i blocchi CORS dei file `file://`)
+
+```bash
+npm run start:web
+# URL predefinito: http://localhost:8000/index.html
+# Per l'archivio: http://localhost:8000/pages/archivio/index.html#api=https://calcolatore-prospetti.onrender.com
+```
+
+Puoi scegliere un'altra porta con `npm run start:web -- 9000`. Lo script usa `python3 -m http.server`, quindi assicurati di avere Python 3 installato (su macOS è già presente).
+
 3) Check backend health, version and configured project links
 
 Replace PORT with the port printed by the previous command (or use your Render URL):
@@ -174,4 +184,4 @@ Done — minimal goal
 - With this README you should be able to run local dev, check the local and remote version, push and confirm Render shows the new commit. If you want any of the optional automations above, tell me which and I'll implement it next.
 
 ---
-Last edited: 2025-10-29
+Last edited: 2025-11-11

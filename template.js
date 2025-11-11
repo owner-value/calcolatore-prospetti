@@ -39,6 +39,25 @@
     if(uaRow){ uaRow.style.display = uaVal > 0 ? '' : 'none'; }
     if($('p6-ota'))     $('p6-ota').textContent     = eur(m?.spese?.ota ?? 0);
     if($('p6-kit'))     $('p6-kit').textContent     = eur(m?.spese?.kit ?? 0);
+    const assVal = m?.spese?.assicurazione ?? 0;
+    if($('p6-assicurazione')) $('p6-assicurazione').textContent = eur(assVal);
+    const assRow = $('p6-assicurazione-row');
+    if(assRow) assRow.style.display = assVal > 0 ? '' : 'none';
+    const assSub = $('p6-assicurazione-sub');
+    if(assSub){
+      if(assVal > 0){
+  const perStay = Number(m?.spese?.assicurazioneDettaglio?.perPrenotazione ?? 0);
+        const label = m?.spese?.assicurazioneDettaglio?.label || '';
+        const parts = [];
+        if(label) parts.push(label);
+        if(Number.isFinite(perStay) && perStay > 0){
+          parts.push(`€ ${perStay.toFixed(2).replace('.', ',')} / prenotazione`);
+        }
+        assSub.textContent = parts.join(' • ');
+      }else{
+        assSub.textContent = '';
+      }
+    }
     if($('p6-pm'))      $('p6-pm').textContent      = eur(m?.spese?.pm ?? 0);
     if($('p6-pm-pct'))   $('p6-pm-pct').textContent   = pct(m?.spese?.pmPct ?? m?.percentualePm ?? 0);
     if($('p6-una')){

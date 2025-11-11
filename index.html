@@ -28,7 +28,7 @@
 
   <h1>Simulatore di Utile Netto Annuale</h1>
   <div class="hr"></div>
-  <p>Formula: <b>Base cedolare = Lordo Affitti − OTA (solo affitti) − PM</b>. Le commissioni OTA si applicano su <b>Affitti + Pulizie</b>.</p>
+  <p>Formula: <b>Base cedolare = Lordo Affitti − OTA (solo affitti) − PM</b>. Le commissioni OTA si applicano su <b>Affitti + Pulizie + Assicurazione</b>.</p>
 
   <div class="grid cols-main">
     <!-- ============ INPUT (sinistra) ============ -->
@@ -118,7 +118,7 @@
       <!-- 2a) Parametri per Soggiorno -->
       <div class="card">
         <h2>2a) Parametri per Soggiorno</h2>
-        <div class="grid cols-3">
+        <div class="grid cols-4">
           <label><span>Durata media soggiorno (notti)</span>
             <input type="number" id="durataMediaSoggiorno" value="3" min="1" step="1" oninput="calculateProfit()">
           </label>
@@ -128,13 +128,20 @@
           <label><span>Welcome kit per soggiorno (€)</span>
             <input type="number" id="kitPerSoggiorno" value="5" min="0" step="1" oninput="calculateProfit()">
           </label>
+          <label><span>Assicurazione per prenotazione</span>
+            <select id="assicurazionePerSoggiorno" onchange="calculateProfit()">
+              <option value="0" data-plan="Senza assicurazione">— Nessuna assicurazione —</option>
+              <option value="17.5" data-plan="Screening + Protection Program (fino a €500)">Screening + Protection Program (fino a €500) — €17,50 / prenotazione</option>
+              <option value="25" data-plan="Protection Program (fino a €50K)">Protection Program (fino a €50K) — €25,00 / prenotazione</option>
+            </select>
+          </label>
         </div>
       </div>
 
       <!-- 2b) Totali annui (auto/manuale) -->
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <h2 style="margin:0">2b) Totali annui (pulizie &amp; kit)</h2>
+          <h2 style="margin:0">2b) Totali annui (pulizie, kit &amp; assicurazione)</h2>
           <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)">
             <input type="checkbox" id="autoCalcPerSoggiorno" checked>
             <span>Calcola automaticamente dai soggiorni</span>
@@ -142,7 +149,7 @@
         </div>
 
         <!-- Anteprima automatica -->
-        <div id="autoFields" class="grid cols-3" style="margin-bottom:10px">
+        <div id="autoFields" class="grid cols-4" style="margin-bottom:10px">
           <div>
             <span>Soggiorni stimati</span>
             <div id="previewNumSoggiorni" class="panel" style="padding:12px 14px;font-weight:800">—</div>
@@ -155,10 +162,14 @@
             <span>Kit annuo (da soggiorni)</span>
             <div id="previewKitAnnuo" class="panel" style="padding:12px 14px;font-weight:800">—</div>
           </div>
+          <div>
+            <span>Assicurazione annua (da soggiorni)</span>
+            <div id="previewAssicurazioneAnnuo" class="panel" style="padding:12px 14px;font-weight:800">—</div>
+          </div>
         </div>
 
         <!-- Campi manuali (visibili quando il toggle è OFF) -->
-        <div id="manualFields" class="grid cols-3" style="display:none">
+        <div id="manualFields" class="grid cols-2" style="display:none">
           <label><span>Pulizie totali annue (€)</span>
             <input type="number" id="totalePulizieOspite" value="6905" min="0" step="1" oninput="calculateProfit()">
           </label>
@@ -167,7 +178,7 @@
           </label>
         </div>
 
-        <p class="note">Se disattivi il toggle, puoi impostare manualmente pulizie e kit annui.</p>
+  <p class="note">Se disattivi il toggle, puoi impostare manualmente pulizie e kit annui. L'assicurazione resta calcolata in base all'importo per prenotazione.</p>
       </div>
 
       <!-- 3) Utenze & amministrazione -->
@@ -279,11 +290,12 @@
     <div>
       <div class="panel summary" id="summaryPanel">
         <h2>Riepilogo</h2>
-        <div class="row"><span>Ricavo Lordo Totale (Affitti + Pulizie)</span><strong id="outputLordoTotale">€ 0,00</strong></div>
+  <div class="row"><span>Ricavo Lordo Totale (Affitti + Pulizie + Assicurazione)</span><strong id="outputLordoTotale">€ 0,00</strong></div>
         <div class="row"><span>Commissioni OTA (<span id="percOtaOutput">0%</span>)</span><strong class="bad" id="outputCommissioniOta">€ 0,00</strong></div>
         <div class="row"><span>Costo PM (<span id="percPmOutput">0%</span>)</span><strong class="bad" id="outputCostoPm">€ 0,00</strong></div>
         <div class="row"><span>Pulizie</span><strong class="bad" id="outputPulizieOspite">€ 0,00</strong></div>
         <div class="row"><span>Welcome Kit</span><strong class="bad" id="outputWelcomeKit">€ 0,00</strong></div>
+  <div class="row"><span>Assicurazione</span><strong class="bad" id="outputAssicurazione">€ 0,00</strong></div>
         <div class="row"><span>Utenze Totali (annue)</span><strong class="bad" id="outputUtenzeTotali">€ 0,00</strong></div>
         <div class="row"><span>Ring — setup</span><strong class="bad" id="outSumRingSetup">€ 0,00</strong></div>
         <div class="row"><span>Ring — abbonamento (12 mesi)</span><strong class="bad" id="outSumRingSubAnnuale">€ 0,00</strong></div>
@@ -421,7 +433,7 @@
       <div class="stat">
         <div class="lbl">Fatturato Lordo Annuo</div><div id="p5-fatt" class="big">—</div>
       </div>
-      <span class="small">Per “fatturato lordo annuo” si intende quanto ricevuto dalle piattaforme o prenotazioni dirette.</span>
+  <span class="small">Per “fatturato lordo annuo” si intende quanto ricevuto dalle piattaforme o prenotazioni dirette (affitti, pulizie e assicurazione).</span>
     </div>
   </section>
 
@@ -454,7 +466,7 @@
           <div class="box-row">
             <div class="label-stack">
               <div class="lbl">Commissioni OTA</div>
-              <div class="label-sub">(<span id="p6-ota-percent"></span> su affitti + pulizie)</div>
+              <div class="label-sub">(<span id="p6-ota-percent"></span> su affitti + pulizie + assicurazione)</div>
             </div>
             <div id="p6-ota" class="big">—</div>
           </div>
@@ -466,6 +478,15 @@
               <div class="label-sub">(Carta igienica, sapone, shampoo, fette biscottate, marmellate, caffè)</div>
             </div>
             <div id="p6-kit" class="big">—</div>
+          </div>
+        </div>
+        <div class="box expense-box" id="p6-assicurazione-row">
+          <div class="box-row">
+            <div class="label-stack">
+              <div class="lbl">Assicurazione per soggiorno</div>
+              <div class="label-sub" id="p6-assicurazione-sub"></div>
+            </div>
+            <div id="p6-assicurazione" class="big">—</div>
           </div>
         </div>
         <div class="box expense-box" id="p6-pm-row">

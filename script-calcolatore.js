@@ -51,14 +51,54 @@ const num = id => { const el=$g(id); if(!el) return 0; const v=(el.value||'').to
 const DEFAULT_PROD_API = 'https://calcolatore-prospetti.onrender.com';
 const LOCAL_API = 'http://localhost:3001';
 
-const API_BASE_URL = (
-  window.CALCOLATORE_API ||
-  (['https://calcolatore-prospetti.onrender.com'].includes(location.hostname) || location.protocol === 'file:' ? LOCAL_API : DEFAULT_PROD_API)
-).replace(/\/$/, '');
+const sanitizeBaseUrl = value => {
+  if(!value) return '';
+  return value.toString().trim().replace(/\/$/, '');
+};
 
-const PROSPECTS_ENDPOINT = `${API_BASE_URL}/api/prospetti`;
-const PROPERTIES_ENDPOINT = `${API_BASE_URL}/api/properties`;
-const ENCODED_API_BASE = encodeURIComponent(API_BASE_URL);
+const isLocalHost = (() => {
+  try{
+    return ['localhost','127.0.0.1','0.0.0.0'].includes(location.hostname);
+  }catch(err){
+    return false;
+  }
+})();
+
+const API_CANDIDATES = (() => {
+  const list = [];
+  const push = value => {
+    const clean = sanitizeBaseUrl(value);
+    if(clean && !list.includes(clean)) list.push(clean);
+  };
+  if(window.CALCOLATORE_API){
+    push(window.CALCOLATORE_API);
+  }
+  push(DEFAULT_PROD_API);
+  push(LOCAL_API);
+  return list.length ? list : [DEFAULT_PROD_API];
+})();
+
+const API_STORAGE_KEY = 'calcolatore:api-base';
+const DEAD_API_BASES = new Set();
+
+let apiCandidateIndex = 0;
+let API_BASE_URL = API_CANDIDATES[apiCandidateIndex];
+let ENCODED_API_BASE = encodeURIComponent(API_BASE_URL);
+
+function setActiveApiBase(base){
+  const clean = sanitizeBaseUrl(base);
+  if(!clean || clean === API_BASE_URL) return;
+  API_BASE_URL = clean;
+  ENCODED_API_BASE = encodeURIComponent(API_BASE_URL);
+  try{ applyApiToLinks(); }catch(err){ /* ignore */ }
+}
+
+function getApiBase(){
+  return API_BASE_URL;
+}
+
+const PROSPECTS_PATH = '/api/prospetti';
+const PROPERTIES_PATH = '/api/properties';
 const appendApiToHref = (url = '') => {
   const href = `${url || ''}`;
   if(!API_BASE_URL) return href;
@@ -75,6 +115,80 @@ const applyApiToLinks = (root = document) => {
     anchor.setAttribute('href', appendApiToHref(href));
   });
 };
+
+async function apiFetch(path = '', options = {}){
+  const total = API_CANDIDATES.length;
+  const startIndex = apiCandidateIndex % total;
+  let lastError = null;
+  let lastResponse = null;
+
+  const RETRY_STATUSES = new Set([404, 500, 502, 503, 504]);
+  const shouldRetryStatus = status => RETRY_STATUSES.has(status);
+
+  const markBaseAsDead = base => {
+    if(!base) return;
+    DEAD_API_BASES.add(base);
+    try{
+      const override = sanitizeBaseUrl(window.CALCOLATORE_API || '');
+      if(override && override === base){
+        try{ localStorage.removeItem(API_STORAGE_KEY); }catch(err){ /* ignore */ }
+        try{ delete window.CALCOLATORE_API; }catch(err){ /* ignore */ }
+      }
+    }catch(err){ /* ignore */ }
+  };
+
+  const ensureOptions = opts => {
+    if(!opts || typeof opts !== 'object') return {};
+    const cloned = { ...opts };
+    if(opts.headers && typeof opts.headers === 'object'){
+      cloned.headers = opts.headers instanceof Headers ? new Headers(opts.headers) : { ...opts.headers };
+    }
+    return cloned;
+  };
+
+  for(let offset = 0; offset < total; offset++){
+    const idx = (startIndex + offset) % total;
+    const base = API_CANDIDATES[idx];
+    if(!base || DEAD_API_BASES.has(base)){
+      continue;
+    }
+    const isAbsolute = /^https?:\/\//i.test(path);
+    const normalizedPath = isAbsolute
+      ? path
+      : path.startsWith('/') ? path : `/${path}`;
+    const url = isAbsolute ? normalizedPath : `${base}${normalizedPath}`;
+    try{
+      const response = await fetch(url, ensureOptions(options));
+      if(response.ok){
+        setActiveApiBase(base);
+        apiCandidateIndex = idx;
+        return response;
+      }
+
+      lastResponse = response;
+      const isLastAttempt = (offset === total - 1);
+      if(isLastAttempt || !shouldRetryStatus(response.status)){
+        setActiveApiBase(base);
+        apiCandidateIndex = idx;
+        return response;
+      }
+      // fall through and try next candidate
+    }catch(err){
+      lastError = err;
+      const isNetworkError = err && (err.name === 'TypeError' || err instanceof TypeError || err.name === 'AbortError');
+      if(isNetworkError){
+        markBaseAsDead(base);
+      }
+      if(!isNetworkError || offset === total - 1){
+        throw err;
+      }
+      // try next candidate
+    }
+  }
+
+  if(lastResponse) return lastResponse;
+  throw lastError || new Error('API request failed');
+}
 const slugify = (str = '') => str
   .toString()
   .trim()
@@ -92,7 +206,7 @@ let printTitleRestore = null;
 
 async function loadProperties(force=false){
   if(!force && propertiesCache.length) return propertiesCache;
-  const res = await fetch(PROPERTIES_ENDPOINT);
+  const res = await apiFetch(PROPERTIES_PATH);
   if(!res.ok) throw new Error(`Status ${res.status}`);
   propertiesCache = await res.json();
   return propertiesCache;
@@ -358,6 +472,11 @@ function calculateProfit(){
 
   const puliziePerStay = Math.max(0, num('puliziePerSoggiorno'));
   const kitPerStay     = Math.max(0, num('kitPerSoggiorno'));
+  const assicurazioneSelect = $g('assicurazionePerSoggiorno');
+  const assicurazioneOption = assicurazioneSelect ? assicurazioneSelect.options[assicurazioneSelect.selectedIndex] : null;
+  const assicurazioneValueRaw = assicurazioneOption ? parseFloat(assicurazioneOption.value || '0') : parseFloat(assicurazioneSelect?.value || '0');
+  const assicurazionePerStay = Number.isFinite(assicurazioneValueRaw) ? Math.max(0, assicurazioneValueRaw) : 0;
+  const assicurazioneLabel = assicurazioneOption ? (assicurazioneOption.dataset.plan || assicurazioneOption.text || '') : '';
 
   const autoCheckbox = $g('autoCalcPerSoggiorno');
   const autoCalc = autoCheckbox ? autoCheckbox.checked : true;
@@ -386,6 +505,10 @@ function calculateProfit(){
     kitAnnuo     = Math.max(0, num('costoWelcomeKit'));
   }
 
+  const assicurazioneAnnuo = stays * assicurazionePerStay;
+
+  const assicurazioneLabelResolved = assicurazioneLabel;
+
   // Preview sezione 2b (solo se presenti)
   if(autoCalc){
     $set('previewNumSoggiorni', stays.toString());
@@ -396,10 +519,11 @@ function calculateProfit(){
     $set('previewPulizieAnnuo', '—');
     $set('previewKitAnnuo', '—');
   }
+  $set('previewAssicurazioneAnnuo', fmtEUR(assicurazioneAnnuo));
 
   // 3) Lordi
   const lordoAffitti = adr * giorni;
-  const lordoTotale = lordoAffitti + pulizieAnnuo;
+  const lordoTotale = lordoAffitti + pulizieAnnuo + assicurazioneAnnuo;
   $set('outputLordoTotale', fmtEUR(lordoTotale));
 
   // 4) Commissioni
@@ -409,7 +533,8 @@ function calculateProfit(){
 
   const otaAffitti = lordoAffitti * (pOTA/100);
   const otaPulizie = pulizieAnnuo * (pOTA/100);
-  const costoOTA   = otaAffitti + otaPulizie;
+  const otaAssicurazione = assicurazioneAnnuo * (pOTA/100);
+  const costoOTA   = otaAffitti + otaPulizie + otaAssicurazione;
 
   const basePM = Math.max(lordoTotale - costoOTA, 0);
   const costoPM = basePM * (pPM/100);
@@ -487,11 +612,11 @@ function calculateProfit(){
   }
 
   // 7) Base imponibile & imposta cedolare
-  const baseImponibile = Math.max(lordoAffitti - otaAffitti - costoPM, 0);
+  const baseImponibile = Math.max(lordoAffitti - otaAffitti - costoPM - assicurazioneAnnuo, 0);
   const imposta = baseImponibile * (pCed/100);
 
   // 8) Totali e utile
-  const costiOperativi = costoOTA + costoPM + pulizieAnnuo + utenze + kitAnnuo + sicurezzaTotale;
+  const costiOperativi = costoOTA + costoPM + pulizieAnnuo + utenze + kitAnnuo + assicurazioneAnnuo + sicurezzaTotale;
   const utileAnn = lordoTotale - costiOperativi - imposta;
   const utileMese = utileAnn / 12;
 
@@ -500,11 +625,30 @@ function calculateProfit(){
   $set('percPmOutput',  fmtPct(pPM));              $set('outputCostoPm', fmtEUR(costoPM));
   $set('outputPulizieOspite', fmtEUR(pulizieAnnuo));
   $set('outputWelcomeKit', fmtEUR(kitAnnuo));
+  $set('outputAssicurazione', fmtEUR(assicurazioneAnnuo));
   $set('outputUtenzeTotali', fmtEUR(utenze));
   $set('outputBaseImponibile', fmtEUR(baseImponibile));
   $set('percCedolareOutput', fmtPct(pCed));        $set('outputImposta', fmtEUR(imposta));
   $set('p6-cedolare-percent', fmtPct(pCed));       $set('p6-cedolare', fmtEUR(imposta));
   $set('p6-ota-percent', fmtPct(pOTA));
+  $set('p6-assicurazione', fmtEUR(assicurazioneAnnuo));
+  const assicurazioneRow = $g('p6-assicurazione-row');
+  if(assicurazioneRow){
+    assicurazioneRow.style.display = assicurazioneAnnuo > 0 ? '' : 'none';
+  }
+  const assicurazioneSub = $g('p6-assicurazione-sub');
+  if(assicurazioneSub){
+    if(assicurazioneAnnuo > 0){
+      const parts = [];
+      if(assicurazioneLabelResolved) parts.push(assicurazioneLabelResolved);
+      if(assicurazionePerStay > 0){
+        parts.push(`€ ${assicurazionePerStay.toFixed(2).replace('.', ',')} / prenotazione`);
+      }
+      assicurazioneSub.textContent = parts.join(' • ');
+    }else{
+      assicurazioneSub.textContent = '';
+    }
+  }
   $set('outputUtileNetto', fmtEUR(utileAnn));      $set('outputUtileMensile', fmtEUR(utileMese));
 
   // 10) Owner Value (SRL) — stima IRES + IRAP
@@ -528,7 +672,12 @@ function calculateProfit(){
     percentualePm: pPM,
     puntiDiForza: (($g('puntiForza')?.value||'').trim().split(/\r?\n/)
                     .map(s=>s.replace(/^-+\s*/,'').trim()).filter(Boolean)) || [],
-    kpi:{ occupazionePct: occ, adr: adr, fatturatoLordoNettoPulizie: lordoTotale },
+    kpi:{
+      occupazionePct: occ,
+      adr: adr,
+      fatturatoLordoNettoPulizie: lordoTotale,
+      fatturatoLordoTotale: lordoTotale
+    },
     spese:{
       pulizie: pulizieAnnuo,
       utenzeAmm: utenze,
@@ -546,6 +695,11 @@ function calculateProfit(){
       },
       ota: costoOTA,
       kit: kitAnnuo,
+      assicurazione: assicurazioneAnnuo,
+      assicurazioneDettaglio: {
+        perPrenotazione: assicurazionePerStay,
+        label: assicurazioneLabelResolved
+      },
       pm: costoPM,
       pmPct: pPM,
       unaTantum: sicurezzaTotale,
@@ -557,7 +711,7 @@ function calculateProfit(){
         totale: sicurezzaTotale
       }
     },
-    risultati:{ utileLordo: lordoTotale - (costoOTA + pulizieAnnuo + utenze + kitAnnuo + sicurezzaTotale),
+  risultati:{ utileLordo: lordoTotale - (costoOTA + pulizieAnnuo + utenze + kitAnnuo + assicurazioneAnnuo + sicurezzaTotale),
                 utileNetto: utileAnn,
                 mensileNetto: utileMese }
   };
@@ -912,11 +1066,11 @@ const prospectManager = (() => {
     try{
       const propertySlug = getSelectedProperty();
       if(!silent) setStatus('Caricamento elenco prospetti...', 'info');
-      const url = propertySlug ? `${PROSPECTS_ENDPOINT}?property=${encodeURIComponent(propertySlug)}` : PROSPECTS_ENDPOINT;
-  const res = await fetch(url);
+    const path = propertySlug ? `${PROSPECTS_PATH}?property=${encodeURIComponent(propertySlug)}` : PROSPECTS_PATH;
+    const res = await apiFetch(path);
       if(!res.ok) throw new Error(`Status ${res.status}`);
       const data = await res.json();
-  knownProspects = Array.isArray(data) ? data.slice() : [];
+    knownProspects = Array.isArray(data) ? data.slice() : [];
       const dropdownOptions = [{ label: '— Seleziona —', value: '' }];
       data.forEach(item => {
         const labelParts = [item.titolo || item.indirizzo1 || item.slug];
@@ -970,7 +1124,7 @@ const prospectManager = (() => {
     const silent = !!options.silent;
     try{
       if(!silent) setStatus('Caricamento prospetto...', 'info');
-      const res = await fetch(`${PROSPECTS_ENDPOINT}/${encodeURIComponent(slug)}`);
+  const res = await apiFetch(`${PROSPECTS_PATH}/${encodeURIComponent(slug)}`);
       if(!res.ok) throw new Error(`Status ${res.status}`);
       const data = await res.json();
       currentProspect = data;
@@ -1078,7 +1232,7 @@ const prospectManager = (() => {
       // Debug: log the cedolare value being saved so we can trace mismatches
       try{ console.log('Saving prospect metadata.percentualeCedolare =', metadata?.formState?.fields?.percentualeCedolare); }catch(e){}
       setStatus('Salvataggio in corso...', 'info');
-      const res = await fetch(PROSPECTS_ENDPOINT, { method: 'POST', body: fd });
+  const res = await apiFetch(PROSPECTS_PATH, { method: 'POST', body: fd });
       if(!res.ok){
         let payload;
         try{

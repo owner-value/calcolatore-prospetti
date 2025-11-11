@@ -8,12 +8,13 @@
   "scripts": {
     "start": "node backend/app.js",
     "start:local": "sh ./scripts/start-local.sh",
-  "push:local": "sh ./scripts/push-local.sh",
-  "push:live": "sh ./scripts/push-live.sh",
+    "start:web": "sh ./scripts/start-web.sh",
+    "push:local": "sh ./scripts/push-local.sh",
+    "push:live": "sh ./scripts/push-live.sh",
     "version:check": "sh ./scripts/show-version.sh",
     "deploy:push": "sh ./scripts/push-and-deploy.sh",
-  "backup": "cd backend && npm run backup",
-  "restore": "cd backend && npm run restore --",
+    "backup": "cd backend && npm run backup",
+    "restore": "cd backend && npm run restore --",
     "postinstall": "cd backend && npm install --no-audit --no-fund && npm run write-commit"
   }
 }

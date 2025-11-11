@@ -32,11 +32,11 @@ p{margin:.25rem 0 .75rem;color:var(--muted)}
 .panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:var(--shadow)}
 
 label span{display:block;font-size:13px;color:var(--muted);font-weight:700;margin-bottom:6px}
-input[type=number],input[type=text],input[type=date],input[type=search],textarea{
+input[type=number],input[type=text],input[type=date],input[type=search],textarea,select{
   width:100%;background:#fff;border:1px solid var(--line);border-radius:12px;
   padding:12px 14px;font-weight:600;outline:none;transition:border .15s,box-shadow .15s
 }
-input[type=number]:focus,textarea:focus,input[type=text]:focus,input[type=date]:focus,input[type=search]:focus{
+input[type=number]:focus,textarea:focus,input[type=text]:focus,input[type=date]:focus,input[type=search]:focus,select:focus{
   border-color:var(--brand);box-shadow:0 0 0 4px rgba(14,165,233,.15)
 }
 textarea{min-height:110px;resize:vertical}
