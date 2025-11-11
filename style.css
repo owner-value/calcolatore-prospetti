@@ -183,3 +183,8 @@ textarea{min-height:110px;resize:vertical}
 
 /* Print: non stampare il calcolatore */
 @media print{ #calculatorRoot{display:none!important} }
+
+.toolbar{
+  position:relative;
+  z-index:1000;
+}

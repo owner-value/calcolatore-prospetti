@@ -28,7 +28,7 @@
 
   <h1>Simulatore di Utile Netto Annuale</h1>
   <div class="hr"></div>
-  <p>Formula: <b>Base cedolare = Lordo Affitti − OTA (solo affitti) − PM</b>. Le commissioni OTA si applicano su <b>Affitti + Pulizie + Assicurazione</b>.</p>
+  <p>Formula: <b>Base cedolare = Lordo Affitti − OTA (solo affitti) − PM</b>. Il PM si calcola su <b>Ricavo Lordo Totale (Affitti + Pulizie + Assicurazione) − Pulizie − Assicurazione − OTA</b>. Le commissioni OTA si applicano su <b>Affitti + Pulizie + Assicurazione</b>.</p>
 
   <div class="grid cols-main">
     <!-- ============ INPUT (sinistra) ============ -->
@@ -289,13 +289,14 @@
     <!-- ============ OUTPUT (destra) ============ -->
     <div>
       <div class="panel summary" id="summaryPanel">
-        <h2>Riepilogo</h2>
-  <div class="row"><span>Ricavo Lordo Totale (Affitti + Pulizie + Assicurazione)</span><strong id="outputLordoTotale">€ 0,00</strong></div>
-        <div class="row"><span>Commissioni OTA (<span id="percOtaOutput">0%</span>)</span><strong class="bad" id="outputCommissioniOta">€ 0,00</strong></div>
-        <div class="row"><span>Costo PM (<span id="percPmOutput">0%</span>)</span><strong class="bad" id="outputCostoPm">€ 0,00</strong></div>
-        <div class="row"><span>Pulizie</span><strong class="bad" id="outputPulizieOspite">€ 0,00</strong></div>
-        <div class="row"><span>Welcome Kit</span><strong class="bad" id="outputWelcomeKit">€ 0,00</strong></div>
-  <div class="row"><span>Assicurazione</span><strong class="bad" id="outputAssicurazione">€ 0,00</strong></div>
+    <h2>Riepilogo</h2>
+    <div class="row"><span>Ricavo Lordo Prenotazioni</span><strong id="outputLordoPrenotazioni">€ 0,00</strong></div>
+    <div class="row"><span>Pulizie</span><strong class="bad" id="outputPulizieOspite">€ 0,00</strong></div>
+    <div class="row"><span>Assicurazione</span><strong class="bad" id="outputAssicurazione">€ 0,00</strong></div>
+    <div class="row"><span>Ricavo Lordo Totale (Affitti + Pulizie + Assicurazione)</span><strong id="outputLordoTotale">€ 0,00</strong></div>
+    <div class="row"><span>Welcome Kit</span><strong class="bad" id="outputWelcomeKit">€ 0,00</strong></div>
+    <div class="row"><span>Commissioni OTA (<span id="percOtaOutput">0%</span>)</span><strong class="bad" id="outputCommissioniOta">€ 0,00</strong></div>
+    <div class="row"><span>Costo PM (<span id="percPmOutput">0%</span>)</span><strong class="bad" id="outputCostoPm">€ 0,00</strong></div>
         <div class="row"><span>Utenze Totali (annue)</span><strong class="bad" id="outputUtenzeTotali">€ 0,00</strong></div>
         <div class="row"><span>Ring — setup</span><strong class="bad" id="outSumRingSetup">€ 0,00</strong></div>
         <div class="row"><span>Ring — abbonamento (12 mesi)</span><strong class="bad" id="outSumRingSubAnnuale">€ 0,00</strong></div>

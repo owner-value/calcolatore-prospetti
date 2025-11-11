@@ -26,7 +26,7 @@ npm run start:local
 
 ```bash
 npm run start:web
-# URL predefinito: http://localhost:8000/index.html
+# Si apre automaticamente http://localhost:8000/index.html (se possibile)
 # Per l'archivio: http://localhost:8000/pages/archivio/index.html#api=https://calcolatore-prospetti.onrender.com
 ```
 

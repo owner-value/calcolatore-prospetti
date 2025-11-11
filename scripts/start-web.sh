@@ -22,4 +22,13 @@ URL: http://localhost:${PORT}/index.html
 Premi CTRL+C per fermare il server.
 INFO
 
+FRONTEND_URL="http://localhost:${PORT}/index.html"
+if [ -z "${CI:-}" ]; then
+  if command -v open >/dev/null 2>&1; then
+    open "${FRONTEND_URL}" >/dev/null 2>&1 &
+  elif command -v xdg-open >/dev/null 2>&1; then
+    xdg-open "${FRONTEND_URL}" >/dev/null 2>&1 &
+  fi
+fi
+
 python3 -m http.server "$PORT"

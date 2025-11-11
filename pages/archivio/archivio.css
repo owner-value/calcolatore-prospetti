@@ -45,6 +45,8 @@ a:hover{text-decoration:underline}
 .header-links a{font-weight:700}
 
 .toolbar{
+  position:relative;
+  z-index:1000;
   display:flex;
   flex-wrap:wrap;
   gap:16px;

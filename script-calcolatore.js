@@ -524,6 +524,7 @@ function calculateProfit(){
   // 3) Lordi
   const lordoAffitti = adr * giorni;
   const lordoTotale = lordoAffitti + pulizieAnnuo + assicurazioneAnnuo;
+  $set('outputLordoPrenotazioni', fmtEUR(lordoAffitti));
   $set('outputLordoTotale', fmtEUR(lordoTotale));
 
   // 4) Commissioni
@@ -536,7 +537,7 @@ function calculateProfit(){
   const otaAssicurazione = assicurazioneAnnuo * (pOTA/100);
   const costoOTA   = otaAffitti + otaPulizie + otaAssicurazione;
 
-  const basePM = Math.max(lordoTotale - costoOTA, 0);
+  const basePM = Math.max(lordoTotale - costoOTA - pulizieAnnuo - assicurazioneAnnuo, 0);
   const costoPM = basePM * (pPM/100);
 
   // 5) Utenze fisse annuali
@@ -768,31 +769,12 @@ function prepareReportForPrint(force=false){
 }
 
 function printWithDate(options = {}){
-  const { forceAsync = false } = options;
   prepareReportForPrint(true);
-  const triggerPrint = () => {
-    try{
-      window.print();
-    }catch(err){
-      console.warn('window.print() failed', err);
-    }
-  };
-
-  const userActivation = (() => {
-    try{
-      const ua = navigator && navigator.userActivation;
-      return !!(ua && ua.isActive);
-    }catch(err){
-      return false;
-    }
-  })();
-
-  if(!forceAsync && userActivation){
-    triggerPrint();
-    return;
+  try {
+    window.print();
+  } catch (err) {
+    console.warn('window.print() failed', err);
   }
-
-  requestAnimationFrame(() => setTimeout(triggerPrint, 20));
 }
 
 window.printWithDate = printWithDate;
@@ -1000,7 +982,6 @@ const prospectManager = (() => {
         toast.style.color = '#fff';
         toast.style.borderRadius = '6px';
         toast.style.boxShadow = '0 4px 16px rgba(2,6,23,0.2)';
-        toast.style.zIndex = 99999;
         toast.style.fontWeight = '700';
         document.body.appendChild(toast);
       }
