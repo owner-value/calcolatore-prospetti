@@ -534,6 +534,16 @@ function calculateProfit(){
       utenzeAmm: utenze,
       utenzeMensili,
       utenzeMesi: mesiUtenze,
+      includeAmministrazione: ammMens > 0,
+      utenzeDettaglio: {
+        luceGasMensile: lucegasMens,
+        wifiMensile: wifiMens,
+        amministrazioneMensile: ammMens,
+        amministrazioneAnnua: ammMens * mesiUtenze,
+        acquaMensile: acquaMens,
+        extraMensili: extraFixedMens,
+        totaleMensile: utenzeMensili
+      },
       ota: costoOTA,
       kit: kitAnnuo,
       pm: costoPM,

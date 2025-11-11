@@ -25,6 +25,13 @@
     if($('p6-pulizie')) $('p6-pulizie').textContent = eur(m?.spese?.pulizie ?? 0);
     const uaVal = m?.spese?.utenzeAmm ?? 0;
     if($('p6-ua'))      $('p6-ua').textContent      = eur(uaVal);
+    const uaLabel = $('p6-ua-label');
+    if(uaLabel){
+      const hasAdmin = Boolean(m?.spese?.includeAmministrazione) ||
+        ((m?.spese?.utenzeDettaglio?.amministrazioneMensile ?? 0) > 0) ||
+        ((m?.spese?.utenzeDettaglio?.amministrazioneAnnua ?? 0) > 0);
+      uaLabel.textContent = hasAdmin ? 'Utenze e amministrazione' : 'Utenze';
+    }
     const uaRow = $('p6-ua-row');
     if(uaRow){ uaRow.style.display = uaVal > 0 ? '' : 'none'; }
     if($('p6-ota'))     $('p6-ota').textContent     = eur(m?.spese?.ota ?? 0);
