@@ -356,9 +356,9 @@
         <img src="https://cdn.prod.website-files.com/62a45e911e39a864ff1d018d/65552313c7ee9c9a8cac0251_Logo-orizzontale%202%20(1).svg" alt="">
         <div class="date" id="p3-data">—</div>
       </div>
-      <div class="h2">I nostri servizi e le<br>nostre garanzie</div>
-      <div class="hr"></div>
-      <div class="info-container">
+  <div class="h2">I nostri servizi e le<br>nostre garanzie</div>
+  <div class="hr"></div>
+  <div class="info-container services-padding">
       <table class="table">
         <tr>
           <td>Creazione annuncio professionale e pubblicazione sui maggiori siti OTA</td>
@@ -420,9 +420,14 @@
       <div class="stat"><div class="lbl">Tasso di occupazione medio</div><div id="p5-occ" class="big">—</div></div>
       <div class="stat"><div class="lbl">Media affitto giornaliera</div><div id="p5-adr" class="big">—</div></div>
       <div class="h3 muted" style="margin-top:26px">Reddito lordo stimato</div>
-      <div class="box"><div style="display:flex;justify-content:space-between;align-items:center">
-        <div class="lbl">Fatturato Lordo Annuo</div><div id="p5-fatt" class="big">—</div>
-      </div></div>
+      <div class="box box-accent">
+        <div class="box-row">
+          <div class="label-stack">
+            <div class="lbl">Fatturato Lordo Annuo</div>
+          </div>
+          <div id="p5-fatt" class="big">—</div>
+        </div>
+      </div>
       <span class="small">Per “fatturato lordo annuo” si intende quanto ricevuto dalle piattaforme o prenotazioni dirette.</span>
     </div>
   </section>
@@ -436,15 +441,66 @@
       </div>
       <div class="h2">Previsioni di Spesa</div>
       <div class="info-container">
-      <table class="table">
-        <tr><td>Pulizie / Noleggio biancheria</td><td id="p6-pulizie" class="big">—</td></tr>
-        <tr id="p6-ua-row"><td id="p6-ua-label">Utenze</td><td id="p6-ua" class="big">—</td></tr>
-        <tr><td>Commissioni OTA <br>(<span id="p6-ota-percent"></span> su affitti + pulizie)</td><td id="p6-ota" class="big">—</td></tr>
-        <tr><td>Kit benvenuto</td><td id="p6-kit" class="big">—</td></tr>
-        <tr><td>Commissione Owner Value (<span id="p6-pm-pct">—</span>)</td><td id="p6-pm" class="big">—</td></tr>
-        <tr><td>Imposta cedolare secca (<span id="p6-cedolare-percent">—</span>)<br>(calcolata al netto del fatturato)</td><td id="p6-cedolare" class="big">—</td></tr>
-        <tr><td id="p6-una-label">Spese iniziali una tantum</td><td id="p6-una" class="big">—</td></tr>
-      </table>
+        <div class="box expense-box" id="p6-pulizie-row">
+          <div class="box-row">
+            <div class="label-stack">
+              <div class="lbl">Pulizie / Noleggio biancheria</div>
+            </div>
+            <div id="p6-pulizie" class="big">—</div>
+          </div>
+        </div>
+        <div class="box expense-box" id="p6-ua-row">
+          <div class="box-row">
+            <div class="label-stack">
+              <div class="lbl" id="p6-ua-label">Utenze</div>
+            </div>
+            <div id="p6-ua" class="big">—</div>
+          </div>
+        </div>
+        <div class="box expense-box" id="p6-ota-row">
+          <div class="box-row">
+            <div class="label-stack">
+              <div class="lbl">Commissioni OTA</div>
+              <div class="label-sub">(<span id="p6-ota-percent"></span> su affitti + pulizie)</div>
+            </div>
+            <div id="p6-ota" class="big">—</div>
+          </div>
+        </div>
+        <div class="box expense-box" id="p6-kit-row">
+          <div class="box-row">
+            <div class="label-stack">
+              <div class="lbl">Kit benvenuto</div>
+              <div class="label-sub">(Carta igienica, sapone, shampoo, fette biscottate, marmellate, caffè)</div>
+            </div>
+            <div id="p6-kit" class="big">—</div>
+          </div>
+        </div>
+        <div class="box expense-box" id="p6-pm-row">
+          <div class="box-row">
+            <div class="label-stack">
+              <div class="lbl">Commissione Owner Value</div>
+              <div class="label-sub">(<span id="p6-pm-pct">—</span>)</div>
+            </div>
+            <div id="p6-pm" class="big">—</div>
+          </div>
+        </div>
+        <div class="box expense-box" id="p6-cedolare-row">
+          <div class="box-row">
+            <div class="label-stack">
+              <div class="lbl">Imposta cedolare secca</div>
+              <div class="label-sub">(<span id="p6-cedolare-percent">—</span> calcolata al netto del fatturato)</div>
+            </div>
+            <div id="p6-cedolare" class="big">—</div>
+          </div>
+        </div>
+        <div class="box expense-box" id="p6-una-row">
+          <div class="box-row">
+            <div class="label-stack">
+              <div class="lbl" id="p6-una-label">Spese iniziali una tantum</div>
+            </div>
+            <div id="p6-una" class="big">—</div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -458,14 +514,20 @@
       </div>
       <div class="h2">Utile Lordo e Netto</div>
       <div class="info-container">
-      <div class="box">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div class="lbl">Utile Lordo Annuo</div><div id="p7-utile-lordo" class="big">—</div>
+      <div class="box box-accent">
+        <div class="box-row">
+          <div class="label-stack">
+            <div class="lbl">Utile Lordo Annuo</div>
+          </div>
+          <div id="p7-utile-lordo" class="big">—</div>
         </div>
       </div>
-      <div class="box">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div class="lbl">Utile Netto Annuo</div><div id="p7-utile-netto" class="big">—</div>
+      <div class="box box-accent">
+        <div class="box-row">
+          <div class="label-stack">
+            <div class="lbl">Utile Netto Annuo</div>
+          </div>
+          <div id="p7-utile-netto" class="big">—</div>
         </div>
       </div>
       <p class="center">Mensile Netto: <span id="p7-mensile-netto" class="big">—</span></p>

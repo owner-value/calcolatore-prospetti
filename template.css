@@ -22,7 +22,13 @@ p{margin:10px 0;color:#111827}
 .list li{margin:10px 0}
 .stat{border:3px solid var(--brand-soft);border-radius:16px;padding:18px 20px;display:flex;justify-content:space-between;align-items:center;margin:12px 0}
 .stat .lbl{font-size:35px}
-.box{border:3px solid var(--brand-soft);border-radius:16px;padding:18px 20px;margin:16px 0}
+.box{border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin:16px 0;background:#fff}
+.box-row{display:flex;justify-content:space-between;align-items:center;gap:16px}
+.label-stack{display:flex;flex-direction:column;gap:6px}
+.label-sub{font-size:16px;line-height:1.35;font-weight:600;color:var(--muted)}
+.box-accent{border:3px solid var(--brand-soft)}
+.expense-box{border:0;border-bottom:1px solid var(--line);border-radius:0;margin:0;padding:12px 6px;background:transparent}
+.services-padding{padding:28px 34px;border-radius:16px;background:#fff;border:1px solid var(--line)}
 .table{width:100%;border-collapse:collapse;margin:6px 0 0}
 .table tr+tr td{border-top:1px dashed #e9e9ee}
 .table td{padding:10px 0;vertical-align:top}
