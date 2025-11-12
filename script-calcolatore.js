@@ -538,6 +538,7 @@ function calculateProfit(){
   const costoOTA   = otaAffitti + otaPulizie + otaAssicurazione;
 
   const basePM = Math.max(lordoTotale - costoOTA - pulizieAnnuo - assicurazioneAnnuo, 0);
+  $set('outputBasePM', fmtEUR(basePM));
   const costoPM = basePM * (pPM/100);
 
   // 5) Utenze fisse annuali
@@ -613,10 +614,9 @@ function calculateProfit(){
   }
 
   // 7) Base imponibile & imposta cedolare
-  const baseImponibile = Math.max(lordoAffitti - otaAffitti - costoPM - assicurazioneAnnuo, 0);
-  const imposta = baseImponibile * (pCed/100);
-
-  // 8) Totali e utile
+  // Cedolare secca su netto: Lordo Totale - Pulizie - Assicurazione - OTA - Costo PM
+  const baseCedolare = Math.max(lordoTotale - pulizieAnnuo - assicurazioneAnnuo - costoOTA - costoPM, 0);
+  const imposta = baseCedolare * (pCed/100);
   const costiOperativi = costoOTA + costoPM + pulizieAnnuo + utenze + kitAnnuo + assicurazioneAnnuo + sicurezzaTotale;
   const utileAnn = lordoTotale - costiOperativi - imposta;
   const utileMese = utileAnn / 12;
@@ -628,7 +628,7 @@ function calculateProfit(){
   $set('outputWelcomeKit', fmtEUR(kitAnnuo));
   $set('outputAssicurazione', fmtEUR(assicurazioneAnnuo));
   $set('outputUtenzeTotali', fmtEUR(utenze));
-  $set('outputBaseImponibile', fmtEUR(baseImponibile));
+  $set('outputBaseImponibile', fmtEUR(baseCedolare));
   $set('percCedolareOutput', fmtPct(pCed));        $set('outputImposta', fmtEUR(imposta));
   $set('p6-cedolare-percent', fmtPct(pCed));       $set('p6-cedolare', fmtEUR(imposta));
   $set('p6-ota-percent', fmtPct(pOTA));
