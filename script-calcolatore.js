@@ -537,7 +537,7 @@ function calculateProfit(){
   const otaAssicurazione = assicurazioneAnnuo * (pOTA/100);
   const costoOTA   = otaAffitti + otaPulizie + otaAssicurazione;
 
-  const basePM = Math.max(lordoTotale - costoOTA - pulizieAnnuo - assicurazioneAnnuo, 0);
+  const basePM = Math.max(lordoTotale - costoOTA, 0);
   const costoPM = basePM * (pPM/100);
 
   // 5) Utenze fisse annuali
