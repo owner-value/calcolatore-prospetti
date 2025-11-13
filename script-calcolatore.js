@@ -659,6 +659,38 @@ function calculateProfit(){
         extraList.appendChild(row);
       });
     }
+    // Append a summary row for Optional Extras inside Panel Summary list
+    try{
+      const includeOpt = !!($g('includeOptionalExtras')?.checked);
+      const optionalItems = [...document.querySelectorAll('#optionalCostsContainer .opt-row')]
+        .map(r => ({
+          name: (r.querySelector('[data-type="opt-name"]').value||'').trim(),
+          amount: Math.max(0, +(r.querySelector('[data-type="opt-amount"]').value||0))
+        }))
+        .filter(it => it.name && it.amount > 0);
+      // remove existing optional summary row if any
+      const existing = extraList.querySelector('[data-role="optional-summary"]');
+      if(existing) existing.remove();
+      if(includeOpt && optionalItems.length){
+        const totalOpt = optionalItems.reduce((s,it)=> s+it.amount, 0);
+        const row=document.createElement('div');
+        row.className='row';
+        row.setAttribute('data-role','optional-summary');
+        const span=document.createElement('span');
+        span.textContent='Spese Extra Opzionali';
+        const strong=document.createElement('strong');
+        strong.className='bad';
+        strong.textContent=fmtEUR(totalOpt);
+        row.append(span,strong);
+        // insert after first row (Kit), else append
+        const first = extraList.querySelector('.row');
+        if(first && first.parentNode === extraList){
+          first.insertAdjacentElement('afterend', row);
+        }else{
+          extraList.appendChild(row);
+        }
+      }
+    }catch(e){ console.warn('optional summary in securityExtraList failed', e); }
   }
 
   // Optional extras (editor-only data, not part of calculations)
@@ -753,24 +785,36 @@ function calculateProfit(){
       row.append(left, right);
       sumRow.appendChild(row);
 
-      // place before Base imponibile cedolare, and after all previous boxes
-      let cedRow = document.getElementById('p6-cedolare-row');
-      if(!cedRow){
-        // try fallback by text match
-        const boxes = Array.from(document.querySelectorAll('.box.expense-box'));
-        cedRow = boxes.find(b => (b.textContent||'').toLowerCase().includes('imposta cedolare secca')) || null;
+      // Place in Panel Summary: prefer after Kit Sicurezza; robust fallbacks
+      let placed = false;
+      try{ console.debug('[OV] optional summary: items', optItems.length, 'total', optTotal, 'flag', includeOptional); }catch(e){}
+      const kitRow = document.getElementById('p6-una-row');
+      if(kitRow && kitRow.parentNode){
+        kitRow.parentNode.insertBefore(sumRow, kitRow.nextSibling);
+        placed = true;
       }
-      if(cedRow && cedRow.parentNode){
-        if(sumRow.parentNode !== cedRow.parentNode){
-          cedRow.parentNode.insertBefore(sumRow, cedRow);
-        }else{
-          cedRow.parentNode.insertBefore(sumRow, cedRow);
+      if(!placed){
+        const known = document.getElementById('p6-pm-row') || document.getElementById('p6-ota-row') || document.getElementById('p6-cedolare-row');
+        if(known && known.parentNode){
+          known.parentNode.appendChild(sumRow);
+          placed = true;
         }
-      }else{
-        // fallback: append at end of the summary column container
-        const summaryCol = document.querySelector('#page6 .info-container, .summary-column, .spese-container') || document.body;
-        if(summaryCol){ summaryCol.appendChild(sumRow); }
       }
+      if(!placed){
+        const p6una = document.getElementById('p6-una');
+        if(p6una && p6una.parentNode && p6una.parentNode.parentNode){
+          p6una.parentNode.parentNode.parentNode.insertBefore(sumRow, p6una.parentNode.parentNode.nextSibling);
+          placed = true;
+        }
+      }
+      if(!placed){
+        const summaryCol = (document.querySelector('#page6 .info-container')
+          || document.querySelector('.summary-column')
+          || document.querySelector('.spese-container')
+          || document.body);
+        if(summaryCol){ summaryCol.appendChild(sumRow); placed = true; }
+      }
+      try{ console.debug('[OV] optional summary placed:', placed); }catch(e){}
     }
   }catch(e){ console.warn('optional extras summary failed', e); }
   // Mirror extra items as separate boxes after Kit Sicurezza
