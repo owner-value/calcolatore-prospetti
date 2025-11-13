@@ -62,29 +62,13 @@
     if($('p6-pm-pct'))   $('p6-pm-pct').textContent   = pct(m?.spese?.pmPct ?? m?.percentualePm ?? 0);
     if($('p6-una')){
       const sicurezza = m?.spese?.sicurezza || {};
-      const parts = [];
-      if(typeof sicurezza.extraManuale === 'number' && sicurezza.extraManuale > 0){
-        parts.push(eur(sicurezza.extraManuale));
-      }
-      (sicurezza.extraDettagli || []).forEach(item => {
-        if(!item || typeof item.amount !== 'number' || item.amount <= 0) return;
-        const label = item.label || 'Spesa extra';
-        parts.push(`${label}: ${eur(item.amount)}`);
-      });
-      $('p6-una').textContent = parts.length ? parts.join(' • ') : '—';
+      // DO NOT sum extras here; show only the Kit amount
+      const kitOnly = typeof sicurezza.extraManuale === 'number' ? Math.max(0, sicurezza.extraManuale) : 0;
+      $('p6-una').textContent = kitOnly > 0 ? eur(kitOnly) : '—';
     }
-    const unaLabel = $('p6-una-label');
-    if(unaLabel){
-      const sicurezza = m?.spese?.sicurezza || {};
-      const firstLabel = (sicurezza.extraDettagli && sicurezza.extraDettagli[0] && sicurezza.extraDettagli[0].label) || '';
-      if(firstLabel){
-        unaLabel.textContent = firstLabel;
-      }else if(sicurezza.extraManuale > 0){
-        unaLabel.textContent = 'Kit Sicurezza';
-      }else{
-        unaLabel.textContent = '';
-      }
-    }
+    // Do NOT override the static label in the report
+    // p6-una-label must remain unchanged by dynamic data
+    // Intentionally no-op here to preserve original label
 
     if($('p7-utile-lordo'))   $('p7-utile-lordo').textContent   = eur(m?.risultati?.utileLordo ?? 0);
     if($('p7-utile-netto'))   $('p7-utile-netto').textContent   = eur(m?.risultati?.utileNetto ?? 0);

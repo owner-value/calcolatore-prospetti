@@ -591,7 +591,7 @@ function calculateProfit(){
       const row=document.createElement('div');
       row.className='row';
       const span=document.createElement('span');
-      span.textContent='Kit Sicurezza';
+      span.textContent= 'Kit Sicurezza';
       const strong=document.createElement('strong');
       strong.className='bad';
       strong.textContent=fmtEUR(unaTantumManuali);
@@ -612,6 +612,39 @@ function calculateProfit(){
       });
     }
   }
+  // Mirror extra items as separate boxes after Kit Sicurezza
+  try{
+    const anchor = document.getElementById('p6-una-row');
+    if(anchor){
+      let cont = document.getElementById('p6-extras-container');
+      if(!cont){
+        cont = document.createElement('div');
+        cont.id = 'p6-extras-container';
+        cont.setAttribute('data-persist-ignore','true');
+        anchor.parentNode.insertBefore(cont, anchor.nextSibling);
+      }
+      cont.innerHTML = '';
+      extraDevices.forEach((it, i) => {
+        const box = document.createElement('div');
+        box.className = 'box expense-box';
+        box.id = `p6-extra-${i+1}`;
+        const row = document.createElement('div');
+        row.className = 'box-row';
+        const labelStack = document.createElement('div');
+        labelStack.className = 'label-stack';
+        const lbl = document.createElement('div');
+        lbl.className = 'lbl';
+        lbl.textContent = it.label || 'Spesa extra';
+        labelStack.appendChild(lbl);
+        const amount = document.createElement('div');
+        amount.className = 'big';
+        amount.textContent = fmtEUR(it.amount);
+        row.append(labelStack, amount);
+        box.appendChild(row);
+        cont.appendChild(box);
+      });
+    }
+  }catch(e){ console.warn('extras container render failed', e); }
 
   // 7) Base imponibile & imposta cedolare
   // Cedolare secca su netto: Lordo Totale - Pulizie - Assicurazione - OTA - Costo PM
