@@ -269,6 +269,26 @@
         <button class="btn" style="margin-top:10px" onclick="addDeviceCostField()">+ Aggiungi spesa extra</button>
       </div>
 
+      <!-- Spese Extra Opzionali -->
+      <div class="card" id="optionalExtrasCard">
+        <h2>Spese Extra Opzionali</h2>
+        <label style="display:flex;align-items:center;gap:10px"><input type="checkbox" id="includeOptionalExtras" onchange="calculateProfit()"> <span>Includi nel riepilogo (totali a destra)</span></label>
+        <div id="optionalCostsContainer" class="grid" style="gap:14px;margin-top:10px">
+          <div class="opt-row">
+            <label><span>Descrizione</span>
+              <input type="text" data-type="opt-name" placeholder="Spesa Extra Opzionale" oninput="calculateProfit()">
+            </label>
+            <label><span>Importo (€)</span>
+              <input type="number" data-type="opt-amount" value="0" min="0" step="1" oninput="calculateProfit()">
+            </label>
+            <div class="device-actions">
+              <button type="button" class="btn btn-minor" onclick="removeOptRow(this)">Rimuovi</button>
+            </div>
+          </div>
+        </div>
+        <button class="btn" style="margin-top:10px" onclick="addOptionalCostField()">+ Aggiungi spesa extra opzionale</button>
+      </div>
+
       <!-- 6) Punti di forza -->
       <div class="card">
         <h2>6) Punti di Forza</h2>

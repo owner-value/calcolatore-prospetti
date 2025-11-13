@@ -445,6 +445,54 @@ function removeDeviceRow(btn){
   if(row){ row.remove(); calculateProfit(); }
 }
 
+function addOptionalCostField(name='', amount=0, opts={}){
+  const cont = document.getElementById('optionalCostsContainer');
+  if(!cont) return;
+  const wrap = document.createElement('div');
+  wrap.className = 'opt-row';
+  const l1 = document.createElement('label');
+  l1.innerHTML = '<span>Descrizione</span>';
+  const inputName = document.createElement('input');
+  inputName.type = 'text';
+  inputName.dataset.type = 'opt-name';
+  inputName.placeholder = 'Spesa Extra Opzionale';
+  inputName.value = name || '';
+  l1.appendChild(inputName);
+
+  const l2 = document.createElement('label');
+  l2.innerHTML = '<span>Importo (€)</span>';
+  const inputAmount = document.createElement('input');
+  inputAmount.type = 'number';
+  inputAmount.dataset.type = 'opt-amount';
+  inputAmount.min = '0';
+  inputAmount.step = '1';
+  inputAmount.value = amount || 0;
+  l2.appendChild(inputAmount);
+
+  const actions = document.createElement('div');
+  actions.className = 'device-actions';
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'btn btn-minor';
+  btn.textContent = 'Rimuovi';
+  btn.addEventListener('click', () => { wrap.remove(); calculateProfit(); });
+  actions.appendChild(btn);
+
+  wrap.append(l1, l2, actions);
+  cont.appendChild(wrap);
+  inputName.addEventListener('input', calculateProfit);
+  inputAmount.addEventListener('input', calculateProfit);
+  if(!opts.skipCalc) calculateProfit();
+}
+
+function removeOptRow(btn){
+  const row = btn && btn.closest('.opt-row');
+  if(row){ row.remove(); calculateProfit(); }
+}
+
+window.addOptionalCostField = addOptionalCostField;
+window.removeOptRow = removeOptRow;
+
 /* ============= Core Calculation ============= */
 function calculateProfit(){
   // Data ISO default oggi se vuota
@@ -612,6 +660,119 @@ function calculateProfit(){
       });
     }
   }
+
+  // Optional extras (editor-only data, not part of calculations)
+  const includeOptional = !!($g('includeOptionalExtras')?.checked);
+  // Gather optional items: valid if name AND amount > 0
+  const optItems = [...document.querySelectorAll('#optionalCostsContainer .opt-row')]
+    .map(row => {
+      const name = (row.querySelector('[data-type="opt-name"]')?.value || '').trim();
+      const amount = Math.max(0, +(row.querySelector('[data-type="opt-amount"]')?.value || 0));
+      return { label: name, amount };
+    })
+    .filter(it => it.label && it.amount > 0);
+
+  // Render optional extras boxes in PDF/preview whenever there are valid items.
+  // Style: green border when flag OFF, no special border when flag ON.
+  try{
+    const anchor = document.getElementById('p6-extras-container') || document.getElementById('p6-una-row');
+    if(anchor){
+      let cont = document.getElementById('p6-optional-extras');
+      if(!optItems.length){
+        if(cont) cont.remove ? cont.remove() : (cont.innerHTML = '');
+      }else{
+        if(!cont){
+          cont = document.createElement('div');
+          cont.id = 'p6-optional-extras';
+          cont.setAttribute('data-persist-ignore','true');
+          anchor.parentNode.insertBefore(cont, anchor.nextSibling);
+        }
+        cont.innerHTML = '';
+        // toggle green border class based on flag
+        if(includeOptional){
+          cont.classList.remove('optional-green');
+        }else{
+          cont.classList.add('optional-green');
+        }
+        optItems.forEach((it, i) => {
+          const box = document.createElement('div');
+          box.className = 'box expense-box';
+          box.id = `p6-opt-${i+1}`;
+          const row = document.createElement('div');
+          row.className = 'box-row';
+          const left = document.createElement('div');
+          left.className = 'label-stack';
+          const lbl = document.createElement('div');
+          lbl.className = 'lbl';
+          lbl.textContent = it.label || 'Spesa extra opzionale';
+          // when flag is OFF, show a small note "OPZIONALE" under the label
+          if(!includeOptional){
+            const note = document.createElement('div');
+            note.className = 'label-sub optional-note';
+            note.textContent = 'OPZIONALE';
+            left.appendChild(lbl);
+            left.appendChild(note);
+          }else{
+            left.appendChild(lbl);
+          }
+          const right = document.createElement('div');
+          right.className = 'big';
+          right.textContent = fmtEUR(it.amount);
+          row.append(left, right);
+          box.appendChild(row);
+          cont.appendChild(box);
+        });
+      }
+    }
+  }catch(e){ console.warn('render optional extras failed', e); }
+
+  // Add/remove a dedicated summary row for optional extras when flag is ON
+  try{
+    const optTotal = optItems.reduce((s, it) => s + it.amount, 0);
+    let sumRow = document.getElementById('p6-optional-summary-row');
+    if(!includeOptional || optTotal <= 0){
+      if(sumRow) sumRow.remove();
+    }else{
+      if(!sumRow){
+        sumRow = document.createElement('div');
+        sumRow.className = 'box expense-box';
+        sumRow.id = 'p6-optional-summary-row';
+      }
+      sumRow.innerHTML = '';
+      const row = document.createElement('div');
+      row.className = 'box-row';
+      const left = document.createElement('div');
+      left.className = 'label-stack';
+      const lbl = document.createElement('div');
+      lbl.className = 'lbl';
+      lbl.textContent = 'Spese Extra Opzionali';
+      left.appendChild(lbl);
+      const right = document.createElement('div');
+      right.className = 'big';
+      right.textContent = fmtEUR(optTotal);
+      row.append(left, right);
+      sumRow.appendChild(row);
+
+      // place before Base imponibile cedolare, and after all previous boxes
+      let cedRow = document.getElementById('p6-cedolare-row');
+      if(!cedRow){
+        // try fallback by text match
+        const boxes = Array.from(document.querySelectorAll('.box.expense-box'));
+        cedRow = boxes.find(b => (b.textContent||'').toLowerCase().includes('imposta cedolare secca')) || null;
+      }
+      if(cedRow && cedRow.parentNode){
+        if(sumRow.parentNode !== cedRow.parentNode){
+          cedRow.parentNode.insertBefore(sumRow, cedRow);
+        }else{
+          cedRow.parentNode.insertBefore(sumRow, cedRow);
+        }
+      }else{
+        // fallback: append at end of the summary column container
+        const summaryCol = document.querySelector('#page6 .info-container, .summary-column, .spese-container') || document.body;
+        if(summaryCol){ summaryCol.appendChild(sumRow); }
+      }
+    }
+  }catch(e){ console.warn('optional extras summary failed', e); }
   // Mirror extra items as separate boxes after Kit Sicurezza
   try{
     const anchor = document.getElementById('p6-una-row');
@@ -874,7 +1035,7 @@ function saveToReport(model){
 
 function gatherFormValues(){
   const root = document.getElementById('calculatorRoot');
-  const result = { fields: {}, fixedExtras: [], deviceCosts: [] };
+  const result = { fields: {}, fixedExtras: [], deviceCosts: [], optionalExtras: [], includeOptionalExtras: false };
   if(!root) return result;
 
   root.querySelectorAll('input, textarea, select').forEach(el => {
@@ -900,6 +1061,19 @@ function gatherFormValues(){
     const amountEl = row.querySelector('[data-type="device-extra"]');
     if(!nameEl && !amountEl) return;
     result.deviceCosts.push({
+      name: nameEl ? nameEl.value : '',
+      amount: amountEl ? amountEl.value : ''
+    });
+  });
+
+  // optional extras
+  const includeOpt = document.getElementById('includeOptionalExtras');
+  result.includeOptionalExtras = !!(includeOpt && includeOpt.checked);
+  root.querySelectorAll('#optionalCostsContainer .opt-row').forEach(row => {
+    const nameEl = row.querySelector('[data-type="opt-name"]');
+    const amountEl = row.querySelector('[data-type="opt-amount"]');
+    if(!nameEl && !amountEl) return;
+    result.optionalExtras.push({
       name: nameEl ? nameEl.value : '',
       amount: amountEl ? amountEl.value : ''
     });
@@ -939,7 +1113,7 @@ function setDeviceRows(items){
 
 function restoreFormValues(state){
   if(!state || typeof state !== 'object') return;
-  const { fields = {}, fixedExtras = [], deviceCosts = [] } = state;
+  const { fields = {}, fixedExtras = [], deviceCosts = [], optionalExtras = [], includeOptionalExtras = false } = state;
 
   Object.entries(fields).forEach(([id, value]) => {
     const el = document.getElementById(id);
@@ -958,6 +1132,20 @@ function restoreFormValues(state){
   });
 
   setDeviceRows(deviceCosts);
+  // restore optional extras
+  try{
+    const cont = document.getElementById('optionalCostsContainer');
+    if(cont){
+      cont.querySelectorAll('.opt-row').forEach(row => row.remove());
+      if(Array.isArray(optionalExtras) && optionalExtras.length){
+        optionalExtras.forEach(item => addOptionalCostField(item?.name || '', item?.amount ?? 0, { skipCalc: true }));
+      }else{
+        addOptionalCostField('', 0, { skipCalc: true });
+      }
+    }
+    const chk = document.getElementById('includeOptionalExtras');
+    if(chk){ chk.checked = !!includeOptionalExtras; }
+  }catch(e){ console.warn('restore optional extras failed', e); }
   calculateProfit();
 }
 
