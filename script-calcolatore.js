@@ -639,7 +639,7 @@ function calculateProfit(){
       const row=document.createElement('div');
       row.className='row';
       const span=document.createElement('span');
-      span.textContent= 'Kit Sicurezza';
+      span.innerHTML= 'Kit Sicurezza<br>(Estintore, rilevatore fumo, monossido di carbonio, gas combustibile)';
       const strong=document.createElement('strong');
       strong.className='bad';
       strong.textContent=fmtEUR(unaTantumManuali);
