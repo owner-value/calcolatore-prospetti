@@ -628,6 +628,12 @@ function calculateProfit(){
   $set('outRingSetup', fmtEUR(ringSetup));
   $set('outRingSubAnnuale', fmtEUR(ringSubAnn));
   $set('outputCostoRingAnnuale', fmtEUR(ringTotale));
+  // Update PDF/report row live if present
+  $set('p6-ring', fmtEUR(ringTotale));
+  // Notify embedded report (live update)
+  try{
+    window.postMessage({ type: 'ov:update', field: 'p6-ring', value: fmtEUR(ringTotale) }, '*');
+  }catch(e){ /* noop */ }
 
   // Output riepilogo sicurezza
   $set('outSumRingSetup', fmtEUR(ringSetup));
@@ -754,6 +760,17 @@ function calculateProfit(){
           box.appendChild(row);
           cont.appendChild(box);
         });
+
+        // Ensure optional extras block is always last in PDF, after Ring row
+        try{
+          const ringRow = document.getElementById('p6-ring-row');
+          if(ringRow && ringRow.parentNode){
+            ringRow.parentNode.insertBefore(cont, ringRow.nextSibling);
+          }else{
+            const parent = document.getElementById('p6-una-row')?.parentNode || cont.parentNode;
+            if(parent) parent.appendChild(cont);
+          }
+        }catch(_e){}
       }
     }
   }catch(e){ console.warn('render optional extras failed', e); }
@@ -785,34 +802,19 @@ function calculateProfit(){
       row.append(left, right);
       sumRow.appendChild(row);
 
-      // Place in Panel Summary: prefer after Kit Sicurezza; robust fallbacks
+      // Place summary row ALWAYS after Ring row
       let placed = false;
       try{ console.debug('[OV] optional summary: items', optItems.length, 'total', optTotal, 'flag', includeOptional); }catch(e){}
-      const kitRow = document.getElementById('p6-una-row');
-      if(kitRow && kitRow.parentNode){
-        kitRow.parentNode.insertBefore(sumRow, kitRow.nextSibling);
+      const ringRow = document.getElementById('p6-ring-row');
+      if(ringRow && ringRow.parentNode){
+        ringRow.parentNode.insertBefore(sumRow, ringRow.nextSibling);
         placed = true;
       }
       if(!placed){
-        const known = document.getElementById('p6-pm-row') || document.getElementById('p6-ota-row') || document.getElementById('p6-cedolare-row');
-        if(known && known.parentNode){
-          known.parentNode.appendChild(sumRow);
-          placed = true;
-        }
-      }
-      if(!placed){
-        const p6una = document.getElementById('p6-una');
-        if(p6una && p6una.parentNode && p6una.parentNode.parentNode){
-          p6una.parentNode.parentNode.parentNode.insertBefore(sumRow, p6una.parentNode.parentNode.nextSibling);
-          placed = true;
-        }
-      }
-      if(!placed){
-        const summaryCol = (document.querySelector('#page6 .info-container')
-          || document.querySelector('.summary-column')
-          || document.querySelector('.spese-container')
-          || document.body);
-        if(summaryCol){ summaryCol.appendChild(sumRow); placed = true; }
+        // Fallback: append to container
+        const infoContainer = document.querySelector('#page6 .info-container') || document.body;
+        infoContainer.appendChild(sumRow);
+        placed = true;
       }
       try{ console.debug('[OV] optional summary placed:', placed); }catch(e){}
     }

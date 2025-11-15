@@ -60,6 +60,10 @@
     }
     if($('p6-pm'))      $('p6-pm').textContent      = eur(m?.spese?.pm ?? 0);
     if($('p6-pm-pct'))   $('p6-pm-pct').textContent   = pct(m?.spese?.pmPct ?? m?.percentualePm ?? 0);
+    if($('p6-ring')){
+      const ringTot = (m?.spese?.ringTotale ?? (m?.spese?.ringSetup ?? 0) + (m?.spese?.ringSubAnn ?? 0)) || 0;
+      $('p6-ring').textContent = eur(ringTot);
+    }
     if($('p6-una')){
       const sicurezza = m?.spese?.sicurezza || {};
       // DO NOT sum extras here; show only the Kit amount
@@ -114,6 +118,18 @@
     try{ localStorage.setItem(CACHE_KEY, JSON.stringify(model)); }
     catch(err){ console.warn('Report: impossibile salvare il modello in locale', err); }
   }
+
+  // Live updates from calculator (same-origin embed)
+  try{
+    window.addEventListener('message', (e) => {
+      const d = e && e.data;
+      if(!d || d.type !== 'ov:update') return;
+      if(d.field === 'p6-ring'){
+        const el = document.getElementById('p6-ring');
+        if(el && typeof d.value === 'string') el.textContent = d.value;
+      }
+    });
+  }catch(err){ /* ignore */ }
 
   function loadFromCache(){
     try{
