@@ -1089,6 +1089,14 @@ window.addEventListener('beforeprint', () => {
   // ensure we prepare the report (dates, recalc) before print
   prepareReportForPrint(false);
 
+  // Fallback: sync Ring total into print field if any drift occurred
+  try{
+    const local = document.getElementById('outputCostoRingAnnuale');
+    const printNode = document.getElementById('p6-ring');
+    const txt = (local && local.textContent || '').trim();
+    if(printNode && txt){ printNode.textContent = txt; }
+  }catch(e){ /* ignore */ }
+
   // blank the document title so browser native header doesn't include address
   // Do not blank the document title here — keep the title so the browser
   // can propose a human-friendly filename when saving as PDF.
@@ -1817,6 +1825,13 @@ document.addEventListener('DOMContentLoaded', () => {
       #ov-toast, #prospectManager, .prospect-status, .btn, .device-actions, .dropdown, [data-dropdown-menu], .dropdown-item { display: none !important; }
       /* avoid printing obvious controls and links */
       a[href]:after { content: none !important; }
+
+      /* Ensure rows align nicely when labels wrap to multiple lines */
+      .box-row { display: grid !important; grid-template-columns: 1fr auto !important; align-items: start !important; gap: 8px !important; }
+      .box-row .big { align-self: start !important; }
+      .label-stack, .lbl, .label-sub { white-space: normal !important; word-break: break-word !important; line-height: 1.25 !important; }
+      /* Avoid awkward manual line breaks in print for long labels like Ring Intercom */
+      #p6-una-row .lbl br { display: none !important; }
     }`;
     const style = document.createElement('style');
     style.setAttribute('data-generated-by','script-calcolatore:print');
