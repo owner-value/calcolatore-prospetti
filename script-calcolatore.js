@@ -38,11 +38,17 @@
 
 /* ============= Helpers ============= */
 const DEFAULT_TITLE = document.title || 'Calcolatore Prospetti · Owner Value';
-const fmtEUR = n => (new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'})).format(+n||0);
+// Format currency with decimals (always show cents)
+const fmtEUR = n => (new Intl.NumberFormat('it-IT',{
+  style: 'currency',
+  currency: 'EUR',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2
+})).format(Number.isFinite(+n) ? +n : 0);
+// Percentuali con due decimali, formato it-IT con virgola
 const fmtPct = n => {
   const value = Number.isFinite(+n) ? +n : 0;
-  const formatted = value.toFixed(1);
-  return `${formatted.endsWith('.0') ? formatted.slice(0, -2) : formatted}%`;
+  return `${value.toFixed(2).replace('.', ',')}%`;
 };
 const $g = id => document.getElementById(id);
 const $set = (id,v)=>{ const el=$g(id); if(el) el.textContent = v; };
@@ -511,12 +517,14 @@ function calculateProfit(){
 
   const adr = num('prezzoMedioNotte') || 168;
   const occ = num('occupazioneAnnuale') || 68; // %
-  const giorni = Math.round(365 * (occ/100));
-  $set('outputGiorniOccupati', giorni);
+  const giorniReal = 365 * (occ/100);
+  const giorni = Math.round(giorniReal); // half up: >= .5 per eccesso
+  $set('outputGiorniOccupati', String(giorni));
 
   // 2) Soggiorni (per calcolare Pulizie/Kit annui)
   const durataMedia = Math.max(1, num('durataMediaSoggiorno') || 1);
-  const stays = Math.max(0, Math.ceil(giorni / durataMedia));
+  const staysReal = (365 * (occ/100)) / durataMedia;
+  const stays = Math.max(0, Math.round(staysReal)); // half up per anteprima
 
   const puliziePerStay = Math.max(0, num('puliziePerSoggiorno'));
   const kitPerStay     = Math.max(0, num('kitPerSoggiorno'));
@@ -559,7 +567,7 @@ function calculateProfit(){
 
   // Preview sezione 2b (solo se presenti)
   if(autoCalc){
-    $set('previewNumSoggiorni', stays.toString());
+    $set('previewNumSoggiorni', String(stays));
     $set('previewPulizieAnnuo', fmtEUR(pulizieAnnuo));
     $set('previewKitAnnuo', fmtEUR(kitAnnuo));
   }else{
@@ -861,6 +869,34 @@ function calculateProfit(){
   const utileAnn = lordoTotale - costiOperativi - imposta;
   const utileMese = utileAnn / 12;
 
+  try{
+    console.log('[Calcolatore] Dettaglio base imponibile', {
+      occPercent: occ,
+      adr,
+      giorni,
+      staysPreview: stays,
+      lordoAffitti,
+      pulizieAnnuo,
+      assicurazioneAnnuo,
+      otaAffitti,
+      otaPulizie,
+      otaAssicurazione,
+      costoOTA,
+      basePM,
+      percentualePM: pPM,
+      costoPM,
+      lordoTotale,
+      baseCedolare,
+      percentualeCedolare: pCed,
+      imposta,
+      utenze,
+      kitAnnuo,
+      sicurezzaTotale,
+      utileAnn,
+      utileMese
+    });
+  }catch(e){ /* no-op */ }
+
   // 9) Output riepilogo principale
   $set('percOtaOutput', fmtPct(pOTA));             $set('outputCommissioniOta', fmtEUR(costoOTA));
   $set('percPmOutput',  fmtPct(pPM));              $set('outputCostoPm', fmtEUR(costoPM));
@@ -956,6 +992,35 @@ function calculateProfit(){
                 utileNetto: utileAnn,
                 mensileNetto: utileMese }
   };
+
+  /* === UTILE LORDO REPORT (Embed 2) – COMPLETAMENTE ALLINEATO AL RIEPILOGO === */
+
+// Calcolo identico al riepilogo
+const utileLordoReport =
+  lordoTotale -
+  (costoOTA +
+   pulizieAnnuo +
+   utenze +
+   kitAnnuo +
+   assicurazioneAnnuo +
+   sicurezzaTotale +
+   costoPM);
+
+// Aggiorna il valore nel DOM (pagina 7: Utile Lordo Annuo)
+try {
+  const el = document.getElementById("p7-utile-lordo");
+  if (el) {
+    el.textContent = utileLordoReport.toLocaleString("it-IT", {
+      minimumFractionDigits: 0,
+    }) + " €";
+  }
+} catch (e) {
+  console.warn("Errore aggiornamento Utile Lordo Report:", e);
+}
+
+// Inserisce anche nel modello inviato al Report
+reportModel.risultati.utileLordo = utileLordoReport;
+
 
   saveToReport(reportModel);
 }

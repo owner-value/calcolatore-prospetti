@@ -1,7 +1,12 @@
 (() => {
   // helpers locali
   const $ = id => document.getElementById(id);
-  const eur = n => (new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR',maximumFractionDigits:0})).format(+n||0);
+  const eur = n => (new Intl.NumberFormat('it-IT',{
+    style:'currency',
+    currency:'EUR',
+    minimumFractionDigits:2,
+    maximumFractionDigits:2
+  })).format(Number.isFinite(+n)?+n:0);
   const pct = n => `${Math.round(+n||0)}%`;
   const CACHE_KEY = 'ownervalue:model';
   const DEFAULT_PROD_API = 'https://calcolatore-prospetti.onrender.com';
