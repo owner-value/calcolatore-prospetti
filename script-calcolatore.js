@@ -698,26 +698,53 @@ function calculateProfit(){
   $set('outSumRingSubAnnuale', fmtEUR(ringSubAnn));
   const extraList = $g('securityExtraList');
   if(extraList){
-    extraList.innerHTML = '';
-    // Crea la box Kit Sicurezza SOLO se il valore è valido
-    if(unaTantumManuali && unaTantumManuali > 0 && fmtEUR(unaTantumManuali) !== '—'){
-      // Crea la box solo se non esiste già
-      if(!document.getElementById('p6-kit-sicurezza')) {
-        const row=document.createElement('div');
-        row.className='row';
-        row.id = 'p6-kit-sicurezza';
-        const span=document.createElement('span');
-        span.innerHTML= 'Kit Sicurezza<br>(Estintore, rilevatore fumo, monossido di carbonio, gas combustibile)';
-        const strong=document.createElement('strong');
-        strong.className='bad';
-        strong.textContent=fmtEUR(unaTantumManuali);
-        row.append(span,strong);
-        extraList.appendChild(row);
+    // Nascondi la box Ring Abbonamento (12 mesi) nel riepilogo se valore non valido
+    const ringAbbonamentoBoxSummary = document.getElementById('outSumRingSubAnnuale');
+    if(ringAbbonamentoBoxSummary) {
+      if(!ringSubAnn || ringSubAnn <= 0 || fmtEUR(ringSubAnn) === '—') {
+        ringAbbonamentoBoxSummary.parentElement.style.display = 'none';
+      } else {
+        ringAbbonamentoBoxSummary.parentElement.style.display = '';
       }
-    } else {
-      // Se la box esiste ma il valore non è valido, rimuovila
-      const kitBox = document.getElementById('p6-kit-sicurezza');
-      if(kitBox) kitBox.remove();
+    }
+    // Nascondi la box Assicurazione nel riepilogo se valore non valido
+    const assicurazioneBoxSummary = document.getElementById('outputAssicurazione');
+    if(assicurazioneBoxSummary) {
+      if(!assicurazioneAnnuo || assicurazioneAnnuo <= 0 || fmtEUR(assicurazioneAnnuo) === '—') {
+        assicurazioneBoxSummary.parentElement.style.display = 'none';
+      } else {
+        assicurazioneBoxSummary.parentElement.style.display = '';
+      }
+    }
+    extraList.innerHTML = '';
+    // Kit Sicurezza riepilogo: mostra solo se valore valido
+    if(unaTantumManuali && unaTantumManuali > 0 && fmtEUR(unaTantumManuali) !== '—'){
+      const row=document.createElement('div');
+      row.className='row';
+      row.id = 'p6-kit-sicurezza';
+      const span=document.createElement('span');
+      span.innerHTML= 'Kit Sicurezza<br>(Estintore, rilevatore fumo, monossido di carbonio, gas combustibile)';
+      const strong=document.createElement('strong');
+      strong.className='bad';
+      strong.textContent=fmtEUR(unaTantumManuali);
+      row.append(span,strong);
+      extraList.appendChild(row);
+    }
+    // Nascondi la box Kit Sicurezza se valore non valido
+    const kitBoxSummary = document.getElementById('p6-kit-sicurezza');
+    if(kitBoxSummary && (!unaTantumManuali || unaTantumManuali <= 0 || fmtEUR(unaTantumManuali) === '—')) {
+      kitBoxSummary.style.display = 'none';
+    } else if(kitBoxSummary) {
+      kitBoxSummary.style.display = '';
+    }
+    // Nascondi la box Ring nel riepilogo se valore non valido
+    const ringBoxSummary = document.getElementById('outSumRingSetup');
+    if(ringBoxSummary) {
+      if(!ringSetup || ringSetup <= 0 || fmtEUR(ringSetup) === '—') {
+        ringBoxSummary.parentElement.style.display = 'none';
+      } else {
+        ringBoxSummary.parentElement.style.display = '';
+      }
     }
     if(extraDevices.length){
       extraDevices.forEach(({label, amount})=>{
