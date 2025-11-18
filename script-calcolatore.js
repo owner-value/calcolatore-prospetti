@@ -1,3 +1,13 @@
+  // Helper to show/hide output rows based on value
+  function toggleRow(id, value) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (value === '—' || value === 0 || value === '€ 0,00' || value === '0,00 €' || value === '' || value === '€ 0,00') {
+      el.style.display = 'none';
+    } else {
+      el.style.display = '';
+    }
+  }
 // Bootstrap API override from query/hash/localStorage for local dev convenience.
 (function(){
   if(typeof window === 'undefined') return;
@@ -548,20 +558,34 @@ function calculateProfit(){
   }
   if(manualFields){
     manualFields.style.display = autoCalc ? 'none' : 'grid';
+    // Se si passa da auto a manuale, copia il valore calcolato
+    if(!autoCalc) {
+      const assicurazioneManualInput = $g('assicurazioneAnnuaManuale');
+      if(assicurazioneManualInput) {
+        // Calcolo automatico
+        const assicurazioneAuto = stays * assicurazionePerStay;
+        // Solo se il campo è vuoto o zero, imposta il valore
+        if(!assicurazioneManualInput.value || Number(assicurazioneManualInput.value) === 0) {
+          assicurazioneManualInput.value = assicurazioneAuto.toFixed(2);
+        }
+      }
+    }
   }
 
   let pulizieAnnuo;
   let kitAnnuo;
+  let assicurazioneAnnuo;
 
   if(autoCalc){
     pulizieAnnuo = stays * puliziePerStay;
     kitAnnuo     = stays * kitPerStay;
+    assicurazioneAnnuo = stays * assicurazionePerStay;
   }else{
     pulizieAnnuo = Math.max(0, num('totalePulizieOspite'));
     kitAnnuo     = Math.max(0, num('costoWelcomeKit'));
+    // Assicurazione annua manuale: campo input
+    assicurazioneAnnuo = Math.max(0, num('assicurazioneAnnuaManuale'));
   }
-
-  const assicurazioneAnnuo = stays * assicurazionePerStay;
 
   const assicurazioneLabelResolved = assicurazioneLabel;
 
@@ -570,18 +594,21 @@ function calculateProfit(){
     $set('previewNumSoggiorni', String(stays));
     $set('previewPulizieAnnuo', fmtEUR(pulizieAnnuo));
     $set('previewKitAnnuo', fmtEUR(kitAnnuo));
+    $set('previewAssicurazioneAnnuo', fmtEUR(assicurazioneAnnuo));
   }else{
     $set('previewNumSoggiorni', '—');
     $set('previewPulizieAnnuo', '—');
     $set('previewKitAnnuo', '—');
+    $set('previewAssicurazioneAnnuo', fmtEUR(assicurazioneAnnuo));
   }
-  $set('previewAssicurazioneAnnuo', fmtEUR(assicurazioneAnnuo));
 
   // 3) Lordi
   const lordoAffitti = adr * giorni;
   const lordoTotale = lordoAffitti + pulizieAnnuo + assicurazioneAnnuo;
   $set('outputLordoPrenotazioni', fmtEUR(lordoAffitti));
+  toggleRow('outputLordoPrenotazioni', lordoAffitti);
   $set('outputLordoTotale', fmtEUR(lordoTotale));
+  toggleRow('outputLordoTotale', lordoTotale);
 
   // 4) Commissioni
   const pOTA = num('percentualeOta') || 20;
@@ -595,6 +622,7 @@ function calculateProfit(){
 
   const basePM = Math.max(lordoTotale - costoOTA - pulizieAnnuo - assicurazioneAnnuo, 0);
   $set('outputBasePM', fmtEUR(basePM));
+  toggleRow('outputBasePM', basePM);
   const costoPM = basePM * (pPM/100);
 
   // 5) Utenze fisse annuali
@@ -633,6 +661,28 @@ function calculateProfit(){
   const sicurezzaTotale = ringTotale + extraDev;
 
   // Output sezione 5 (box locale)
+  // Nascondi la box Ring nel PDF se il valore è zero, nullo o '—'
+  const ringBoxPdf = document.getElementById('p6-ring-row');
+  if(ringBoxPdf) {
+    if(!ringTotale || ringTotale <= 0 || fmtEUR(ringTotale) === '—') {
+      ringBoxPdf.style.display = 'none';
+    } else {
+      ringBoxPdf.style.display = '';
+      const ringVal = document.getElementById('p6-ring');
+      if(ringVal) ringVal.textContent = fmtEUR(ringTotale);
+    }
+  }
+  // Nascondi la box Kit Sicurezza nel PDF se il valore è zero, nullo o '—'
+  const kitBoxPdf = document.getElementById('p6-una-row');
+  if(kitBoxPdf) {
+    if(!unaTantumManuali || unaTantumManuali <= 0 || fmtEUR(unaTantumManuali) === '—') {
+      kitBoxPdf.style.display = 'none';
+    } else {
+      kitBoxPdf.style.display = '';
+      const kitVal = document.getElementById('p6-una');
+      if(kitVal) kitVal.textContent = fmtEUR(unaTantumManuali);
+    }
+  }
   $set('outRingSetup', fmtEUR(ringSetup));
   $set('outRingSubAnnuale', fmtEUR(ringSubAnn));
   $set('outputCostoRingAnnuale', fmtEUR(ringTotale));
@@ -649,16 +699,25 @@ function calculateProfit(){
   const extraList = $g('securityExtraList');
   if(extraList){
     extraList.innerHTML = '';
-    if(unaTantumManuali > 0){
-      const row=document.createElement('div');
-      row.className='row';
-      const span=document.createElement('span');
-      span.innerHTML= 'Kit Sicurezza<br>(Estintore, rilevatore fumo, monossido di carbonio, gas combustibile)';
-      const strong=document.createElement('strong');
-      strong.className='bad';
-      strong.textContent=fmtEUR(unaTantumManuali);
-      row.append(span,strong);
-      extraList.appendChild(row);
+    // Crea la box Kit Sicurezza SOLO se il valore è valido
+    if(unaTantumManuali && unaTantumManuali > 0 && fmtEUR(unaTantumManuali) !== '—'){
+      // Crea la box solo se non esiste già
+      if(!document.getElementById('p6-kit-sicurezza')) {
+        const row=document.createElement('div');
+        row.className='row';
+        row.id = 'p6-kit-sicurezza';
+        const span=document.createElement('span');
+        span.innerHTML= 'Kit Sicurezza<br>(Estintore, rilevatore fumo, monossido di carbonio, gas combustibile)';
+        const strong=document.createElement('strong');
+        strong.className='bad';
+        strong.textContent=fmtEUR(unaTantumManuali);
+        row.append(span,strong);
+        extraList.appendChild(row);
+      }
+    } else {
+      // Se la box esiste ma il valore non è valido, rimuovila
+      const kitBox = document.getElementById('p6-kit-sicurezza');
+      if(kitBox) kitBox.remove();
     }
     if(extraDevices.length){
       extraDevices.forEach(({label, amount})=>{
@@ -839,6 +898,13 @@ function calculateProfit(){
         anchor.parentNode.insertBefore(cont, anchor.nextSibling);
       }
       cont.innerHTML = '';
+      // La box Kit Sicurezza NON viene mai creata qui se il valore è zero, nullo o '—'
+      // (Sezione PDF)
+      // Se per errore esiste già una box Kit Sicurezza, rimuovila
+      const kitBox = document.getElementById('p6-kit-sicurezza');
+      if(kitBox && (!unaTantumManuali || unaTantumManuali <= 0 || fmtEUR(unaTantumManuali) === '—')) {
+        kitBox.remove();
+      }
       extraDevices.forEach((it, i) => {
         const box = document.createElement('div');
         box.className = 'box expense-box';
@@ -901,10 +967,20 @@ function calculateProfit(){
   $set('percOtaOutput', fmtPct(pOTA));             $set('outputCommissioniOta', fmtEUR(costoOTA));
   $set('percPmOutput',  fmtPct(pPM));              $set('outputCostoPm', fmtEUR(costoPM));
   $set('outputPulizieOspite', fmtEUR(pulizieAnnuo));
+  toggleRow('outputPulizieOspite', pulizieAnnuo);
   $set('outputWelcomeKit', fmtEUR(kitAnnuo));
+  toggleRow('outputWelcomeKit', kitAnnuo);
   $set('outputAssicurazione', fmtEUR(assicurazioneAnnuo));
+  toggleRow('outputAssicurazione', assicurazioneAnnuo);
   $set('outputUtenzeTotali', fmtEUR(utenze));
+  toggleRow('outputUtenzeTotali', utenze);
+  toggleRow('outputCommissioniOta', costoOTA);
+  toggleRow('outputCostoPm', costoPM);
   $set('outputBaseImponibile', fmtEUR(baseCedolare));
+  toggleRow('outputBaseImponibile', baseCedolare);
+  toggleRow('outputImposta', imposta);
+  toggleRow('outputUtileNetto', utileAnn);
+  toggleRow('outputUtileMensile', utileMese);
   $set('percCedolareOutput', fmtPct(pCed));        $set('outputImposta', fmtEUR(imposta));
   $set('p6-cedolare-percent', fmtPct(pCed));       $set('p6-cedolare', fmtEUR(imposta));
   $set('p6-ota-percent', fmtPct(pOTA));
@@ -936,9 +1012,13 @@ function calculateProfit(){
   const ovNettoMens = ovNetto / 12;
 
   $set('outputPmLordo', fmtEUR(costoPM));
+  toggleRow('outputPmLordo', costoPM);
   $set('outputPmTasse', fmtEUR(ovTasse));
+  toggleRow('outputPmTasse', ovTasse);
   $set('outputPmNetto', fmtEUR(ovNetto));
+  toggleRow('outputPmNetto', ovNetto);
   $set('outputPmNettoMensile', fmtEUR(ovNettoMens));
+  toggleRow('outputPmNettoMensile', ovNettoMens);
 
   // 11) Bridge → Embed 2
   const reportModel = {
