@@ -201,7 +201,15 @@
       const extras = document.getElementById('p6-optional-extras');
       if(!extras) return;
       const persistIgnore = (extras.getAttribute('data-persist-ignore') || '').toLowerCase();
-      const infoContainer = document.querySelector('#page6 .info-container') || document.body;
+      // Trova sempre un container valido nel report, mai il <body>
+      let infoContainer = document.querySelector('#page6 .info-container');
+      if(!infoContainer){
+        try{
+          if(extras.closest) infoContainer = extras.closest('.info-container');
+          if(!infoContainer) infoContainer = extras.parentNode || null;
+        }catch(_) { /* ignore */ }
+      }
+      if(!infoContainer) return;
       const totalRow = document.getElementById('p6-totale-costi-row');
       const otaRow = document.getElementById('p6-ota-row');
       if(persistIgnore === 'true'){
@@ -353,16 +361,16 @@
           if(include.checked){ optExtras.classList.remove('optional-green'); }
           else { optExtras.classList.add('optional-green'); }
         }
-        // se checkbox è false, sposta #p6-extras-container sotto il totale costi
+        // se checkbox è false, sposta #p6-extras-container subito dopo il totale costi
         try{
           if(extrasContainer){
             if(!include.checked){
               const totalRow = document.getElementById('p6-totale-costi-row');
-              const infoContainer = document.querySelector('#page6 .info-container') || totalRow?.parentNode || document.body;
-              if(totalRow && infoContainer){
+              const parent = totalRow && totalRow.parentNode;
+              if(parent){
                 const afterTotal = totalRow.nextSibling;
-                if(afterTotal){ infoContainer.insertBefore(extrasContainer, afterTotal); }
-                else { infoContainer.appendChild(extrasContainer); }
+                if(afterTotal){ parent.insertBefore(extrasContainer, afterTotal); }
+                else { parent.appendChild(extrasContainer); }
               }
             }
             // se true: lasciamo extrasContainer dove si trova (nessun riposizionamento richiesto)
