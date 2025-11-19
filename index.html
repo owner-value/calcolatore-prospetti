@@ -131,8 +131,8 @@
           <label><span>Assicurazione per prenotazione</span>
             <select id="assicurazionePerSoggiorno" onchange="calculateProfit()">
               <option value="0" data-plan="Senza assicurazione">— Nessuna assicurazione —</option>
-              <option value="17.50" data-plan="Screening + Protection Program (fino a €500)">Screening + Protection Program (fino a €500) — €17,50 / prenotazione</option>
-              <option value="25.00" data-plan="Protection Program (fino a €50K)">Protection Program (fino a €50K) — €25,00 / prenotazione</option>
+              <option value="17.50" data-plan="Screening + Protezione danni (fino a €500)">Screening + Protezione danni (fino a €500) — €17,50 / prenotazione</option>
+              <option value="25.00" data-plan="Protezione danni (fino a €50K)">Protezione danni (fino a €50K) — €25,00 / prenotazione</option>
             </select>
           </label>
         </div>
@@ -479,6 +479,15 @@
             <div id="p6-pulizie" class="big">—</div>
           </div>
         </div>
+        <div class="box expense-box" id="p6-assicurazione-row">
+          <div class="box-row">
+            <div class="label-stack">
+              <div class="lbl">Assicurazione per soggiorno</div>
+              <div class="label-sub" id="p6-assicurazione-sub"></div>
+            </div>
+            <div id="p6-assicurazione" class="big">—</div>
+          </div>
+        </div>
         <div class="box expense-box" id="p6-ua-row">
           <div class="box-row">
             <div class="label-stack">
@@ -510,15 +519,6 @@
               <div class="label-sub">(Carta igienica, sapone, shampoo, fette biscottate, marmellate, caffè)</div>
             </div>
             <div id="p6-kit" class="big">—</div>
-          </div>
-        </div>
-        <div class="box expense-box" id="p6-assicurazione-row">
-          <div class="box-row">
-            <div class="label-stack">
-              <div class="lbl">Assicurazione per soggiorno</div>
-              <div class="label-sub" id="p6-assicurazione-sub"></div>
-            </div>
-            <div id="p6-assicurazione" class="big">—</div>
           </div>
         </div>
         <div class="box expense-box" id="p6-ota-row">
