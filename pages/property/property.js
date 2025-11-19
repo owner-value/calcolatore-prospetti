@@ -62,8 +62,19 @@ const API_CANDIDATES = (() => {
   if(window.CALCOLATORE_API){
     push(window.CALCOLATORE_API);
   }
-  push(DEFAULT_PROD_API);
-  push(LOCAL_API);
+  const isFileProtocol = (() => {
+    try{ return window.location && window.location.protocol === 'file:'; }
+    catch(_) { return false; }
+  })();
+  if(isFileProtocol){
+    // File aperti da disco: preferisci API locale
+    push(LOCAL_API);
+    push(DEFAULT_PROD_API);
+  }else{
+    // In produzione: prima API pubblica, poi locale
+    push(DEFAULT_PROD_API);
+    push(LOCAL_API);
+  }
   return list.length ? list : [DEFAULT_PROD_API];
 })();
 

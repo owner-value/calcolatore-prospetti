@@ -7,7 +7,7 @@
   },
   "scripts": {
     "start": "node backend/app.js",
-    "start:local": "sh ./scripts/start-local.sh",
+    "start:local": "PORT=3001 sh ./scripts/start-local.sh",
     "start:web": "sh ./scripts/start-web.sh",
     "push:local": "sh ./scripts/push-local.sh",
     "push:live": "sh ./scripts/push-live.sh",

@@ -89,8 +89,19 @@ const API_CANDIDATES = (() => {
   if(window.CALCOLATORE_API){
     push(window.CALCOLATORE_API);
   }
-  push(DEFAULT_PROD_API);
-  push(LOCAL_API);
+  const isFileProtocol = (() => {
+    try{ return window.location && window.location.protocol === 'file:'; }
+    catch(_) { return false; }
+  })();
+  if(isFileProtocol){
+    // Quando apri il file da disco, preferisci l'API locale
+    push(LOCAL_API);
+    push(DEFAULT_PROD_API);
+  }else{
+    // In produzione preferisci l'API pubblica, con fallback locale
+    push(DEFAULT_PROD_API);
+    push(LOCAL_API);
+  }
   return list.length ? list : [DEFAULT_PROD_API];
 })();
 

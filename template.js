@@ -141,7 +141,7 @@
     });
   }catch(err){ /* ignore */ }
 
-  // Ricalcolo totale costi basato su quanto visualizzato in UI
+  // Ricalcolo totale spese basato su quanto visualizzato in UI
   function recalculateTotalCosti(){
     try{
       const parseMoney = (txt) => {
@@ -214,7 +214,7 @@
       const otaRow = document.getElementById('p6-ota-row');
       if(persistIgnore === 'true'){
         if(totalRow && totalRow.parentNode === infoContainer){
-          // inserisci subito dopo il totale costi
+          // inserisci subito dopo il totale spese
           const afterTotal = totalRow.nextSibling;
           if(afterTotal){ infoContainer.insertBefore(extras, afterTotal); }
           else { infoContainer.appendChild(extras); }
@@ -361,7 +361,7 @@
           if(include.checked){ optExtras.classList.remove('optional-green'); }
           else { optExtras.classList.add('optional-green'); }
         }
-        // se checkbox è false, sposta #p6-extras-container subito dopo il totale costi
+        // se checkbox è false, sposta #p6-extras-container subito dopo il totale spese
         try{
           if(extrasContainer){
             if(!include.checked){
