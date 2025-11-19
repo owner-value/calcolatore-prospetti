@@ -197,6 +197,9 @@ textarea{min-height:110px;resize:vertical}
 .opt-row{ display:grid; grid-template-columns: 1fr 160px auto; gap:12px; align-items:end; }
 #p6-optional-extras{ border-radius:8px; padding:8px; margin-top:8px; }
 #p6-optional-extras.optional-green{ border:1px solid #10b981; }
-#p6-optional-extras.optional-green .expense-box{ border-color:#10b981; }
+#p6-optional-extras.optional-green .expense-box{
+  border-color:#10b981;
+  border-bottom:none;
+}
 /* (rimosse regole che modificavano il bordo dei box opzionali) */
 .optional-note{ font-size:12px; color:#059669; font-weight:700; margin-top:2px; }
