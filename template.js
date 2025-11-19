@@ -176,6 +176,18 @@
         }
       }catch(_) { /* ignore */ }
 
+      // Somma importi opzionali, solo se abilitati via checkbox
+      try{
+        const include = document.getElementById('includeOptionalExtras');
+        if(include && include.checked){
+          const optInputs = document.querySelectorAll('#optionalCostsContainer [data-type="opt-amount"]');
+          for(const inp of optInputs){
+            const val = (inp && 'value' in inp) ? inp.value : '';
+            total += parseMoney(String(val));
+          }
+        }
+      }catch(_) { /* ignore */ }
+
       const totEl = $('p6-totale-costi');
       if(totEl) totEl.textContent = eur(total);
     }catch(err){ /* ignore */ }
@@ -231,9 +243,19 @@
           if(t && t.matches && t.matches('[data-type="device-amount"]')){
             recalculateTotalCosti();
           }
+          if(t && t.matches && t.matches('#optionalCostsContainer [data-type="opt-amount"]')){
+            recalculateTotalCosti();
+          }
         }, true);
       };
       ['input','change'].forEach(delegate);
+    }catch(_) { /* ignore */ }
+    // Aggiorna quando si abilita/disabilita l'inclusione opzionale
+    try{
+      const include = document.getElementById('includeOptionalExtras');
+      if(include){
+        include.addEventListener('change', recalculateTotalCosti);
+      }
     }catch(_) { /* ignore */ }
     try{
       const params = new URLSearchParams(window.location.search);
