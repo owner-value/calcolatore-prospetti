@@ -79,7 +79,9 @@
     // p6-una-label must remain unchanged by dynamic data
     // Intentionally no-op here to preserve original label
 
+    renderOptionalExtras();
     recalculateTotalCosti();
+    reorderOptionalExtras();
 
     if($('p7-utile-lordo'))   $('p7-utile-lordo').textContent   = eur(m?.risultati?.utileLordo ?? 0);
     if($('p7-utile-netto'))   $('p7-utile-netto').textContent   = eur(m?.risultati?.utileNetto ?? 0);
@@ -193,6 +195,92 @@
     }catch(err){ /* ignore */ }
   }
 
+  // Posiziona #p6-optional-extras in base a data-persist-ignore
+  function reorderOptionalExtras(){
+    try{
+      const extras = document.getElementById('p6-optional-extras');
+      if(!extras) return;
+      const persistIgnore = (extras.getAttribute('data-persist-ignore') || '').toLowerCase();
+      const infoContainer = document.querySelector('#page6 .info-container') || document.body;
+      const totalRow = document.getElementById('p6-totale-costi-row');
+      const otaRow = document.getElementById('p6-ota-row');
+      if(persistIgnore === 'true'){
+        if(totalRow && totalRow.parentNode === infoContainer){
+          // inserisci subito dopo il totale costi
+          const afterTotal = totalRow.nextSibling;
+          if(afterTotal){ infoContainer.insertBefore(extras, afterTotal); }
+          else { infoContainer.appendChild(extras); }
+        }else{
+          // fallback: append in fondo al container
+          infoContainer.appendChild(extras);
+        }
+      }else{
+        // posiziona prima delle commissioni OTA
+        if(otaRow && otaRow.parentNode === infoContainer){
+          infoContainer.insertBefore(extras, otaRow);
+        }
+      }
+    }catch(_) { /* ignore */ }
+  }
+
+  // Genera riassunto e box per le spese opzionali nel prospetto
+  function renderOptionalExtras(){
+    try{
+      const cont = document.getElementById('optionalCostsContainer');
+      const list = [];
+      if(cont){
+        const rows = cont.querySelectorAll('.opt-row');
+        rows.forEach((row, idx) => {
+          const nameEl = row.querySelector('[data-type="opt-name"]');
+          const amountEl = row.querySelector('[data-type="opt-amount"]');
+          const name = (nameEl && nameEl.value || '').trim();
+          const raw = (amountEl && amountEl.value) || '';
+          const amt = parseFloat(String(raw).replace(',', '.'));
+          if(Number.isFinite(amt) && amt > 0){
+            list.push({ name: name || `Extra ${idx+1}`, amount: amt });
+          }
+        });
+      }
+
+      // Aggiorna il riassunto
+      const sumRow = document.getElementById('p6-optional-summary-row');
+      if(sumRow){
+        const lbl = sumRow.querySelector('.lbl');
+        if(lbl){ lbl.textContent = list.length ? list.map(x=>x.name).join('; ') : '—'; }
+        const big = sumRow.querySelector('.big');
+        if(big){
+          const total = list.reduce((a,b)=>a+b.amount,0);
+          big.textContent = eur(total);
+        }
+      }
+
+      // Ricostruisci i box singoli nel prospetto
+      const extrasContainer = document.getElementById('p6-optional-extras');
+      if(extrasContainer){
+        // pulisci
+        extrasContainer.innerHTML = '';
+        const include = document.getElementById('includeOptionalExtras');
+        const includeChecked = include ? !!include.checked : false;
+        list.forEach((item, i) => {
+          const box = document.createElement('div');
+          box.className = 'box expense-box';
+          box.id = `p6-opt-${i+1}`;
+          box.innerHTML = `
+            <div class="box-row">
+              <div class="label-stack">
+                <div class="lbl"></div>
+                <div class="label-sub optional-note">OPZIONALE${includeChecked ? '' : ' • Non incluso nel totale'}</div>
+              </div>
+              <div class="big"></div>
+            </div>`;
+          box.querySelector('.lbl').textContent = item.name;
+          box.querySelector('.big').textContent = eur(item.amount);
+          extrasContainer.appendChild(box);
+        });
+      }
+    }catch(_) { /* ignore */ }
+  }
+
   function loadFromCache(){
     try{
       const raw = localStorage.getItem(CACHE_KEY);
@@ -235,6 +323,59 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     const fallbackUsed = loadFromCache();
+    // assicurati che l'ordine iniziale sia corretto
+    reorderOptionalExtras();
+    // Osserva cambi attributo data-persist-ignore per riordinare subito
+    try{
+      const extras = document.getElementById('p6-optional-extras');
+      if(extras && 'MutationObserver' in window){
+        const mo = new MutationObserver((mutList) => {
+          for(const m of mutList){
+            if(m.type === 'attributes' && m.attributeName === 'data-persist-ignore'){
+              reorderOptionalExtras();
+              break;
+            }
+          }
+        });
+        mo.observe(extras, { attributes: true, attributeFilter: ['data-persist-ignore'] });
+      }
+    }catch(_) { /* ignore */ }
+
+    // Sincronizza stile evidenziato e posizione extras-container in base al checkbox
+    try{
+      const include = document.getElementById('includeOptionalExtras');
+      const optExtras = document.getElementById('p6-optional-extras');
+      const extrasContainer = document.getElementById('p6-extras-container');
+      const syncVisualState = () => {
+        if(!include) return;
+        // bordo verde quando checkbox è false
+        if(optExtras){
+          if(include.checked){ optExtras.classList.remove('optional-green'); }
+          else { optExtras.classList.add('optional-green'); }
+        }
+        // se checkbox è false, sposta #p6-extras-container sotto il totale costi
+        try{
+          if(extrasContainer){
+            if(!include.checked){
+              const totalRow = document.getElementById('p6-totale-costi-row');
+              const infoContainer = document.querySelector('#page6 .info-container') || totalRow?.parentNode || document.body;
+              if(totalRow && infoContainer){
+                const afterTotal = totalRow.nextSibling;
+                if(afterTotal){ infoContainer.insertBefore(extrasContainer, afterTotal); }
+                else { infoContainer.appendChild(extrasContainer); }
+              }
+            }
+            // se true: lasciamo extrasContainer dove si trova (nessun riposizionamento richiesto)
+          }
+        }catch(_) { /* ignore */ }
+        recalculateTotalCosti();
+      };
+      if(include){
+        include.addEventListener('change', syncVisualState);
+        // inizializza
+        syncVisualState();
+      }
+    }catch(_) { /* ignore */ }
     // Aggiorna il totale quando l'utente modifica spese extra dinamiche
     try{
       const delegate = (evtName) => {
@@ -250,11 +391,30 @@
       };
       ['input','change'].forEach(delegate);
     }catch(_) { /* ignore */ }
+    // Ricalcola automaticamente quando si aggiungono/rimuovono righe opzionali
+    try{
+      const optContainer = document.getElementById('optionalCostsContainer');
+      if(optContainer && 'MutationObserver' in window){
+        const mo = new MutationObserver(() => recalculateTotalCosti());
+        mo.observe(optContainer, { childList: true, subtree: true });
+      }
+    }catch(_) { /* ignore */ }
     // Aggiorna quando si abilita/disabilita l'inclusione opzionale
     try{
       const include = document.getElementById('includeOptionalExtras');
+      const optContainer = document.getElementById('p6-optional-extras');
+      const syncOptionalState = () => {
+        if(!include) return;
+        if(optContainer){
+          if(include.checked) optContainer.classList.add('active');
+          else optContainer.classList.remove('active');
+        }
+        recalculateTotalCosti();
+      };
       if(include){
-        include.addEventListener('change', recalculateTotalCosti);
+        include.addEventListener('change', syncOptionalState);
+        // inizializza stato alla load
+        syncOptionalState();
       }
     }catch(_) { /* ignore */ }
     try{

@@ -7,7 +7,7 @@ html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Inter,sys
 .wrap{max-width:900px;margin:24px auto;padding:0 10px; font-size: 20px}
 .page{background:var(--paper);border:1px solid var(--line);border-radius:16px;box-shadow:0 12px 30px rgba(15,23,42,.09);margin:18px 0;overflow:hidden}
 .page .in{padding:50px;}
-.logo-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:50px}
+.logo-bar{display:flex;align-items:center;justify-content:space-between;}
 .date{font-weight:800;color:var(--muted)}
 .h1{font-size:64px;line-height:1.05;font-weight:900;margin:24px 0}
 .h2{font-size:42px;line-height:1.1;font-weight:900;margin:20px 0}
