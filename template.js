@@ -79,6 +79,8 @@
     // p6-una-label must remain unchanged by dynamic data
     // Intentionally no-op here to preserve original label
 
+    recalculateTotalCosti();
+
     if($('p7-utile-lordo'))   $('p7-utile-lordo').textContent   = eur(m?.risultati?.utileLordo ?? 0);
     if($('p7-utile-netto'))   $('p7-utile-netto').textContent   = eur(m?.risultati?.utileNetto ?? 0);
     if($('p7-mensile-netto')) $('p7-mensile-netto').textContent = eur(m?.risultati?.mensileNetto ?? 0);
@@ -132,9 +134,52 @@
       if(d.field === 'p6-ring'){
         const el = document.getElementById('p6-ring');
         if(el && typeof d.value === 'string') el.textContent = d.value;
+        recalculateTotalCosti();
       }
     });
   }catch(err){ /* ignore */ }
+
+  // Ricalcolo totale costi basato su quanto visualizzato in UI
+  function recalculateTotalCosti(){
+    try{
+      const parseMoney = (txt) => {
+        if(!txt) return 0;
+        const s = txt.replace(/[^0-9,,-.]/g,'').replace(/\./g,'').replace(',', '.');
+        const n = parseFloat(s);
+        return Number.isFinite(n) ? n : 0;
+      };
+      const ids = ['p6-pulizie','p6-ua','p6-una','p6-ring','p6-kit','p6-assicurazione','p6-ota','p6-pm','p6-cedolare'];
+      let total = ids.reduce((sum,id)=>{
+        const el = $(id);
+        const t = el ? (el.textContent || '').trim() : '';
+        return sum + (t && t !== '—' ? parseMoney(t) : 0);
+      },0);
+
+      // Somma importi extra dichiarati nel DOM tramite data-type
+      // Supportiamo due modalità:
+      //  - elementi con data-type="device-amount" e testo/valore formattato in €
+      //  - input con data-type="device-amount" dove il valore è digitato dall'utente
+      try{
+        const extras = Array.from(document.querySelectorAll('[data-type="device-amount"]'));
+        for(const el of extras){
+          const val = ('value' in el) ? (el.value || el.getAttribute('data-amount') || '') : (el.textContent || el.getAttribute('data-amount') || '');
+          total += parseMoney(String(val).trim());
+        }
+      }catch(_) { /* ignore */ }
+
+      // Somma importi extra dentro il container dedicato (markup reale)
+      try{
+        const nodes = document.querySelectorAll('#p6-extras-container .box.expense-box .big');
+        for(const el of nodes){
+          const t = (el.textContent || '').trim();
+          if(t && t !== '—') total += parseMoney(t);
+        }
+      }catch(_) { /* ignore */ }
+
+      const totEl = $('p6-totale-costi');
+      if(totEl) totEl.textContent = eur(total);
+    }catch(err){ /* ignore */ }
+  }
 
   function loadFromCache(){
     try{
@@ -178,6 +223,18 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     const fallbackUsed = loadFromCache();
+    // Aggiorna il totale quando l'utente modifica spese extra dinamiche
+    try{
+      const delegate = (evtName) => {
+        document.addEventListener(evtName, (e) => {
+          const t = e.target;
+          if(t && t.matches && t.matches('[data-type="device-amount"]')){
+            recalculateTotalCosti();
+          }
+        }, true);
+      };
+      ['input','change'].forEach(delegate);
+    }catch(_) { /* ignore */ }
     try{
       const params = new URLSearchParams(window.location.search);
       const slug = params.get('slug') || '';
