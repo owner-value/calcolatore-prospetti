@@ -234,20 +234,10 @@ const getProspect = async slug => {
 const ensureUniqueSlug = async (candidate, originalSlug='') => {
   let base = slugify(candidate);
   if(!base) return '';
-  let slug = base;
-  let attempts = 0;
-  while(true){
-    if(originalSlug && slug === originalSlug) return slug;
-    const [existingProperty, existingProspect] = await Promise.all([
-      getProperty(slug),
-      getProspect(slug),
-    ]);
-    if(!existingProperty && !existingProspect) return slug;
-    if(originalSlug && (existingProperty?.slug === originalSlug || existingProspect?.slug === originalSlug)) return slug;
-    attempts += 1;
-    const suffix = attempts > 5 ? Date.now().toString(36) : Math.random().toString(36).slice(2,6);
-    slug = `${base}-${suffix}`;
-  }
+  // Prima controllavamo l'esistenza con richieste GET (che loggano 404 in console).
+  // Per evitare rumore, ora ci affidiamo al controllo di unicità del backend:
+  // se lo slug è occupato, l'API risponde 400 e mostriamo l'errore.
+  return base;
 };
 
 const fmtDate = iso => {
@@ -516,9 +506,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   $('autoSlugBtn')?.addEventListener('click', async () => {
     const name = $('propertyName').value;
-    let slug = slugify(name);
+    const indirizzo = $('propertyAddress').value;
+    // Usa nome o indirizzo come base; se vuoto, fallback statico
+    let slug = slugify(name || indirizzo || 'proprieta');
     slug = await ensureUniqueSlug(slug, currentSlug);
     $('propertySlug').value = slug;
+    if(!slug){
+      setStatus('propertyStatus', 'Inserisci nome o indirizzo per generare lo slug.', 'error');
+    }else{
+      setStatus('propertyStatus', 'Slug generato.', 'success');
+    }
   });
 
   $('savePropertyBtn')?.addEventListener('click', saveProperty);
@@ -531,12 +528,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
   $('deletePropertyBtn')?.addEventListener('click', deleteProperty);
 
-  $('propertyProspects')?.addEventListener('click', e => {
+  const onPropertyProspectClick = e => {
     const btn = e.target.closest('[data-action="delete-prospect"]');
-    if(btn){
-      handleProspectDelete(btn.dataset.slug);
+    if(!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const slug = (btn.dataset.slug || '').trim();
+    if(!slug){
+      setStatus('prospectStatus', 'Slug non trovato per il prospetto da eliminare.', 'error');
+      return;
     }
-  });
+    console.log('[property] delete prospect click', slug);
+    setStatus('prospectStatus', `Eliminazione del prospetto "${slug}" in corso...`, 'info');
+    handleProspectDelete(slug);
+  };
+
+  $('propertyProspects')?.addEventListener('click', onPropertyProspectClick);
+  // Fallback globale in caso il listener locale non sia attivo
+  document.addEventListener('click', onPropertyProspectClick);
 
   applyApiToLinks();
   loadProperty(currentSlug);

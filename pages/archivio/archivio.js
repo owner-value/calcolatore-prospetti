@@ -576,22 +576,44 @@ document.addEventListener('DOMContentLoaded', () => {
     window.open(url, '_blank');
   });
 
-  $('propertyList')?.addEventListener('click', e => {
+  const onDeletePropertyClick = e => {
     const btn = e.target.closest('[data-action="delete-property"]');
-    if(btn){
-      const count = parseInt(btn.dataset.prospectCount || '0', 10) || 0;
-      handlePropertyDelete(btn.dataset.slug, count);
+    if(!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const count = parseInt(btn.dataset.prospectCount || '0', 10) || 0;
+    const slug = (btn.dataset.slug || '').trim();
+    if(!slug){
+      setStatus('propertyStatus', 'Slug non trovato per la proprieta da eliminare.', 'error');
+      return;
     }
-  });
+    console.log('[archive] delete property click', slug);
+    setStatus('propertyStatus', `Eliminazione di "${slug}" in corso...`, 'info');
+    handlePropertyDelete(slug, count);
+  };
 
-  $('prospectList')?.addEventListener('click', e => {
+  $('propertyList')?.addEventListener('click', onDeletePropertyClick);
+  // Fallback globale nel caso il listener specifico non si leghi (markup cambiato)
+  document.addEventListener('click', onDeletePropertyClick);
+
+  const onProspectClick = e => {
     const deleteBtn = e.target.closest('[data-action="delete-prospect"]');
     if(deleteBtn){
-      handleProspectDelete(deleteBtn.dataset.slug);
+      e.preventDefault();
+      e.stopPropagation();
+      const slug = (deleteBtn.dataset.slug || '').trim();
+      if(!slug){
+        setStatus('archiveStatus', 'Slug non trovato per il prospetto da eliminare.', 'error');
+        return;
+      }
+      console.log('[archive] delete prospect click', slug);
+      setStatus('archiveStatus', `Eliminazione del prospetto "${slug}" in corso...`, 'info');
+      handleProspectDelete(slug);
       return;
     }
     const assignBtn = e.target.closest('[data-action="assign-property"]');
     if(assignBtn){
+      e.preventDefault();
       const card = assignBtn.closest('.prospect-card');
       const select = card?.querySelector('[data-role="assign-select"]');
       const value = select ? select.value : '';
@@ -600,9 +622,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     const quickBtn = e.target.closest('[data-action="assign-quick"]');
     if(quickBtn){
+      e.preventDefault();
       handleProspectAssign(quickBtn.dataset.slug, quickBtn.dataset.property || '');
     }
-  });
+  };
+
+  $('prospectList')?.addEventListener('click', onProspectClick);
+  // Fallback globale se il listener locale non si aggancia
+  document.addEventListener('click', onProspectClick);
 
   const params = new URLSearchParams(window.location.search);
   selectedProperty = params.get('property') || '';

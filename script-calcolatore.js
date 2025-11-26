@@ -63,6 +63,14 @@ const fmtPct = n => {
 const $g = id => document.getElementById(id);
 const $set = (id,v)=>{ const el=$g(id); if(el) el.textContent = v; };
 const num = id => { const el=$g(id); if(!el) return 0; const v=(el.value||'').toString().replace(',','.'); return +v||0; };
+const readPct = (id, fallback) => {
+  const el = $g(id);
+  if(!el) return fallback;
+  const raw = (el.value ?? '').toString().replace(',','.');
+  if(raw === '') return fallback;
+  const val = parseFloat(raw);
+  return Number.isFinite(val) ? val : fallback;
+};
 
 const DEFAULT_PROD_API = 'https://calcolatore-prospetti.onrender.com';
 const LOCAL_API = 'http://localhost:3001';
@@ -599,6 +607,14 @@ function calculateProfit(){
   }
 
   const assicurazioneLabelResolved = assicurazioneLabel;
+  // Aggiorna nota sul fatturato lordo: se l'assicurazione non è selezionata, non citarla.
+  const fattNote = document.getElementById('fatturatoNote');
+  if(fattNote){
+    const includeAss = assicurazioneAnnuo > 0;
+    fattNote.textContent = includeAss
+      ? 'Per “fatturato lordo annuo” si intende quanto ricevuto dalle piattaforme o prenotazioni dirette (affitti, pulizie e assicurazione).'
+      : 'Per “fatturato lordo annuo” si intende quanto ricevuto dalle piattaforme o prenotazioni dirette (affitti e pulizie).';
+  }
 
   // Preview sezione 2b (solo se presenti)
   if(autoCalc){
@@ -622,9 +638,9 @@ function calculateProfit(){
   toggleRow('outputLordoTotale', lordoTotale);
 
   // 4) Commissioni
-  const pOTA = num('percentualeOta') || 20;
-  const pPM  = num('percentualePm')  || 30;
-  const pCed = num('percentualeCedolare') || 21;
+  const pOTA = readPct('percentualeOta', 20);
+  const pPM  = readPct('percentualePm', 30);
+  const pCed = readPct('percentualeCedolare', 21);
 
   const otaAffitti = lordoAffitti * (pOTA/100);
   const otaPulizie = pulizieAnnuo * (pOTA/100);
