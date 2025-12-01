@@ -650,7 +650,10 @@ function calculateProfit(){
   const basePM = Math.max(lordoTotale - costoOTA - pulizieAnnuo - assicurazioneAnnuo, 0);
   $set('outputBasePM', fmtEUR(basePM));
   toggleRow('outputBasePM', basePM);
-  const costoPM = basePM * (pPM/100);
+  const ivaPmPct = 22;
+  const costoPmNetto = basePM * (pPM/100);
+  const costoPmIva = costoPmNetto * (ivaPmPct/100);
+  const costoPmTotale = costoPmNetto + costoPmIva;
 
   // 5) Utenze fisse annuali
   const mesiField = $g('utenzeMesi');
@@ -983,9 +986,9 @@ function calculateProfit(){
 
   // 7) Base imponibile & imposta cedolare
   // Cedolare secca su netto: Lordo Totale - Pulizie - Assicurazione - OTA - Costo PM
-  const baseCedolare = Math.max(lordoTotale - pulizieAnnuo - assicurazioneAnnuo - costoOTA - costoPM, 0);
+  const baseCedolare = Math.max(lordoTotale - pulizieAnnuo - assicurazioneAnnuo - costoOTA - costoPmTotale, 0);
   const imposta = baseCedolare * (pCed/100);
-  const costiOperativi = costoOTA + costoPM + pulizieAnnuo + utenze + kitAnnuo + assicurazioneAnnuo + sicurezzaTotale;
+  const costiOperativi = costoOTA + costoPmTotale + pulizieAnnuo + utenze + kitAnnuo + assicurazioneAnnuo + sicurezzaTotale;
   const utileAnn = lordoTotale - costiOperativi - imposta;
   const utileMese = utileAnn / 12;
 
@@ -1004,7 +1007,9 @@ function calculateProfit(){
       costoOTA,
       basePM,
       percentualePM: pPM,
-      costoPM,
+      costoPmNetto,
+      costoPmIva,
+      costoPmTotale,
       lordoTotale,
       baseCedolare,
       percentualeCedolare: pCed,
@@ -1019,7 +1024,8 @@ function calculateProfit(){
 
   // 9) Output riepilogo principale
   $set('percOtaOutput', fmtPct(pOTA));             $set('outputCommissioniOta', fmtEUR(costoOTA));
-  $set('percPmOutput',  fmtPct(pPM));              $set('outputCostoPm', fmtEUR(costoPM));
+  $set('percPmOutput',  `${fmtPct(pPM)} + IVA ${fmtPct(ivaPmPct)}`); $set('outputCostoPm', fmtEUR(costoPmTotale));
+  $set('outputIvaPm', fmtEUR(costoPmIva));
   $set('outputPulizieOspite', fmtEUR(pulizieAnnuo));
   toggleRow('outputPulizieOspite', pulizieAnnuo);
   $set('outputWelcomeKit', fmtEUR(kitAnnuo));
@@ -1029,7 +1035,8 @@ function calculateProfit(){
   $set('outputUtenzeTotali', fmtEUR(utenze));
   toggleRow('outputUtenzeTotali', utenze);
   toggleRow('outputCommissioniOta', costoOTA);
-  toggleRow('outputCostoPm', costoPM);
+  toggleRow('outputCostoPm', costoPmTotale);
+  toggleRow('outputIvaPm', costoPmIva);
   $set('outputBaseImponibile', fmtEUR(baseCedolare));
   toggleRow('outputBaseImponibile', baseCedolare);
   toggleRow('outputImposta', imposta);
@@ -1061,12 +1068,12 @@ function calculateProfit(){
   // 10) Owner Value (SRL) — stima IRES + IRAP
   const ires = ($g('aliquotaIres') ? num('aliquotaIres') : 24) / 100;
   const irap = ($g('aliquotaIrap') ? num('aliquotaIrap') : 3.9) / 100;
-  const ovTasse = costoPM * (ires + irap);
-  const ovNetto = costoPM - ovTasse;
+  const ovTasse = costoPmNetto * (ires + irap);
+  const ovNetto = costoPmNetto - ovTasse;
   const ovNettoMens = ovNetto / 12;
 
-  $set('outputPmLordo', fmtEUR(costoPM));
-  toggleRow('outputPmLordo', costoPM);
+  $set('outputPmLordo', fmtEUR(costoPmNetto));
+  toggleRow('outputPmLordo', costoPmNetto);
   $set('outputPmTasse', fmtEUR(ovTasse));
   toggleRow('outputPmTasse', ovTasse);
   $set('outputPmNetto', fmtEUR(ovNetto));
@@ -1111,7 +1118,10 @@ function calculateProfit(){
         perPrenotazione: assicurazionePerStay,
         label: assicurazioneLabelResolved
       },
-      pm: costoPM,
+      pm: costoPmTotale,
+      pmNetto: costoPmNetto,
+      pmIva: costoPmIva,
+      pmIvaPct: ivaPmPct,
       pmPct: pPM,
       unaTantum: sicurezzaTotale,
       sicurezza:{
@@ -1122,7 +1132,7 @@ function calculateProfit(){
         totale: sicurezzaTotale
       }
     },
-  risultati:{ utileLordo: lordoTotale - (costoOTA + pulizieAnnuo + utenze + kitAnnuo + assicurazioneAnnuo + sicurezzaTotale),
+  risultati:{ utileLordo: lordoTotale - (costoOTA + costoPmTotale + pulizieAnnuo + utenze + kitAnnuo + assicurazioneAnnuo + sicurezzaTotale),
                 utileNetto: utileAnn,
                 mensileNetto: utileMese }
   };
@@ -1138,7 +1148,7 @@ const utileLordoReport =
    kitAnnuo +
    assicurazioneAnnuo +
    sicurezzaTotale +
-   costoPM);
+   costoPmTotale);
 
 // Aggiorna il valore nel DOM (pagina 7: Utile Lordo Annuo)
 try {

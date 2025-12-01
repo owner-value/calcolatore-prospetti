@@ -64,7 +64,7 @@
       }
     }
     if($('p6-pm'))      $('p6-pm').textContent      = eur(m?.spese?.pm ?? 0);
-    if($('p6-pm-pct'))   $('p6-pm-pct').textContent   = pct(m?.spese?.pmPct ?? m?.percentualePm ?? 0);
+    if($('p6-pm-pct'))   $('p6-pm-pct').textContent   = `${pct(m?.spese?.pmPct ?? m?.percentualePm ?? 0)} + IVA 22%`;
     if($('p6-ring')){
       const ringTot = (m?.spese?.ringTotale ?? (m?.spese?.ringSetup ?? 0) + (m?.spese?.ringSubAnn ?? 0)) || 0;
       $('p6-ring').textContent = eur(ringTot);

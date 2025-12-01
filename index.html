@@ -217,7 +217,7 @@
           <label><span>Commissioni OTA (%) <br>(Airbnb e Booking)</span>
             <input type="number" id="percentualeOta" value="20" min="0" max="100" step="0.1" oninput="calculateProfit()">
           </label>
-          <label><span>Commissione PM (%)</span>
+          <label><span>Commissione PM (% + IVA 22%)</span>
             <input type="number" id="percentualePm" value="30" min="0" max="100" step="0.1" oninput="calculateProfit()">
           </label>
           <label><span>Cedolare Secca (%)</span>
@@ -235,7 +235,7 @@
             <input type="number" id="costoRingSetup" value="100.00" min="0" step="0.01" oninput="calculateProfit()">
           </label>
           <label><span>Ring Intercom — abbonamento mensile (€)</span>
-            <input type="number" id="abbonamentoMensile" value="5.00" min="0" step="0.01" oninput="calculateProfit()">
+            <input type="number" id="abbonamentoMensile" value="9.00" min="0" step="0.01" oninput="calculateProfit()">
           </label>
           <div>
             <span style="display:block;font-size:13px;color:var(--muted);font-weight:700;margin-bottom:6px">Totale Ring Annuale</span>
@@ -320,7 +320,8 @@
     <div class="row"><span>Welcome Kit</span><strong class="bad" id="outputWelcomeKit">€ 0,00</strong></div>
   <div class="row"><span>Commissioni OTA<br>(Airbnb e Booking) (<span id="percOtaOutput">0%</span>)</span><strong class="bad" id="outputCommissioniOta">€ 0,00</strong></div>
   <div class="row"><span>Base PM<br> (Lordo - Pulizie - Assicurazione - OTA)</span><strong id="outputBasePM">€ 0,00</strong></div>
-  <div class="row"><span>Costo PM (<span id="percPmOutput">0%</span>)</span><strong class="bad" id="outputCostoPm">€ 0,00</strong></div>
+  <div class="row"><span>IVA su PM (22%)</span><strong class="bad" id="outputIvaPm">€ 0,00</strong></div>
+  <div class="row"><span>Costo PM + IVA (<span id="percPmOutput">0%</span>)</span><strong class="bad" id="outputCostoPm">€ 0,00</strong></div>
   <div class="row"><span>Utenze Totali (annue)</span><strong class="bad" id="outputUtenzeTotali">€ 0,00</strong></div>
     <div class="row"><span>Ring — setup</span><strong class="bad" id="outSumRingSetup">€ 0,00</strong></div>
       <div class="row"><span>Ring — abbonamento (12 mesi)</span><strong class="bad" id="outSumRingSubAnnuale">€ 0,00</strong></div>
