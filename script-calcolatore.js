@@ -673,6 +673,7 @@ function calculateProfit(){
   const utenze = utenzeMensili * mesiUtenze;
 
   // 6) Sicurezza (breakdown)
+  // Ring Intercom: setup is now a one-time payment, not included in annual/monthly fees
   const ringSetup   = Math.max(0, num('costoRingSetup'));
   const ringSubAnn  = Math.max(0, num('abbonamentoMensile')) * 12;
   const extraDevices = [...document.querySelectorAll('.device-row')].map(row=>{
@@ -685,12 +686,25 @@ function calculateProfit(){
   }).filter(item => item.amount > 0);
 
   const unaTantumManuali = Math.max(0, num('speseUnaTantumManuali'));
-  const extraDev = unaTantumManuali + extraDevices.reduce((sum, item) => sum + item.amount, 0);
+  // Add ringSetup to extra one-time payments
+  const extraDev = unaTantumManuali + ringSetup + extraDevices.reduce((sum, item) => sum + item.amount, 0);
 
-  const ringTotale  = ringSetup + ringSubAnn;
+  // Only the monthly fee is recurring, setup is one-time
+  const ringTotale  = ringSubAnn;
   const sicurezzaTotale = ringTotale + extraDev;
 
   // Output sezione 5 (box locale)
+    // Mostra/nascondi la box Ring Intercom una tantum
+    const ringSetupBox = document.getElementById('p6-ring-setup-row');
+    if(ringSetupBox) {
+      const ringSetupVal = document.getElementById('p6-ring-setup');
+      if(ringSetupVal) ringSetupVal.textContent = fmtEUR(ringSetup);
+      if(!ringSetup || ringSetup <= 0 || fmtEUR(ringSetup) === '—') {
+        ringSetupBox.style.display = 'none';
+      } else {
+        ringSetupBox.style.display = '';
+      }
+    }
   // Nascondi la box Ring nel PDF se il valore è zero, nullo o '—'
   const ringBoxPdf = document.getElementById('p6-ring-row');
   if(ringBoxPdf) {
@@ -1127,10 +1141,12 @@ function calculateProfit(){
       sicurezza:{
         ringSetup,
         ringSubAnn,
+        ringSubMonth: Math.max(0, num('abbonamentoMensile')),
         extraManuale: unaTantumManuali,
         extraDettagli: extraDevices,
         totale: sicurezzaTotale
-      }
+      },
+      ringSetup // <-- aggiunto per il PDF
     },
   risultati:{ utileLordo: lordoTotale - (costoOTA + costoPmTotale + pulizieAnnuo + utenze + kitAnnuo + assicurazioneAnnuo + sicurezzaTotale),
                 utileNetto: utileAnn,

@@ -66,14 +66,45 @@
     if($('p6-pm'))      $('p6-pm').textContent      = eur(m?.spese?.pm ?? 0);
     if($('p6-pm-pct'))   $('p6-pm-pct').textContent   = `${pct(m?.spese?.pmPct ?? m?.percentualePm ?? 0)} + IVA 22%`;
     if($('p6-ring')){
-      const ringTot = (m?.spese?.ringTotale ?? (m?.spese?.ringSetup ?? 0) + (m?.spese?.ringSubAnn ?? 0)) || 0;
-      $('p6-ring').textContent = eur(ringTot);
+      const setup = m?.spese?.ringSetup ?? 0;
+      let subMonth = 0;
+      if (typeof m?.spese?.sicurezza?.ringSubMonth === 'number') {
+        subMonth = m.spese.sicurezza.ringSubMonth;
+      } else if (typeof m?.spese?.abbonamentoMensile === 'number') {
+        subMonth = m.spese.abbonamentoMensile;
+      } else if (m?.spese?.sicurezza?.ringSubAnn) {
+        subMonth = m.spese.sicurezza.ringSubAnn / 12;
+      }
+      let label = '';
+      if(setup > 0 && subMonth > 0) {
+        label = `${eur(setup)} una tantum per acquisto + ${eur(subMonth)} al mese di abbonamento`;
+      } else if(setup > 0) {
+        label = `${eur(setup)} una tantum per acquisto`;
+      } else if(subMonth > 0) {
+        label = `${eur(subMonth)} al mese di abbonamento`;
+      } else {
+        label = '—';
+      }
+      $('p6-ring').textContent = label;
+      // Update the label above as well
+      if($('p6-ring-label')) {
+        if(subMonth > 0) {
+          $('p6-ring-label').innerHTML = `Ring Intercom<br><span style="font-weight:400;font-size:0.95em">${eur(subMonth)} al mese di abbonamento</span>`;
+        } else {
+          $('p6-ring-label').innerHTML = 'Ring Intercom';
+        }
+      }
     }
     if($('p6-una')){
       const sicurezza = m?.spese?.sicurezza || {};
       // DO NOT sum extras here; show only the Kit amount
       const kitOnly = typeof sicurezza.extraManuale === 'number' ? Math.max(0, sicurezza.extraManuale) : 0;
       $('p6-una').textContent = kitOnly > 0 ? eur(kitOnly) : '—';
+    }
+    // Ring Intercom una tantum
+    if($('p6-ring-setup')){
+      const setup = m?.spese?.ringSetup ?? 0;
+      $('p6-ring-setup').textContent = setup > 0 ? eur(setup) : '—';
     }
     // Do NOT override the static label in the report
     // p6-una-label must remain unchanged by dynamic data

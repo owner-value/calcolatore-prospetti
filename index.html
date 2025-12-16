@@ -231,9 +231,6 @@
         <h2>5) Costi extra &amp; Sicurezza</h2>
 
         <div class="grid cols-3">
-          <label><span>Ring Intercom — setup una tantum (€)</span>
-            <input type="number" id="costoRingSetup" value="100.00" min="0" step="0.01" oninput="calculateProfit()">
-          </label>
           <label><span>Ring Intercom — abbonamento mensile (€)</span>
             <input type="number" id="abbonamentoMensile" value="9.00" min="0" step="0.01" oninput="calculateProfit()">
           </label>
@@ -248,6 +245,10 @@
           </div>
         </div>
         <div class="grid cols-2 spese-header">
+          <span class="spese-title">Ring Intercom — setup una tantum (€)</span>
+          <label class="spese-input"><span>Costo (€)</span>
+            <input type="number" id="costoRingSetup" value="100.00" min="0" step="0.01" oninput="calculateProfit()">
+          </label>
           <span class="spese-title">Kit Sicurezza<br>(Estintore, rilevatore fumo, monossido di carbonio, gas combustibile)</span>
           <label class="spese-input"><span>Costo (€)</span>
             <input type="number" id="speseUnaTantumManuali" value="150.00" min="0" step="0.01" oninput="calculateProfit()">
@@ -505,10 +506,18 @@
             <div id="p6-una" class="big">—</div>
           </div>
         </div>
+        <div class="box expense-box" id="p6-ring-setup-row">
+          <div class="box-row">
+            <div class="label-stack">
+              <div class="lbl">Ring Intercom – una tantum</div>
+            </div>
+            <div id="p6-ring-setup" class="big">—</div>
+          </div>
+        </div>
         <div class="box expense-box" id="p6-ring-row">
           <div class="box-row">
             <div class="label-stack">
-              <div class="lbl">Ring Intercom<br> (100€ una tantum per acqusito + 5€ al mese di abbonamento)</div>
+              <div class="lbl" id="p6-ring-label">Ring Intercom</div>
             </div>
             <div id="p6-ring" class="big">—</div>
           </div>
