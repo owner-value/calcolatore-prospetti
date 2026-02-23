@@ -42,7 +42,70 @@
     }
     const uaRow = $('p6-ua-row');
     if(uaRow){ uaRow.style.display = uaVal > 0 ? '' : 'none'; }
-    if($('p6-ota'))     $('p6-ota').textContent     = eur(m?.spese?.ota ?? 0);
+    if($('p6-ota')){
+      $('p6-ota').textContent = eur(m?.spese?.ota ?? 0);
+      try{
+        const otaEl = $('p6-ota');
+        const container = otaEl.closest ? otaEl.closest('.box-row') : otaEl.parentNode;
+        if(container){
+          const labelSub = container.querySelector('.label-sub');
+          if(labelSub){
+            const updateOtaLabel = () => {
+              let assicurazioneVal = 0;
+              // prefer explicit select if present
+              const sel = document.getElementById('assicurazionePerSoggiorno');
+              if(sel){
+                const v = parseFloat(sel.value || '0');
+                assicurazioneVal = Number.isFinite(v) ? Math.max(0, v * (document.getElementById('previewNumSoggiorni') ? parseFloat((document.getElementById('previewNumSoggiorni').textContent||'').replace(/[^0-9\.]/g,'')) || 0 : 0)) : 0;
+                // if select holds a per-stay amount, the previewAssicurazioneAnnuo may be more reliable; try preview as fallback
+                if(assicurazioneVal === 0){
+                  const preview = document.getElementById('previewAssicurazioneAnnuo');
+                  if(preview){
+                    const txt = (preview.textContent || preview.innerText || '').trim();
+                    const s = txt.replace(/[^0-9,\-.]/g,'').replace(/\./g,'').replace(',', '.');
+                    const n = parseFloat(s);
+                    assicurazioneVal = Number.isFinite(n) ? n : 0;
+                  } else {
+                    assicurazioneVal = Number(m?.spese?.assicurazione ?? 0);
+                  }
+                }
+              } else {
+                const preview = document.getElementById('previewAssicurazioneAnnuo');
+                if(preview){
+                  const txt = (preview.textContent || preview.innerText || '').trim();
+                  const s = txt.replace(/[^0-9,\-.]/g,'').replace(/\./g,'').replace(',', '.');
+                  const n = parseFloat(s);
+                  assicurazioneVal = Number.isFinite(n) ? n : 0;
+                } else {
+                  assicurazioneVal = Number(m?.spese?.assicurazione ?? 0);
+                }
+              }
+              const pctVal = pct(m?.spese?.otaPct ?? 20);
+              if(assicurazioneVal > 0){
+                labelSub.innerHTML = `(<span id="p6-ota-percent">${pctVal}</span> su affitti + pulizie + assicurazione)`;
+              } else {
+                labelSub.innerHTML = `(<span id="p6-ota-percent">${pctVal}</span> su affitti + pulizie)`;
+              }
+            };
+            // initial
+            updateOtaLabel();
+            // listen to select changes
+            try{
+              const sel = document.getElementById('assicurazionePerSoggiorno');
+              if(sel) sel.addEventListener('change', updateOtaLabel);
+            }catch(_){ }
+            // observe preview changes as well
+            try{
+              const preview = document.getElementById('previewAssicurazioneAnnuo');
+              if(preview && 'MutationObserver' in window){
+                const mo = new MutationObserver(() => updateOtaLabel());
+                mo.observe(preview, { characterData: true, childList: true, subtree: true });
+              }
+            }catch(_){ }
+          }
+        }
+      }catch(_){ }
+    }
     if($('p6-kit'))     $('p6-kit').textContent     = eur(m?.spese?.kit ?? 0);
     const assVal = m?.spese?.assicurazione ?? 0;
     if($('p6-assicurazione')) $('p6-assicurazione').textContent = eur(assVal);

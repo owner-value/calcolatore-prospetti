@@ -636,6 +636,19 @@ function calculateProfit(){
   toggleRow('outputLordoPrenotazioni', lordoAffitti);
   $set('outputLordoTotale', fmtEUR(lordoTotale));
   toggleRow('outputLordoTotale', lordoTotale);
+  // Update visible label to omit 'Assicurazione' when not selected
+  try{
+    const includeAss = assicurazioneAnnuo > 0;
+    const lordoRow = document.getElementById('outputLordoTotale');
+    if(lordoRow && lordoRow.parentNode){
+      const span = lordoRow.parentNode.querySelector('span');
+      if(span){
+        span.innerHTML = includeAss
+          ? 'Ricavo Lordo Totale<br> (Affitti + Pulizie + Assicurazione)'
+          : 'Ricavo Lordo Totale<br> (Affitti + Pulizie)';
+      }
+    }
+  }catch(_){ }
 
   // 4) Commissioni
   const pOTA = readPct('percentualeOta', 20);
@@ -650,6 +663,19 @@ function calculateProfit(){
   const basePM = Math.max(lordoTotale - costoOTA - pulizieAnnuo - assicurazioneAnnuo, 0);
   $set('outputBasePM', fmtEUR(basePM));
   toggleRow('outputBasePM', basePM);
+  // Update Base PM label to omit Assicurazione when not selected
+  try{
+    const includeAss = assicurazioneAnnuo > 0;
+    const baseRow = document.getElementById('outputBasePM');
+    if(baseRow && baseRow.parentNode){
+      const span = baseRow.parentNode.querySelector('span');
+      if(span){
+        span.innerHTML = includeAss
+          ? 'Base PM<br> (Lordo - Pulizie - Assicurazione - OTA)'
+          : 'Base PM<br> (Lordo - Pulizie - OTA)';
+      }
+    }
+  }catch(_){ }
   const ivaPmPct = 22;
   const costoPmNetto = basePM * (pPM/100);
   const costoPmIva = costoPmNetto * (ivaPmPct/100);
