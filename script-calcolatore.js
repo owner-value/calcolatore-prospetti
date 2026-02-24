@@ -660,22 +660,45 @@ function calculateProfit(){
   const otaAssicurazione = assicurazioneAnnuo * (pOTA/100);
   const costoOTA   = otaAffitti + otaPulizie + otaAssicurazione;
 
-  const basePM = Math.max(lordoTotale - costoOTA - pulizieAnnuo - assicurazioneAnnuo, 0);
+  // Compute Base PM according to user-selectable mode (default: OTA-only)
+  const basePmMode = (document.getElementById('basePmMode')?.value || 'ota-only');
+  let basePM = 0;
+  if(basePmMode === 'ota-only'){
+    basePM = Math.max(lordoTotale - costoOTA, 0);
+  }else if(basePmMode === 'pulizie-ota'){
+    basePM = Math.max(lordoTotale - pulizieAnnuo - costoOTA, 0);
+  }else{ // pulizie-assicurazione-ota
+    basePM = Math.max(lordoTotale - pulizieAnnuo - assicurazioneAnnuo - costoOTA, 0);
+  }
   $set('outputBasePM', fmtEUR(basePM));
   toggleRow('outputBasePM', basePM);
-  // Update Base PM label to omit Assicurazione when not selected
+  // Update Base PM label to reflect selected mode
   try{
-    const includeAss = assicurazioneAnnuo > 0;
     const baseRow = document.getElementById('outputBasePM');
     if(baseRow && baseRow.parentNode){
       const span = baseRow.parentNode.querySelector('span');
       if(span){
-        span.innerHTML = includeAss
-          ? 'Base PM<br> (Lordo - Pulizie - Assicurazione - OTA)'
-          : 'Base PM<br> (Lordo - Pulizie - OTA)';
+        const labels = {
+          'ota-only': 'Base PM<br> (Lordo - OTA)',
+          'pulizie-ota': 'Base PM<br> (Lordo - Pulizie - OTA)',
+          'pulizie-assicurazione-ota': 'Base PM<br> (Lordo - Pulizie - Assicurazione - OTA)'
+        };
+        span.innerHTML = labels[basePmMode] || labels['ota-only'];
       }
     }
   }catch(_){ }
+
+  // Inform the report about the PM percentage label and the selected basis
+  try{
+    const basisLabels = {
+      'ota-only': 'su Fatturato Lordo − OTA',
+      'pulizie-ota': 'su Fatturato Lordo − Pulizie − OTA',
+      'pulizie-assicurazione-ota': 'su FatturatoLordo − Pulizie − Assicurazione − OTA'
+    };
+    const basisLabel = basisLabels[basePmMode] || basisLabels['ota-only'];
+    const pmPctLabel = `${fmtPct(pPM)} + IVA 22% • ${basisLabel}`;
+    try{ window.postMessage({ type: 'ov:update', field: 'p6-pm-pct', value: pmPctLabel }, '*'); }catch(e){}
+  }catch(e){ /* ignore */ }
   const ivaPmPct = 22;
   const costoPmNetto = basePM * (pPM/100);
   const costoPmIva = costoPmNetto * (ivaPmPct/100);
@@ -702,22 +725,33 @@ function calculateProfit(){
   // Ring Intercom: setup is now a one-time payment, not included in annual/monthly fees
   const ringSetup   = Math.max(0, num('costoRingSetup'));
   const ringSubAnn  = Math.max(0, num('abbonamentoMensile')) * 12;
-  const extraDevices = [...document.querySelectorAll('.device-row')].map(row=>{
-    const nameInput = row.querySelector('[data-type="device-name"]');
-    const amountInput = row.querySelector('[data-type="device-extra"]');
-    const amount = Math.max(0, +(amountInput?.value || 0));
-    const rawLabel = (nameInput?.value || '').trim();
-    const label = rawLabel || 'Spesa extra';
-    return { label, amount };
-  }).filter(item => item.amount > 0);
+  // Collect device extras but avoid mirroring while the user is actively typing.
+  // Collect device extras and allow live mirroring while typing.
+  // Keep rows that have either a label or a positive amount (including the active/edited row),
+  // so the preview updates as the user types (we debounce DOM updates below).
+  const extraDevices = [...document.querySelectorAll('.device-row')]
+    .map(row=>{
+      const nameInput = row.querySelector('[data-type="device-name"]');
+      const amountInput = row.querySelector('[data-type="device-extra"]');
+      const rawAmount = (amountInput?.value || '').toString().replace(',', '.');
+      const amount = Number.isFinite(parseFloat(rawAmount)) ? Math.max(0, parseFloat(rawAmount)) : 0;
+      const rawLabel = (nameInput?.value || '').trim();
+      const label = rawLabel || '';
+      return { label, amount };
+    })
+    // Include rows that have either a label or an amount > 0 so preview updates live
+    .filter(item => (item.label && item.label.length) || (item.amount && item.amount > 0))
+    .map(({label, amount}) => ({ label, amount }));
 
   const unaTantumManuali = Math.max(0, num('speseUnaTantumManuali'));
-  // Add ringSetup to extra one-time payments
+  // Add ringSetup and device extras to extra one-time payments
   const extraDev = unaTantumManuali + ringSetup + extraDevices.reduce((sum, item) => sum + item.amount, 0);
 
-  // Only the monthly fee is recurring, setup is one-time
+  // Only the monthly fee is recurring; setup and device extras are one-time
   const ringTotale  = ringSubAnn;
-  const sicurezzaTotale = ringTotale + extraDev;
+  const sicurezzaUnaTantum = extraDev; // one-time security/startup costs
+  const sicurezzaRicorrente = ringTotale; // recurring annual security cost
+  const sicurezzaTotale = sicurezzaRicorrente + sicurezzaUnaTantum;
 
   // Output sezione 5 (box locale)
     // Mostra/nascondi la box Ring Intercom una tantum
@@ -731,6 +765,10 @@ function calculateProfit(){
         ringSetupBox.style.display = '';
       }
     }
+    // Notify embedded report about ring setup one-time cost
+    try{
+      window.postMessage({ type: 'ov:update', field: 'p6-ring-setup', value: fmtEUR(ringSetup) }, '*');
+    }catch(e){ /* noop */ }
   // Nascondi la box Ring nel PDF se il valore è zero, nullo o '—'
   const ringBoxPdf = document.getElementById('p6-ring-row');
   if(ringBoxPdf) {
@@ -753,14 +791,18 @@ function calculateProfit(){
       if(kitVal) kitVal.textContent = fmtEUR(unaTantumManuali);
     }
   }
+    // Notify embedded report about kit value so the template updates live
+    try{
+      window.postMessage({ type: 'ov:update', field: 'p6-una', value: fmtEUR(unaTantumManuali) }, '*');
+    }catch(e){ /* noop */ }
   $set('outRingSetup', fmtEUR(ringSetup));
   $set('outRingSubAnnuale', fmtEUR(ringSubAnn));
   $set('outputCostoRingAnnuale', fmtEUR(ringTotale));
-  // Update PDF/report row live if present
-  $set('p6-ring', fmtEUR(ringTotale));
-  // Notify embedded report (live update)
+  // Publish annual Ring subscription to Previsioni di Spesa (page 6)
+  $set('p6-ring-annual', fmtEUR(ringSubAnn));
+  // Notify embedded report (live update for annual value)
   try{
-    window.postMessage({ type: 'ov:update', field: 'p6-ring', value: fmtEUR(ringTotale) }, '*');
+    window.postMessage({ type: 'ov:update', field: 'p6-ring-annual', value: fmtEUR(ringSubAnn) }, '*');
   }catch(e){ /* noop */ }
 
   // Output riepilogo sicurezza
@@ -983,52 +1025,80 @@ function calculateProfit(){
       try{ console.debug('[OV] optional summary placed:', placed); }catch(e){}
     }
   }catch(e){ console.warn('optional extras summary failed', e); }
-  // Mirror extra items as separate boxes after Kit Sicurezza
+  // Mirror extra items as separate boxes after Kit Sicurezza (debounced real-time)
   try{
-    const anchor = document.getElementById('p6-una-row');
-    if(anchor){
-      let cont = document.getElementById('p6-extras-container');
-      if(!cont){
-        cont = document.createElement('div');
-        cont.id = 'p6-extras-container';
-        cont.setAttribute('data-persist-ignore','true');
-        anchor.parentNode.insertBefore(cont, anchor.nextSibling);
-      }
-      cont.innerHTML = '';
-      // La box Kit Sicurezza NON viene mai creata qui se il valore è zero, nullo o '—'
-      // (Sezione PDF)
-      // Se per errore esiste già una box Kit Sicurezza, rimuovila
-      const kitBox = document.getElementById('p6-kit-sicurezza');
-      if(kitBox && (!unaTantumManuali || unaTantumManuali <= 0 || fmtEUR(unaTantumManuali) === '—')) {
-        kitBox.remove();
-      }
-      extraDevices.forEach((it, i) => {
-        const box = document.createElement('div');
-        box.className = 'box expense-box';
-        box.id = `p6-extra-${i+1}`;
-        const row = document.createElement('div');
-        row.className = 'box-row';
-        const labelStack = document.createElement('div');
-        labelStack.className = 'label-stack';
-        const lbl = document.createElement('div');
-        lbl.className = 'lbl';
-        lbl.textContent = it.label || 'Spesa extra';
-        labelStack.appendChild(lbl);
-        const amount = document.createElement('div');
-        amount.className = 'big';
-        amount.textContent = fmtEUR(it.amount);
-        row.append(labelStack, amount);
-        box.appendChild(row);
-        cont.appendChild(box);
-      });
-    }
-  }catch(e){ console.warn('extras container render failed', e); }
+    // Debounced renderer to allow live updates while typing without flooding DOM operations
+    const scheduleExtrasMirror = () => {
+      try{ if(window.__ov_extra_mirror_timer) clearTimeout(window.__ov_extra_mirror_timer); }catch(_){ }
+      window.__ov_extra_mirror_timer = setTimeout(() => {
+        try{
+          const anchor = document.getElementById('p6-una-row');
+          if(!anchor) return;
+          let cont = document.getElementById('p6-extras-container');
+          if(!cont){
+            cont = document.createElement('div');
+            cont.id = 'p6-extras-container';
+            cont.setAttribute('data-persist-ignore','true');
+            // Prefer Start-up page info-container (use p6-ring-setup-row parent if present)
+            try{
+              const ringSetupRow = document.getElementById('p6-ring-setup-row');
+              const startupInfo = (ringSetupRow && ringSetupRow.parentNode && ringSetupRow.parentNode.classList && ringSetupRow.parentNode.classList.contains('info-container')) ?
+                ringSetupRow.parentNode : (Array.from(document.querySelectorAll('.page')).find(p => (p.querySelector('.h2') && (p.querySelector('.h2').textContent || '').toLowerCase().includes('start')))?.querySelector('.info-container'));
+              if(startupInfo) startupInfo.appendChild(cont);
+              else if(anchor.parentNode) anchor.parentNode.insertBefore(cont, anchor.nextSibling);
+            }catch(e){ if(anchor.parentNode) anchor.parentNode.insertBefore(cont, anchor.nextSibling); }
+          }
+          // Reconcile existing child boxes to avoid flicker/duplicates and update in place
+          // Remove or update the kit summary if not applicable
+          const kitBox = document.getElementById('p6-kit-sicurezza');
+          if(kitBox && (!unaTantumManuali || unaTantumManuali <= 0 || fmtEUR(unaTantumManuali) === '—')) {
+            kitBox.remove();
+          }
+          const existingBoxes = Array.from(cont.querySelectorAll('.box.expense-box'));
+          // Update or create boxes for current extras
+          extraDevices.forEach((it, i) => {
+            const id = `p6-extra-${i+1}`;
+            let box = document.getElementById(id);
+            if(!box){
+              box = document.createElement('div');
+              box.className = 'box expense-box';
+              box.id = id;
+              const row = document.createElement('div'); row.className = 'box-row';
+              const labelStack = document.createElement('div'); labelStack.className = 'label-stack';
+              const lbl = document.createElement('div'); lbl.className = 'lbl'; labelStack.appendChild(lbl);
+              const amountEl = document.createElement('div'); amountEl.className = 'big';
+              row.append(labelStack, amountEl);
+              box.appendChild(row);
+              cont.appendChild(box);
+            }
+            const lblNode = box.querySelector('.lbl');
+            const amtNode = box.querySelector('.big');
+            if(lblNode) lblNode.textContent = it.label || 'Spesa extra';
+            if(amtNode) amtNode.textContent = (it.amount && it.amount > 0) ? fmtEUR(it.amount) : '—';
+          });
+          // Remove stale boxes beyond current count
+          const desiredCount = extraDevices.length;
+          existingBoxes.forEach(ex => {
+            const match = (ex.id || '').match(/^p6-extra-(\d+)$/);
+            if(!match) return;
+            const idx = parseInt(match[1], 10);
+            if(idx > desiredCount){ ex.remove(); }
+          });
+          // Notify template to reparent startup extras into the Start-up page
+          try{ window.postMessage({ type: 'ov:reparent-startup' }, '*'); }catch(e){}
+        }catch(e){ console.warn('extras container render failed', e); }
+      }, 250);
+    };
+    // Schedule the mirror (called on each calculate pass)
+    scheduleExtrasMirror();
+  }catch(e){ console.warn('extras container scheduling failed', e); }
 
   // 7) Base imponibile & imposta cedolare
   // Cedolare secca su netto: Lordo Totale - Pulizie - Assicurazione - OTA - Costo PM
   const baseCedolare = Math.max(lordoTotale - pulizieAnnuo - assicurazioneAnnuo - costoOTA - costoPmTotale, 0);
   const imposta = baseCedolare * (pCed/100);
-  const costiOperativi = costoOTA + costoPmTotale + pulizieAnnuo + utenze + kitAnnuo + assicurazioneAnnuo + sicurezzaTotale;
+  // Exclude one-time startup security costs from annual operating costs
+  const costiOperativi = costoOTA + costoPmTotale + pulizieAnnuo + utenze + kitAnnuo + assicurazioneAnnuo + sicurezzaRicorrente;
   const utileAnn = lordoTotale - costiOperativi - imposta;
   const utileMese = utileAnn / 12;
 
@@ -1163,6 +1233,7 @@ function calculateProfit(){
       pmIva: costoPmIva,
       pmIvaPct: ivaPmPct,
       pmPct: pPM,
+      basePmMode,
       unaTantum: sicurezzaTotale,
       sicurezza:{
         ringSetup,
@@ -1189,7 +1260,8 @@ const utileLordoReport =
    utenze +
    kitAnnuo +
    assicurazioneAnnuo +
-   sicurezzaTotale +
+   // Exclude one-time startup security costs from Utile Lordo
+   sicurezzaRicorrente +
    costoPmTotale);
 
 // Aggiorna il valore nel DOM (pagina 7: Utile Lordo Annuo)
