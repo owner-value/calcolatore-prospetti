@@ -17,6 +17,9 @@
 
     const d = m?.dataISO ? new Date(m.dataISO) : new Date();
     const dateStr = d.toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'});
+    // Set all .date elements to the same formatted date (handles duplicated/misnumbered ids)
+    try{ document.querySelectorAll('.date').forEach(el => { if(el) el.textContent = dateStr; }); }catch(_){ }
+    // Backwards-compat: also set known ids if present
     ['p1-data','p2-data','p3-data','p4-data','p5-data','p6-data','p7-data'].forEach(id=>{ const el=$(id); if(el) el.textContent=dateStr; });
 
     if($('p1-indirizzo-riga1')) $('p1-indirizzo-riga1').textContent = m.indirizzoRiga1 || '—';

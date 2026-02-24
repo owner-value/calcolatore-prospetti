@@ -1236,7 +1236,8 @@ const utileLordoReport =
    utenze +
    kitAnnuo +
    assicurazioneAnnuo +
-   sicurezzaTotale +
+   // Exclude one-time startup security costs from Utile Lordo
+   sicurezzaRicorrente +
    costoPmTotale);
 
 // Aggiorna il valore nel DOM (pagina 7: Utile Lordo Annuo)
