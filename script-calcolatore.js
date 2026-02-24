@@ -775,11 +775,11 @@ function calculateProfit(){
   $set('outRingSetup', fmtEUR(ringSetup));
   $set('outRingSubAnnuale', fmtEUR(ringSubAnn));
   $set('outputCostoRingAnnuale', fmtEUR(ringTotale));
-  // Update PDF/report row live if present
-  $set('p6-ring', fmtEUR(ringTotale));
-  // Notify embedded report (live update)
+  // Publish annual Ring subscription to Previsioni di Spesa (page 6)
+  $set('p6-ring-annual', fmtEUR(ringSubAnn));
+  // Notify embedded report (live update for annual value)
   try{
-    window.postMessage({ type: 'ov:update', field: 'p6-ring', value: fmtEUR(ringTotale) }, '*');
+    window.postMessage({ type: 'ov:update', field: 'p6-ring-annual', value: fmtEUR(ringSubAnn) }, '*');
   }catch(e){ /* noop */ }
 
   // Output riepilogo sicurezza

@@ -128,7 +128,8 @@
     }
     if($('p6-pm'))      $('p6-pm').textContent      = eur(m?.spese?.pm ?? 0);
     if($('p6-pm-pct'))   $('p6-pm-pct').textContent   = `${pct(m?.spese?.pmPct ?? m?.percentualePm ?? 0)} + IVA 22%`;
-    if($('p6-ring')){
+    // Update Ring label (show monthly amount) but do NOT render a Ring box in Start-up
+    try{
       const setup = m?.spese?.ringSetup ?? 0;
       let subMonth = 0;
       if (typeof m?.spese?.sicurezza?.ringSubMonth === 'number') {
@@ -138,26 +139,14 @@
       } else if (m?.spese?.sicurezza?.ringSubAnn) {
         subMonth = m.spese.sicurezza.ringSubAnn / 12;
       }
-      let label = '';
-      if(setup > 0 && subMonth > 0) {
-        label = `${eur(setup)} una tantum per acquisto + ${eur(subMonth)} al mese di abbonamento`;
-      } else if(setup > 0) {
-        label = `${eur(setup)} una tantum per acquisto`;
-      } else if(subMonth > 0) {
-        label = `${eur(subMonth)} al mese di abbonamento`;
-      } else {
-        label = '—';
-      }
-      $('p6-ring').textContent = label;
-      // Update the label above as well
-      if($('p6-ring-label')) {
-        if(subMonth > 0) {
+      if($('p6-ring-label')){
+        if(subMonth > 0){
           $('p6-ring-label').innerHTML = `Ring Intercom<br><span style="font-weight:400;font-size:0.95em">${eur(subMonth)} al mese di abbonamento</span>`;
         } else {
           $('p6-ring-label').innerHTML = 'Ring Intercom';
         }
       }
-    }
+    }catch(_){ }
     if($('p6-una')){
       const sicurezza = m?.spese?.sicurezza || {};
       // DO NOT sum extras here; show only the Kit amount
@@ -176,6 +165,9 @@
     renderOptionalExtras();
     recalculateTotalCosti();
     reorderOptionalExtras();
+
+    // Recalculate Startup total (one-time costs)
+    try{ recalculateTotaleStartup(); }catch(_){ }
 
     if($('p7-utile-lordo'))   $('p7-utile-lordo').textContent   = eur(m?.risultati?.utileLordo ?? 0);
     if($('p7-utile-netto'))   $('p7-utile-netto').textContent   = eur(m?.risultati?.utileNetto ?? 0);
@@ -206,12 +198,30 @@
       };
 
       // Move known containers
-      moveIfPresent(document.getElementById('p6-extras-container'));
-      moveIfPresent(document.getElementById('p6-optional-extras'));
+      const extrasCont = document.getElementById('p6-extras-container');
+      const optExtras = document.getElementById('p6-optional-extras');
+      const totalStartupRow = document.getElementById('p6-totale-startup-row');
+      // Prefer inserting extras BEFORE the Totale Start-up row so they appear above the total
+      const insertBeforeTarget = totalStartupRow && totalStartupRow.parentNode === startupInfo ? totalStartupRow : null;
+      if(extrasCont){
+        if(insertBeforeTarget) startupInfo.insertBefore(extrasCont, insertBeforeTarget);
+        else moveIfPresent(extrasCont);
+      }
+      if(optExtras){
+        if(insertBeforeTarget) startupInfo.insertBefore(optExtras, insertBeforeTarget);
+        else moveIfPresent(optExtras);
+      }
 
       // Move any generated p6-extra-* boxes
       const gen = Array.from(document.querySelectorAll('[id^="p6-extra-"]'));
-      gen.forEach(el=> moveIfPresent(el));
+      gen.forEach(el=> {
+        if(!el) return;
+        if(insertBeforeTarget && el.parentNode !== startupInfo){
+          startupInfo.insertBefore(el, insertBeforeTarget);
+        } else {
+          moveIfPresent(el);
+        }
+      });
     }catch(e){ /* ignore */ }
   }
 
@@ -266,11 +276,21 @@
         try{
           const el = d.field ? document.getElementById(d.field) : null;
           if(el && typeof d.value === 'string') el.textContent = d.value;
+          // Special handling: hide annual Ring row when zero
+          if(d.field === 'p6-ring-annual'){
+            try{
+              const txt = (d.value || '').toString();
+              const s = txt.replace(/[^0-9,\-.]/g,'').replace(/\./g,'').replace(',', '.');
+              const n = parseFloat(s);
+              const row = document.getElementById('p6-ring-annual-row');
+              if(row){ row.style.display = (Number.isFinite(n) && n > 0) ? '' : 'none'; }
+            }catch(_){ }
+          }
         }catch(_){ }
         try{
-          if(['p6-ring','p6-ring-setup','p6-una','p6-kit','p6-ota'].includes(d.field)){
+          if(['p6-ring-annual','p6-ring-setup','p6-una','p6-kit','p6-ota','p6-extras-container'].includes(d.field)){
             recalculateTotalCosti();
-            renderStartupSection();
+            try{ recalculateTotaleStartup(); }catch(_){ }
           }
         }catch(_){ }
         return;
@@ -278,11 +298,49 @@
 
       // Allow explicit reparenting request from calculator
       if(d.type === 'ov:reparent-startup'){
-        try{ moveStartupContainers(); }catch(_){ }
+        try{ moveStartupContainers(); recalculateTotaleStartup(); }catch(_){ }
         return;
       }
     });
   }catch(err){ /* ignore */ }
+
+  // Calcola il totale dei costi di Start-up (una tantum) presenti nella pagina Start-up
+  function recalculateTotaleStartup(){
+    try{
+      // Find startup info container
+      let startupInfo = null;
+      const ringSetupRow = document.getElementById('p6-ring-setup-row');
+      if(ringSetupRow && ringSetupRow.parentNode && ringSetupRow.parentNode.classList && ringSetupRow.parentNode.classList.contains('info-container')){
+        startupInfo = ringSetupRow.parentNode;
+      }
+      if(!startupInfo){
+        const startupPage = Array.from(document.querySelectorAll('.page')).find(p => (p.querySelector('.h2')?.textContent || '').toLowerCase().includes('start'));
+        startupInfo = startupPage ? startupPage.querySelector('.info-container') : null;
+      }
+      if(!startupInfo) return;
+
+      const parseMoney = (txt) => {
+        if(!txt) return 0;
+        const s = txt.replace(/[^0-9,,-.]/g,'').replace(/\./g,'').replace(',', '.');
+        const n = parseFloat(s);
+        return Number.isFinite(n) ? n : 0;
+      };
+
+      let total = 0;
+      const bigEls = startupInfo.querySelectorAll('.box.expense-box .big');
+      for(const el of bigEls){
+        if(!el || !el.offsetParent) continue; // skip hidden
+        const id = el.id || '';
+        // Exclude monthly Ring display (p6-ring) from one-time total
+        if(id === 'p6-ring') continue;
+        const txt = (el.textContent || '').trim();
+        if(txt && txt !== '—') total += parseMoney(txt);
+      }
+
+      const out = document.getElementById('p6-totale-startup');
+      if(out) out.textContent = eur(total);
+    }catch(e){ /* ignore */ }
+  }
 
   // Ricalcolo totale spese basato su quanto visualizzato in UI
   function recalculateTotalCosti(){
