@@ -180,6 +180,39 @@
     if($('p7-utile-lordo'))   $('p7-utile-lordo').textContent   = eur(m?.risultati?.utileLordo ?? 0);
     if($('p7-utile-netto'))   $('p7-utile-netto').textContent   = eur(m?.risultati?.utileNetto ?? 0);
     if($('p7-mensile-netto')) $('p7-mensile-netto').textContent = eur(m?.risultati?.mensileNetto ?? 0);
+    // Ensure startup containers are placed in the Start-up page info container
+    try{ moveStartupContainers(); }catch(_){ }
+  }
+
+  // Force-move startup-related containers/boxes into the Start-up page info-container
+  function moveStartupContainers(){
+    try{
+      // Prefer explicit Start-up container by using parent of p6-ring-setup-row
+      let startupInfo = null;
+      const ringSetupRow = document.getElementById('p6-ring-setup-row');
+      if(ringSetupRow && ringSetupRow.parentNode && ringSetupRow.parentNode.classList && ringSetupRow.parentNode.classList.contains('info-container')){
+        startupInfo = ringSetupRow.parentNode;
+      }
+      if(!startupInfo){
+        const startupPage = Array.from(document.querySelectorAll('.page'))
+          .find(p => (p.querySelector('.h2')?.textContent || '').toLowerCase().includes('start'));
+        startupInfo = startupPage ? startupPage.querySelector('.info-container') : null;
+      }
+      if(!startupInfo) return;
+
+      const moveIfPresent = (el) => {
+        if(!el) return;
+        if(el.parentNode !== startupInfo) startupInfo.appendChild(el);
+      };
+
+      // Move known containers
+      moveIfPresent(document.getElementById('p6-extras-container'));
+      moveIfPresent(document.getElementById('p6-optional-extras'));
+
+      // Move any generated p6-extra-* boxes
+      const gen = Array.from(document.querySelectorAll('[id^="p6-extra-"]'));
+      gen.forEach(el=> moveIfPresent(el));
+    }catch(e){ /* ignore */ }
   }
 
   const sanitizeBase = base => (base || '').toString().replace(/\/$/, '');
@@ -226,11 +259,27 @@
   try{
     window.addEventListener('message', (e) => {
       const d = e && e.data;
-      if(!d || d.type !== 'ov:update') return;
-      if(d.field === 'p6-ring'){
-        const el = document.getElementById('p6-ring');
-        if(el && typeof d.value === 'string') el.textContent = d.value;
-        recalculateTotalCosti();
+      if(!d) return;
+
+      // Handle live updates
+      if(d.type === 'ov:update'){
+        try{
+          const el = d.field ? document.getElementById(d.field) : null;
+          if(el && typeof d.value === 'string') el.textContent = d.value;
+        }catch(_){ }
+        try{
+          if(['p6-ring','p6-ring-setup','p6-una','p6-kit','p6-ota'].includes(d.field)){
+            recalculateTotalCosti();
+            renderStartupSection();
+          }
+        }catch(_){ }
+        return;
+      }
+
+      // Allow explicit reparenting request from calculator
+      if(d.type === 'ov:reparent-startup'){
+        try{ moveStartupContainers(); }catch(_){ }
+        return;
       }
     });
   }catch(err){ /* ignore */ }
@@ -244,45 +293,46 @@
         const n = parseFloat(s);
         return Number.isFinite(n) ? n : 0;
       };
-      const ids = ['p6-pulizie','p6-ua','p6-una','p6-ring','p6-kit','p6-assicurazione','p6-ota','p6-pm','p6-cedolare'];
-      let total = ids.reduce((sum,id)=>{
-        const el = $(id);
-        const t = el ? (el.textContent || '').trim() : '';
-        return sum + (t && t !== '—' ? parseMoney(t) : 0);
-      },0);
-
-      // Somma importi extra dichiarati nel DOM tramite data-type
-      // Supportiamo due modalità:
-      //  - elementi con data-type="device-amount" e testo/valore formattato in €
-      //  - input con data-type="device-amount" dove il valore è digitato dall'utente
+      // Only count items that are part of the annual "Previsioni di Spesa" page.
+      // Exclude known start-up items (Kit Sicurezza, Ring setup and extras injected into #p6-extras-container).
+      const startupIds = new Set(['p6-una','p6-ring-setup']);
+      let total = 0;
       try{
-        const extras = Array.from(document.querySelectorAll('[data-type="device-amount"]'));
-        for(const el of extras){
-          const val = ('value' in el) ? (el.value || el.getAttribute('data-amount') || '') : (el.textContent || el.getAttribute('data-amount') || '');
-          total += parseMoney(String(val).trim());
+        const totalRow = document.getElementById('p6-totale-costi-row');
+        const pageEl = totalRow && totalRow.closest ? totalRow.closest('.page') : null;
+        // Fallback to document if page element not found
+        const container = pageEl || document;
+
+        // Sum all visible "big" values inside the same page's expense boxes,
+        // skipping any element whose id is a known startup id.
+        const bigEls = container.querySelectorAll('.box.expense-box .big');
+        for(const el of bigEls){
+          if(!el || !el.offsetParent) continue; // skip hidden
+          const id = el.id || '';
+          if(id && startupIds.has(id)) continue;
+          const txt = (el.textContent || '').trim();
+          if(txt && txt !== '—') total += parseMoney(txt);
         }
-      }catch(_) { /* ignore */ }
 
-      // Somma importi extra dentro il container dedicato (markup reale)
-      try{
-        const nodes = document.querySelectorAll('#p6-extras-container .box.expense-box .big');
-        for(const el of nodes){
-          const t = (el.textContent || '').trim();
-          if(t && t !== '—') total += parseMoney(t);
-        }
-      }catch(_) { /* ignore */ }
+        // Device extras (from #deviceCostsContainer) are start-up costs and must NOT be
+        // included in the annual Totale Spese. Do not add them here.
 
-      // Somma importi opzionali, solo se abilitati via checkbox
-      try{
-        const include = document.getElementById('includeOptionalExtras');
-        if(include && include.checked){
-          const optInputs = document.querySelectorAll('#optionalCostsContainer [data-type="opt-amount"]');
-          for(const inp of optInputs){
-            const val = (inp && 'value' in inp) ? inp.value : '';
-            total += parseMoney(String(val));
+        // Include optional extras only if the optional container is inside the same page and the flag is enabled
+        try{
+          const include = document.getElementById('includeOptionalExtras');
+          const optContainer = document.getElementById('optionalCostsContainer');
+          if(include && include.checked && optContainer){
+            const optPage = optContainer.closest ? optContainer.closest('.page') : null;
+            if(!optPage || optPage === pageEl){
+              const optInputs = optContainer.querySelectorAll('[data-type="opt-amount"]');
+              for(const inp of optInputs){
+                const val = (inp && 'value' in inp) ? inp.value : '';
+                total += parseMoney(String(val));
+              }
+            }
           }
-        }
-      }catch(_) { /* ignore */ }
+        }catch(_){}
+      }catch(_){}
 
       const totEl = $('p6-totale-costi');
       if(totEl) totEl.textContent = eur(total);
@@ -297,6 +347,21 @@
       const persistIgnore = (extras.getAttribute('data-persist-ignore') || '').toLowerCase();
       // Trova sempre un container valido nel report, mai il <body>
       let infoContainer = document.querySelector('#page6 .info-container');
+      // If extras have data-persist-ignore=true, prefer placing them into the Start-up page
+      if(persistIgnore === 'true'){
+        try{
+          // Prefer explicit Start-up container by locating the parent of p6-ring-setup-row
+          const ringSetupRow = document.getElementById('p6-ring-setup-row');
+          if(ringSetupRow && ringSetupRow.parentNode && ringSetupRow.parentNode.classList && ringSetupRow.parentNode.classList.contains('info-container')){
+            infoContainer = ringSetupRow.parentNode;
+          } else {
+            const startupPage = Array.from(document.querySelectorAll('.page'))
+              .find(p => (p.querySelector('.h2')?.textContent || '').toLowerCase().includes('start'));
+            const startupInfo = startupPage ? startupPage.querySelector('.info-container') : null;
+            if(startupInfo) infoContainer = startupInfo;
+          }
+        }catch(_){ /* ignore */ }
+      }
       if(!infoContainer){
         try{
           if(extras.closest) infoContainer = extras.closest('.info-container');

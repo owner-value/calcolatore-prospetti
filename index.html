@@ -226,9 +226,9 @@
         </div>
       </div>
 
-      <!-- 5) Costi extra & Sicurezza -->
+      <!-- 5) Costi di Start-up -->
       <div class="card">
-        <h2>5) Costi extra &amp; Sicurezza</h2>
+        <h2>5) Costi di Start-up</h2>
 
         <div class="grid cols-3">
           <label><span>Ring Intercom — abbonamento mensile (€)</span>
@@ -498,39 +498,7 @@
             <div id="p6-ua" class="big">—</div>
           </div>
         </div>
-        <div class="box expense-box" id="p6-una-row">
-          <div class="box-row">
-            <div class="label-stack">
-              <div class="lbl" id="p6-una-label">Kit Sicurezza<br>(Estintore, rilevatore fumo, monossido di carbonio, gas combustibile)</div>
-            </div>
-            <div id="p6-una" class="big">—</div>
-          </div>
-        </div>
-        <div class="box expense-box" id="p6-ring-setup-row">
-          <div class="box-row">
-            <div class="label-stack">
-              <div class="lbl">Ring Intercom – una tantum</div>
-            </div>
-            <div id="p6-ring-setup" class="big">—</div>
-          </div>
-        </div>
-        <div class="box expense-box" id="p6-ring-row">
-          <div class="box-row">
-            <div class="label-stack">
-              <div class="lbl" id="p6-ring-label">Ring Intercom</div>
-            </div>
-            <div id="p6-ring" class="big">—</div>
-          </div>
-        </div>
-        <div class="box expense-box" id="p6-kit-row">
-          <div class="box-row">
-            <div class="label-stack">
-              <div class="lbl">Kit benvenuto</div>
-              <div class="label-sub">(Carta igienica, sapone, shampoo, fette biscottate, marmellate, caffè)</div>
-            </div>
-            <div id="p6-kit" class="big">—</div>
-          </div>
-        </div>
+        <!-- Kit Sicurezza and Kit Benvenuto moved to Start-up page to avoid counting as annual costs -->
         <div class="box expense-box" id="p6-ota-row">
           <div class="box-row">
             <div class="label-stack">
@@ -566,6 +534,47 @@
             <div id="p6-totale-costi" class="big">—</div>
           </div>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGINA 7 — START-UP COSTS (una tantum) -->
+  <section class="page">
+    <div class="in">
+      <div class="logo-bar">
+        <img src="https://cdn.prod.website-files.com/62a45e911e39a864ff1d018d/65552313c7ee9c9a8cac0251_Logo-orizzontale%202%20(1).svg" alt="">
+        <div class="date" id="p7-data">—</div>
+      </div>
+      <div class="h2">Costi di Start-up</div>
+      <div class="info-container">
+        <div class="box expense-box" id="p6-ring-setup-row">
+          <div class="box-row">
+            <div class="label-stack">
+              <div class="lbl">Ring Intercom – setup (una tantum)</div>
+            </div>
+            <div id="p6-ring-setup" class="big">—</div>
+          </div>
+        </div>
+        <div class="box expense-box" id="p6-ring-row">
+          <div class="box-row">
+            <div class="label-stack">
+              <div class="lbl" id="p6-ring-label">Ring Intercom — abbonamento mensile</div>
+            </div>
+            <div id="p6-ring" class="big">—</div>
+          </div>
+        </div>
+        <div class="box expense-box" id="p6-una-row">
+          <div class="box-row">
+            <div class="label-stack">
+              <div class="lbl" id="p6-una-label">Kit Sicurezza<br>(Estintore, rilevatore fumo, monossido di carbonio, gas combustibile)</div>
+            </div>
+            <div id="p6-una" class="big">—</div>
+          </div>
+        </div>
+        <!-- Container per extra una tantum generati dinamicamente -->
+        <div id="p6-extras-container"></div>
+        <!-- Optional extras block (mirrored boxes) -->
+        <div id="p6-optional-extras"></div>
       </div>
     </div>
   </section>
