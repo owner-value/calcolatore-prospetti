@@ -130,7 +130,16 @@
       }
     }
     if($('p6-pm'))      $('p6-pm').textContent      = eur(m?.spese?.pm ?? 0);
-    if($('p6-pm-pct'))   $('p6-pm-pct').textContent   = `${pct(m?.spese?.pmPct ?? m?.percentualePm ?? 0)} + IVA 22%`;
+    if($('p6-pm-pct')){
+      const baseMode = m?.spese?.basePmMode || 'ota-only';
+      const basisMap = {
+        'ota-only': 'su Fatturato Lordo − OTA',
+        'pulizie-ota': 'su Fatturato Lordo − Pulizie − OTA',
+        'pulizie-assicurazione-ota': 'su FatturatoLordo − Pulizie − Assicurazione − OTA'
+      };
+      const basisLabel = basisMap[baseMode] || basisMap['ota-only'];
+      $('p6-pm-pct').textContent = `${pct(m?.spese?.pmPct ?? m?.percentualePm ?? 0)} + IVA 22% • ${basisLabel}`;
+    }
     // Update Ring label (show monthly amount) but do NOT render a Ring box in Start-up
     try{
       const setup = m?.spese?.ringSetup ?? 0;

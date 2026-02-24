@@ -224,6 +224,15 @@
             <input type="number" id="percentualeCedolare" value="21" min="0" max="100" step="0.1" oninput="calculateProfit()">
           </label>
         </div>
+        <div style="margin-top:8px;">
+          <label><span>Base PM calcolata come</span>
+            <select id="basePmMode" onchange="calculateProfit()">
+              <option value="ota-only">Lordo − OTA (default)</option>
+              <option value="pulizie-ota">Lordo − Pulizie − OTA</option>
+              <option value="pulizie-assicurazione-ota">Lordo − Pulizie − Assicurazione − OTA</option>
+            </select>
+          </label>
+        </div>
       </div>
 
       <!-- 5) Costi di Start-up -->
@@ -398,7 +407,7 @@
   <div class="info-container services-padding">
       <table class="table">
         <tr>
-          <td>Creazione annuncio professionale e pubblicazione sui maggiori siti OTA</td>
+          <td>Creazione annuncio professionale e pubblicazione sui maggiori siti <br>OTA (Online Travel Agencies) come Airbnb, Booking</td>
           <td class="icon-cell">
             <i class="fa-brands fa-airbnb" aria-hidden="true" title="Airbnb"></i>
             <i class="fa-solid fa-b" aria-hidden="true" title="Booking.com"></i>

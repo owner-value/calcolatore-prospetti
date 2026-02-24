@@ -660,22 +660,45 @@ function calculateProfit(){
   const otaAssicurazione = assicurazioneAnnuo * (pOTA/100);
   const costoOTA   = otaAffitti + otaPulizie + otaAssicurazione;
 
-  const basePM = Math.max(lordoTotale - costoOTA - pulizieAnnuo - assicurazioneAnnuo, 0);
+  // Compute Base PM according to user-selectable mode (default: OTA-only)
+  const basePmMode = (document.getElementById('basePmMode')?.value || 'ota-only');
+  let basePM = 0;
+  if(basePmMode === 'ota-only'){
+    basePM = Math.max(lordoTotale - costoOTA, 0);
+  }else if(basePmMode === 'pulizie-ota'){
+    basePM = Math.max(lordoTotale - pulizieAnnuo - costoOTA, 0);
+  }else{ // pulizie-assicurazione-ota
+    basePM = Math.max(lordoTotale - pulizieAnnuo - assicurazioneAnnuo - costoOTA, 0);
+  }
   $set('outputBasePM', fmtEUR(basePM));
   toggleRow('outputBasePM', basePM);
-  // Update Base PM label to omit Assicurazione when not selected
+  // Update Base PM label to reflect selected mode
   try{
-    const includeAss = assicurazioneAnnuo > 0;
     const baseRow = document.getElementById('outputBasePM');
     if(baseRow && baseRow.parentNode){
       const span = baseRow.parentNode.querySelector('span');
       if(span){
-        span.innerHTML = includeAss
-          ? 'Base PM<br> (Lordo - Pulizie - Assicurazione - OTA)'
-          : 'Base PM<br> (Lordo - Pulizie - OTA)';
+        const labels = {
+          'ota-only': 'Base PM<br> (Lordo - OTA)',
+          'pulizie-ota': 'Base PM<br> (Lordo - Pulizie - OTA)',
+          'pulizie-assicurazione-ota': 'Base PM<br> (Lordo - Pulizie - Assicurazione - OTA)'
+        };
+        span.innerHTML = labels[basePmMode] || labels['ota-only'];
       }
     }
   }catch(_){ }
+
+  // Inform the report about the PM percentage label and the selected basis
+  try{
+    const basisLabels = {
+      'ota-only': 'su Fatturato Lordo − OTA',
+      'pulizie-ota': 'su Fatturato Lordo − Pulizie − OTA',
+      'pulizie-assicurazione-ota': 'su FatturatoLordo − Pulizie − Assicurazione − OTA'
+    };
+    const basisLabel = basisLabels[basePmMode] || basisLabels['ota-only'];
+    const pmPctLabel = `${fmtPct(pPM)} + IVA 22% • ${basisLabel}`;
+    try{ window.postMessage({ type: 'ov:update', field: 'p6-pm-pct', value: pmPctLabel }, '*'); }catch(e){}
+  }catch(e){ /* ignore */ }
   const ivaPmPct = 22;
   const costoPmNetto = basePM * (pPM/100);
   const costoPmIva = costoPmNetto * (ivaPmPct/100);
@@ -1210,6 +1233,7 @@ function calculateProfit(){
       pmIva: costoPmIva,
       pmIvaPct: ivaPmPct,
       pmPct: pPM,
+      basePmMode,
       unaTantum: sicurezzaTotale,
       sicurezza:{
         ringSetup,
