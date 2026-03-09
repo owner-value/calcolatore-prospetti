@@ -41,7 +41,9 @@
       const hasAdmin = Boolean(m?.spese?.includeAmministrazione) ||
         ((m?.spese?.utenzeDettaglio?.amministrazioneMensile ?? 0) > 0) ||
         ((m?.spese?.utenzeDettaglio?.amministrazioneAnnua ?? 0) > 0);
-      uaLabel.textContent = hasAdmin ? 'Utenze e amministrazione' : 'Utenze';
+        const wifiMensile = Number(m?.spese?.utenzeDettaglio?.wifiMensile ?? 0) || 0;
+        const wifiLabel = wifiMensile > 0 ? ', WIFI' : '';
+        uaLabel.textContent = hasAdmin ? `Costi Immobile (Utenze, amministrazione${wifiLabel})` : 'Utenze';
     }
     const uaRow = $('p6-ua-row');
     if(uaRow){ uaRow.style.display = uaVal > 0 ? '' : 'none'; }
@@ -300,7 +302,7 @@
           }
         }catch(_){ }
         try{
-          if(['p6-ring-annual','p6-ring-setup','p6-una','p6-kit','p6-ota','p6-extras-container'].includes(d.field)){
+          if(['p6-ring-annual','p6-ring-setup','p6-una','p6-kit','p6-ota','p6-extras-container','p6-kit-sicurezza'].includes(d.field)){
             recalculateTotalCosti();
             try{ recalculateTotaleStartup(); }catch(_){ }
           }
@@ -365,7 +367,7 @@
       };
       // Only count items that are part of the annual "Previsioni di Spesa" page.
       // Exclude known start-up items (Kit Sicurezza, Ring setup and extras injected into #p6-extras-container).
-      const startupIds = new Set(['p6-una','p6-ring-setup']);
+      const startupIds = new Set(['p6-una','p6-ring-setup','p6-kit-sicurezza']);
       let total = 0;
       try{
         const totalRow = document.getElementById('p6-totale-costi-row');

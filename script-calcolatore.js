@@ -629,6 +629,12 @@ function calculateProfit(){
     $set('previewAssicurazioneAnnuo', fmtEUR(assicurazioneAnnuo));
   }
 
+  // Publish Welcome Kit to report (so it appears in Previsioni di Spesa and totals)
+  try{
+    $set('p6-kit', fmtEUR(kitAnnuo));
+    try{ window.postMessage({ type: 'ov:update', field: 'p6-kit', value: fmtEUR(kitAnnuo) }, '*'); }catch(e){}
+  }catch(e){ }
+
   // 3) Lordi
   const lordoAffitti = adr * giorni;
   const lordoTotale = lordoAffitti + pulizieAnnuo + assicurazioneAnnuo;
@@ -829,47 +835,12 @@ function calculateProfit(){
       }
     }
     extraList.innerHTML = '';
-    // Kit Sicurezza riepilogo: mostra solo se valore valido
-    if(unaTantumManuali && unaTantumManuali > 0 && fmtEUR(unaTantumManuali) !== '—'){
-      const row=document.createElement('div');
-      row.className='row';
-      row.id = 'p6-kit-sicurezza';
-      const span=document.createElement('span');
-      span.innerHTML= 'Kit Sicurezza<br>(Estintore, rilevatore fumo, monossido di carbonio, gas combustibile)';
-      const strong=document.createElement('strong');
-      strong.className='bad';
-      strong.textContent=fmtEUR(unaTantumManuali);
-      row.append(span,strong);
-      extraList.appendChild(row);
-    }
-    // Nascondi la box Kit Sicurezza se valore non valido
-    const kitBoxSummary = document.getElementById('p6-kit-sicurezza');
-    if(kitBoxSummary && (!unaTantumManuali || unaTantumManuali <= 0 || fmtEUR(unaTantumManuali) === '—')) {
-      kitBoxSummary.style.display = 'none';
-    } else if(kitBoxSummary) {
-      kitBoxSummary.style.display = '';
-    }
-    // Nascondi la box Ring nel riepilogo se valore non valido
+    // Do NOT show one-time security (Kit Sicurezza) or device extras in the quick Riepilogo
+    // These are Start-up (one-time) costs and are shown on the Start-up page only.
+    // Always hide the one-time Ring setup from the quick Riepilogo (it's a start-up cost)
     const ringBoxSummary = document.getElementById('outSumRingSetup');
     if(ringBoxSummary) {
-      if(!ringSetup || ringSetup <= 0 || fmtEUR(ringSetup) === '—') {
-        ringBoxSummary.parentElement.style.display = 'none';
-      } else {
-        ringBoxSummary.parentElement.style.display = '';
-      }
-    }
-    if(extraDevices.length){
-      extraDevices.forEach(({label, amount})=>{
-        const row=document.createElement('div');
-        row.className='row';
-        const span=document.createElement('span');
-        span.textContent=label;
-        const strong=document.createElement('strong');
-        strong.className='bad';
-        strong.textContent=fmtEUR(amount);
-        row.append(span,strong);
-        extraList.appendChild(row);
-      });
+      try{ ringBoxSummary.parentElement.style.display = 'none'; }catch(_){ }
     }
     // Append a summary row for Optional Extras inside Panel Summary list
     try{
