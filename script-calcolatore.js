@@ -759,6 +759,11 @@ function calculateProfit(){
   const sicurezzaRicorrente = ringTotale; // recurring annual security cost
   const sicurezzaTotale = sicurezzaRicorrente + sicurezzaUnaTantum;
 
+  // Setup & Abbonamenti summary
+  const totalSetupSubscriptions = ringSubAnn + sicurezzaUnaTantum;
+  $set('securityExtraSummary', fmtEUR(totalSetupSubscriptions));
+  toggleRow('securityExtraSummary', totalSetupSubscriptions);
+
   // Output sezione 5 (box locale)
     // Mostra/nascondi la box Ring Intercom una tantum
     const ringSetupBox = document.getElementById('p6-ring-setup-row');

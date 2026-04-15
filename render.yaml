@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: calcolatore-prospetti-backend
+    env: node
+    buildCommand: npm install && cd backend && npm install && npx prisma generate
+    startCommand: cd backend && node app.js
+    envVars:
+      - key: NODE_VERSION
+        value: 22.x
+      - key: DATABASE_URL
+        sync: false # User should provide their own (e.g. from Neon.tech)
+    healthCheckPath: /_health
+    autoDeploy: true
+
+  - type: static
+    name: calcolatore-prospetti-frontend
+    env: static
+    staticPublishPath: ./
+    autoDeploy: true
