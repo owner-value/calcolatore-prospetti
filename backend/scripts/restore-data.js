@@ -212,7 +212,7 @@ async function main() {
         updatedProspects += 1;
       }
     }
-  });
+  }, { timeout: 60000 });
 
   console.log('Restore completed.');
   console.log(`Properties created: ${createdProps}`);
