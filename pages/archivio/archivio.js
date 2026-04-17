@@ -177,6 +177,9 @@ async function apiFetch(path = '', options = {}){
   throw lastError || new Error('API request failed');
 }
 
+// Wake up Render server immediately on script load (free tier sleeps after inactivity)
+apiFetch('/_health').catch(() => {});
+
 const $ = id => document.getElementById(id);
 
 let properties = [];
@@ -391,36 +394,73 @@ const renderProperties = () => {
   applyApiToLinks(container);
 };
 
+const updatePropertyFilter = () => {
+  const select = $('propertyFilter');
+  if(!select) return;
+  const current = select.value;
+  select.innerHTML = '<option value="">Tutte le proprieta</option>' + properties.map(item => {
+    const label = escapeHtml(item.nome || item.slug);
+    const sel = item.slug === selectedProperty ? ' selected' : '';
+    return `<option value="${escapeHtml(item.slug)}"${sel}>${label}</option>`;
+  }).join('');
+  if(current && !properties.some(item => item.slug === current)){
+    selectedProperty = '';
+  }
+  if(selectedProperty) select.value = selectedProperty;
+};
+
+const updatePropertyStatus = () => {
+  if(selectedProperty){
+    const name = getPropertyName(selectedProperty) || selectedProperty;
+    const exists = properties.some(item => item.slug === selectedProperty);
+    setStatus('propertyStatus', exists ? `Proprieta selezionata: ${name}.` : `La proprieta ${name} non esiste piu.`, 'info');
+  }else{
+    setStatus('propertyStatus', properties.length ? `Proprieta totali: ${properties.length}.` : 'Nessuna proprieta registrata.', 'info');
+  }
+};
+
+const updateProspectStatus = () => {
+  if(selectedProperty){
+    const assignedCount = prospects.filter(item => item.property?.slug === selectedProperty).length;
+    const propertyName = getPropertyName(selectedProperty) || selectedProperty;
+    setStatus('archiveStatus', assignedCount ? `Prospetti per ${propertyName}: ${assignedCount}.` : `Nessun prospetto assegnato a ${propertyName}.`, 'info');
+  }else{
+    setStatus('archiveStatus', prospects.length ? `Trovati ${prospects.length} prospetti salvati.` : 'Nessun prospetto salvato.', 'info');
+  }
+};
+
+const loadAllData = async () => {
+  setStatus('propertyStatus', 'Caricamento...', 'info');
+  setStatus('archiveStatus', 'Caricamento...', 'info');
+  try{
+    const [propRes, prospRes] = await Promise.all([
+      apiFetch(PROPERTIES_PATH),
+      apiFetch(PROSPECTS_PATH),
+    ]);
+    if(!propRes.ok) throw new Error(`Properties: Status ${propRes.status}`);
+    if(!prospRes.ok) throw new Error(`Prospects: Status ${prospRes.status}`);
+    [properties, prospects] = await Promise.all([propRes.json(), prospRes.json()]);
+    renderProperties();
+    updatePropertyFilter();
+    applyProspectFilter();
+    updatePropertyStatus();
+    updateProspectStatus();
+  }catch(err){
+    console.error(err);
+    setStatus('propertyStatus', 'Errore nel recupero delle proprieta.', 'error');
+    setStatus('archiveStatus', 'Errore nel recupero dei prospetti.', 'error');
+  }
+};
+
 const fetchProperties = async () => {
   try{
     setStatus('propertyStatus', 'Caricamento proprieta...', 'info');
-  const res = await apiFetch(PROPERTIES_PATH);
+    const res = await apiFetch(PROPERTIES_PATH);
     if(!res.ok) throw new Error(`Status ${res.status}`);
     properties = await res.json();
     renderProperties();
-    if(selectedProperty){
-      const name = getPropertyName(selectedProperty) || selectedProperty;
-      const exists = properties.some(item => item.slug === selectedProperty);
-      setStatus('propertyStatus', exists ? `Proprieta selezionata: ${name}.` : `La proprieta ${name} non esiste piu.`, 'info');
-    }else{
-      setStatus('propertyStatus', properties.length ? `Proprieta totali: ${properties.length}.` : 'Nessuna proprieta registrata.', 'info');
-    }
-
-    const select = $('propertyFilter');
-    if(select){
-      const current = select.value;
-      select.innerHTML = '<option value="">Tutte le proprieta</option>' + properties.map(item => {
-        const label = escapeHtml(item.nome || item.slug);
-        const sel = item.slug === selectedProperty ? ' selected' : '';
-        return `<option value="${escapeHtml(item.slug)}"${sel}>${label}</option>`;
-      }).join('');
-      if(current && !properties.some(item => item.slug === current)){
-        selectedProperty = '';
-      }
-      if(selectedProperty){
-        select.value = selectedProperty;
-      }
-    }
+    updatePropertyFilter();
+    updatePropertyStatus();
   }catch(err){
     console.error(err);
     setStatus('propertyStatus', 'Errore nel recupero delle proprieta.', 'error');
@@ -430,17 +470,11 @@ const fetchProperties = async () => {
 const fetchProspects = async () => {
   try{
     setStatus('archiveStatus', 'Caricamento prospetti...', 'info');
-  const res = await apiFetch(PROSPECTS_PATH);
+    const res = await apiFetch(PROSPECTS_PATH);
     if(!res.ok) throw new Error(`Status ${res.status}`);
     prospects = await res.json();
     applyProspectFilter();
-    if(selectedProperty){
-      const assignedCount = prospects.filter(item => item.property?.slug === selectedProperty).length;
-      const propertyName = getPropertyName(selectedProperty) || selectedProperty;
-      setStatus('archiveStatus', assignedCount ? `Prospetti per ${propertyName}: ${assignedCount}.` : `Nessun prospetto assegnato a ${propertyName}.`, 'info');
-    }else{
-      setStatus('archiveStatus', prospects.length ? `Trovati ${prospects.length} prospetti salvati.` : 'Nessun prospetto salvato.', 'info');
-    }
+    updateProspectStatus();
   }catch(err){
     console.error(err);
     prospects = [];
@@ -459,8 +493,7 @@ const handleProspectDelete = async slug => {
     setStatus('archiveStatus', 'Eliminazione prospetto in corso...', 'info');
     const res = await apiFetch(`${PROSPECTS_PATH}/${encodeURIComponent(slugTrim)}`, { method: 'DELETE' });
     if(res.status === 404){
-      await fetchProspects();
-      await fetchProperties();
+      await loadAllData();
       setStatus('archiveStatus', 'Il prospetto era già stato eliminato.', 'success');
       return;
     }
@@ -468,8 +501,7 @@ const handleProspectDelete = async slug => {
       const txt = await res.text();
       throw new Error(txt || `Status ${res.status}`);
     }
-    await fetchProspects();
-    await fetchProperties();
+    await loadAllData();
     setStatus('archiveStatus', 'Prospetto eliminato correttamente.', 'success');
   }catch(err){
     console.error(err);
@@ -495,8 +527,7 @@ const handlePropertyDelete = async (slug, prospectCount = 0) => {
       if(selectedProperty === slugTrim){
         selectedProperty = '';
       }
-      await fetchProperties();
-      await fetchProspects();
+      await loadAllData();
       setStatus('propertyStatus', 'La proprieta era già stata rimossa.', 'success');
       return;
     }
@@ -515,8 +546,7 @@ const handlePropertyDelete = async (slug, prospectCount = 0) => {
     if(selectedProperty === slugTrim){
       selectedProperty = '';
     }
-    await fetchProperties();
-    await fetchProspects();
+    await loadAllData();
     const detached = Number.isFinite(+result?.detachedProspects) ? +result.detachedProspects : 0;
     const extra = detached > 0 ? ` ${detached === 1 ? '1 prospetto spostato' : `${detached} prospetti spostati`} nella sezione senza proprieta.` : '';
     setStatus('propertyStatus', `Proprieta eliminata correttamente.${extra}`, 'success');
@@ -541,8 +571,7 @@ const handleProspectAssign = async (slug, propertySlug) => {
       const txt = await res.text();
       throw new Error(txt || `Status ${res.status}`);
     }
-    await fetchProspects();
-    await fetchProperties();
+    await loadAllData();
     setStatus('archiveStatus', 'Prospetto aggiornato correttamente.', 'success');
   }catch(err){
     console.error(err);
@@ -564,8 +593,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   $('refreshArchiveBtn')?.addEventListener('click', () => {
-    fetchProperties();
-    fetchProspects();
+    loadAllData();
   });
 
   $('openPropertyBtn')?.addEventListener('click', () => {
@@ -636,13 +664,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   applyApiToLinks();
 
-  fetchProperties().then(() => {
-    if(selectedProperty){
-      const select = $('propertyFilter');
-      if(select){
-        select.value = selectedProperty;
-      }
-    }
-    fetchProspects();
-  });
+  loadAllData();
+
+  // Keep Render server warm while page is open (pings every 4 min)
+  setInterval(() => { apiFetch('/_health').catch(() => {}); }, 4 * 60 * 1000);
 });

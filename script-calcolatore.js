@@ -234,6 +234,9 @@ const slugify = (str = '') => str
   .replace(/-+/g, '-')
   .replace(/^-|-$/g, '');
 
+// Wake up Render server immediately on script load
+apiFetch('/_health').catch(() => {});
+
 let latestModel = null;
 let propertiesCache = [];
 let baseDocumentTitle = document.title || DEFAULT_TITLE;

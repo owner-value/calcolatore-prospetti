@@ -188,6 +188,9 @@ async function apiFetch(path = '', options = {}){
   throw lastError || new Error('API request failed');
 }
 
+// Wake up Render server immediately on script load
+apiFetch('/_health').catch(() => {});
+
 const $ = id => document.getElementById(id);
 
 let currentSlug = '';
