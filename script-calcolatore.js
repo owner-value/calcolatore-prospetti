@@ -719,30 +719,6 @@ function calculateProfit(){
   }
 
   const assicurazioneLabelResolved = assicurazioneLabel;
-  // Aggiorna nota sul fatturato lordo: cita solo le voci effettivamente presenti
-  // (affitti, pulizie, assicurazione). Omettere quelle a 0 evita di promettere
-  // "assicurazione inclusa" quando non lo è, e mantiene il testo conciso.
-  const fattNote = document.getElementById('fatturatoNote');
-  if(fattNote){
-    const items = [];
-    if(lordoAffitti > 0)        items.push(I18N.t('pdf.p5FattNoteRent'));
-    if(pulizieAnnuo > 0)         items.push(I18N.t('pdf.p5FattNoteCleaning'));
-    if(assicurazioneAnnuo > 0)  items.push(I18N.t('pdf.p5FattNoteInsurance'));
-    const listText = items.length === 0
-      ? I18N.t('pdf.p5FattNoteRent') // fallback: niente selezionato, mostra almeno affitti
-      : (I18N.locale() === 'en'
-          ? (items.length === 1
-              ? items[0]
-              : (items.length === 2
-                  ? items.join(' and ')
-                  : items.slice(0, -1).join(', ') + ' and ' + items[items.length - 1]))
-          : (items.length === 1
-              ? items[0]
-              : (items.length === 2
-                  ? items.join(' e ')
-                  : items.slice(0, -1).join(', ') + ' e ' + items[items.length - 1])));
-    fattNote.textContent = I18N.t('pdf.p5FattNote', { items: listText });
-  }
 
   // Preview sezione 2b (solo se presenti)
   if(autoCalc){
@@ -770,6 +746,32 @@ function calculateProfit(){
   toggleRow('outputLordoPrenotazioni', lordoAffitti);
   $set('outputLordoTotale', fmtEUR(lordoTotale));
   toggleRow('outputLordoTotale', lordoTotale);
+  // Aggiorna nota sul fatturato lordo: cita solo le voci effettivamente presenti
+  // (affitti, pulizie, assicurazione). Omettere quelle a 0 evita di promettere
+  // "assicurazione inclusa" quando non lo è, e mantiene il testo conciso.
+  // Placed AFTER lordoAffitti / pulizieAnnuo / assicurazioneAnnuo are
+  // declared — they're const, so reading them earlier would hit the TDZ.
+  const fattNote = document.getElementById('fatturatoNote');
+  if(fattNote){
+    const items = [];
+    if(lordoAffitti > 0)        items.push(I18N.t('pdf.p5FattNoteRent'));
+    if(pulizieAnnuo > 0)         items.push(I18N.t('pdf.p5FattNoteCleaning'));
+    if(assicurazioneAnnuo > 0)  items.push(I18N.t('pdf.p5FattNoteInsurance'));
+    const listText = items.length === 0
+      ? I18N.t('pdf.p5FattNoteRent') // fallback: niente selezionato, mostra almeno affitti
+      : (I18N.locale() === 'en'
+          ? (items.length === 1
+              ? items[0]
+              : (items.length === 2
+                  ? items.join(' and ')
+                  : items.slice(0, -1).join(', ') + ' and ' + items[items.length - 1]))
+          : (items.length === 1
+              ? items[0]
+              : (items.length === 2
+                  ? items.join(' e ')
+                  : items.slice(0, -1).join(', ') + ' e ' + items[items.length - 1])));
+    fattNote.textContent = I18N.t('pdf.p5FattNote', { items: listText });
+  }
   // Update visible label to omit 'Assicurazione' when not selected
   try{
     const includeAss = assicurazioneAnnuo > 0;
