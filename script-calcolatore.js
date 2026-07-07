@@ -304,16 +304,104 @@ function initDropdown(root, options = {}){
   const menu = root.querySelector('[data-dropdown-menu]');
   const hidden = root.querySelector('input[type="hidden"]');
   const placeholder = options.placeholder || root.dataset.placeholder || toggle?.textContent || '';
+  // Opt-in search: any truthy value of the data-dropdown-search attribute
+  // (use data-dropdown-search="true" or just data-dropdown-search).
+  const searchEnabled = root.hasAttribute('data-dropdown-search');
+  const searchPh = root.dataset.searchPh || I18N.t('common.searchPh');
+  const noResultsLabel = I18N.t('common.noResults');
   const changeHandlers = [];
-  const state = { options: [], value: hidden?.value || '', placeholder };
+  const state = {
+    options: [],
+    value: hidden?.value || '',
+    placeholder,
+    query: '',
+  };
+
+  // ---- search input (optional) ---------------------------------------
+  // Lives inside the menu at the top. Renders a sub-element "options" inside
+  // the menu so the search input + the options list can be styled separately
+  // and the input stays sticky at the top of the menu.
+  let searchInput = null;
+  let optionsList = null;
+  let emptyState = null;
+  if (searchEnabled && menu) {
+    // Wrap the existing options container in a sub-element if not already
+    if (!menu.querySelector('[data-dropdown-options]')) {
+      const wrap = document.createElement('div');
+      wrap.className = 'dropdown-options';
+      wrap.setAttribute('data-dropdown-options', '');
+      while (menu.firstChild) wrap.appendChild(menu.firstChild);
+      menu.appendChild(wrap);
+    }
+    optionsList = menu.querySelector('[data-dropdown-options]');
+    emptyState = document.createElement('div');
+    emptyState.className = 'dropdown-empty';
+    emptyState.setAttribute('data-dropdown-empty', '');
+    emptyState.textContent = noResultsLabel;
+    emptyState.style.display = 'none';
+    menu.appendChild(emptyState);
+
+    const searchWrap = document.createElement('div');
+    searchWrap.className = 'dropdown-search';
+    searchWrap.setAttribute('data-dropdown-search-wrap', '');
+    searchInput = document.createElement('input');
+    searchInput.type = 'search';
+    searchInput.className = 'dropdown-search-input';
+    searchInput.placeholder = searchPh;
+    searchInput.setAttribute('aria-label', searchPh);
+    searchInput.setAttribute('autocomplete', 'off');
+    searchInput.setAttribute('spellcheck', 'false');
+    searchWrap.appendChild(searchInput);
+    menu.insertBefore(searchWrap, menu.firstChild);
+
+    searchInput.addEventListener('input', () => {
+      state.query = (searchInput.value || '').trim().toLowerCase();
+      renderOptions(state.value);
+    });
+    // Stop propagation so typing doesn't trigger outside-click close
+    searchInput.addEventListener('click', e => e.stopPropagation());
+    searchInput.addEventListener('keydown', e => e.stopPropagation());
+    // Esc inside the search field clears it (and refocuses)
+    searchInput.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        if (searchInput.value) {
+          searchInput.value = '';
+          state.query = '';
+          renderOptions(state.value);
+        } else {
+          close();
+        }
+      }
+    });
+  }
+
+  // Filter options by the current search query. Case-insensitive substring
+  // match on the option label. Empty query returns everything.
+  const filteredOptions = () => {
+    if (!state.query) return state.options;
+    const q = state.query;
+    return state.options.filter(opt => {
+      const label = String(opt && opt.label != null ? opt.label : '').toLowerCase();
+      return label.indexOf(q) !== -1;
+    });
+  };
 
   const close = () => {
     root.classList.remove('is-open');
     if(toggle) toggle.setAttribute('aria-expanded', 'false');
+    if (searchInput) {
+      // Clear the search when closing so reopening starts fresh
+      searchInput.value = '';
+      state.query = '';
+    }
   };
   const open = () => {
     root.classList.add('is-open');
     if(toggle) toggle.setAttribute('aria-expanded', 'true');
+    // Focus the search input shortly after open so click-to-open still works
+    if (searchInput) {
+      setTimeout(() => { try { searchInput.focus(); } catch (e) {} }, 0);
+    }
   };
   const toggleOpen = () => {
     if(root.classList.contains('is-open')){
@@ -345,8 +433,17 @@ function initDropdown(root, options = {}){
 
   const renderOptions = selectedValue => {
     if(!menu) return;
-    menu.innerHTML = '';
-    if(!state.options.length){
+    // Pick the right container: either the sub-options wrapper (search mode)
+    // or the menu itself (classic mode).
+    const target = optionsList || menu;
+    target.innerHTML = '';
+    const visible = filteredOptions();
+    if(!visible.length){
+      if (searchEnabled) {
+        // Show the empty-state helper instead of the placeholder button.
+        if (emptyState) emptyState.style.display = '';
+        return;
+      }
       const emptyBtn=document.createElement('button');
       emptyBtn.type='button';
       emptyBtn.className='dropdown-item is-active';
@@ -355,10 +452,11 @@ function initDropdown(root, options = {}){
       emptyBtn.setAttribute('role','option');
       emptyBtn.setAttribute('aria-selected','true');
       emptyBtn.textContent = state.placeholder;
-      menu.appendChild(emptyBtn);
+      target.appendChild(emptyBtn);
       return;
     }
-    state.options.forEach(opt => {
+    if (emptyState) emptyState.style.display = 'none';
+    visible.forEach(opt => {
       const btn=document.createElement('button');
       btn.type='button';
       btn.className='dropdown-item';
@@ -371,13 +469,14 @@ function initDropdown(root, options = {}){
         btn.classList.add('is-active');
       }
       btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
-      menu.appendChild(btn);
+      target.appendChild(btn);
     });
   };
 
   const syncActiveState = selectedValue => {
-    if(!menu) return;
-    menu.querySelectorAll('[data-dropdown-option]').forEach(btn => {
+    const target = optionsList || menu;
+    if(!target) return;
+    target.querySelectorAll('[data-dropdown-option]').forEach(btn => {
       const isActive = (btn.dataset.value || '') === (selectedValue ?? '');
       btn.classList.toggle('is-active', isActive);
       btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
@@ -611,13 +710,29 @@ function calculateProfit(){
   }
 
   const assicurazioneLabelResolved = assicurazioneLabel;
-  // Aggiorna nota sul fatturato lordo: se l'assicurazione non è selezionata, non citarla.
+  // Aggiorna nota sul fatturato lordo: cita solo le voci effettivamente presenti
+  // (affitti, pulizie, assicurazione). Omettere quelle a 0 evita di promettere
+  // "assicurazione inclusa" quando non lo è, e mantiene il testo conciso.
   const fattNote = document.getElementById('fatturatoNote');
   if(fattNote){
-    const includeAss = assicurazioneAnnuo > 0;
-    fattNote.textContent = includeAss
-      ? I18N.t('pdf.p5FattNote')
-      : I18N.t('pdf.p5FattNote').replace(', assicurazione,', ',').replace(' e assicurazione', '');
+    const items = [];
+    if(lordoAffitti > 0)        items.push(I18N.t('pdf.p5FattNoteRent'));
+    if(pulizieAnnuo > 0)         items.push(I18N.t('pdf.p5FattNoteCleaning'));
+    if(assicurazioneAnnuo > 0)  items.push(I18N.t('pdf.p5FattNoteInsurance'));
+    const listText = items.length === 0
+      ? I18N.t('pdf.p5FattNoteRent') // fallback: niente selezionato, mostra almeno affitti
+      : (I18N.locale() === 'en'
+          ? (items.length === 1
+              ? items[0]
+              : (items.length === 2
+                  ? items.join(' and ')
+                  : items.slice(0, -1).join(', ') + ' and ' + items[items.length - 1]))
+          : (items.length === 1
+              ? items[0]
+              : (items.length === 2
+                  ? items.join(' e ')
+                  : items.slice(0, -1).join(', ') + ' e ' + items[items.length - 1])));
+    fattNote.textContent = I18N.t('pdf.p5FattNote', { items: listText });
   }
 
   // Preview sezione 2b (solo se presenti)

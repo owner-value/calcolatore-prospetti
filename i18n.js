@@ -29,6 +29,8 @@
       'common.required':        'Obbligatorio',
       'common.optional':        'opzionale',
       'common.loading':         'Caricamento…',
+      'common.searchPh':        'Cerca…',
+      'common.noResults':       'Nessun risultato',
 
       // nav menu
       'menu.calculator':  'Calcolatore',
@@ -384,7 +386,10 @@
       'pdf.p5Adr':                'Media affitto giornaliera',
       'pdf.p5Lordo':              'Reddito lordo stimato',
       'pdf.p5Fatt':               'Fatturato Lordo Annuo',
-      'pdf.p5FattNote':           'Per "fatturato lordo annuo" si intende quanto ricevuto dalle piattaforme o prenotazioni dirette (affitti, pulizie e assicurazione).',
+      'pdf.p5FattNote':           'Per "fatturato lordo annuo" si intende quanto ricevuto dalle piattaforme o prenotazioni dirette ({items}).',
+      'pdf.p5FattNoteRent':       'affitti',
+      'pdf.p5FattNoteCleaning':   'pulizie',
+      'pdf.p5FattNoteInsurance':  'assicurazione',
       'pdf.p6Title':              'Previsioni di Spesa',
       'pdf.p6Pulizie':            'Pulizie / Noleggio biancheria',
       'pdf.p6Assicurazione':      'Assicurazione per soggiorno',
@@ -426,6 +431,8 @@
       'common.required':        'Required',
       'common.optional':        'optional',
       'common.loading':         'Loading…',
+      'common.searchPh':        'Search…',
+      'common.noResults':       'No results',
 
       // nav menu
       'menu.calculator':  'Calculator',
@@ -781,7 +788,10 @@
       'pdf.p5Adr':                'Average daily rate',
       'pdf.p5Lordo':              'Estimated gross revenue',
       'pdf.p5Fatt':               'Annual gross revenue',
-      'pdf.p5FattNote':           'By "annual gross revenue" we mean the amount received from platforms or direct bookings (rent, cleaning and insurance).',
+      'pdf.p5FattNote':           'By "annual gross revenue" we mean the amount received from platforms or direct bookings ({items}).',
+      'pdf.p5FattNoteRent':       'rent',
+      'pdf.p5FattNoteCleaning':   'cleaning',
+      'pdf.p5FattNoteInsurance':  'insurance',
       'pdf.p6Title':              'Expense forecast',
       'pdf.p6Pulizie':            'Cleaning / Linen rental',
       'pdf.p6Assicurazione':      'Insurance per stay',
