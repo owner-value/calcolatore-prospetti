@@ -216,7 +216,7 @@ const getProperty = async slug => {
     if(!res.ok) throw new Error(`Status ${res.status}`);
     return await res.json();
   }catch(err){
-    console.error('Errore recupero proprieta', err);
+    console.error('Errore recupero proprietà', err);
     return null;
   }
 };
@@ -267,7 +267,7 @@ const setStatus = (id, message = '', type = 'info') => {
 };
 
 const fillForm = property => {
-  $('propertyTitle').textContent = property ? property.nome || property.slug : 'Nuova proprieta';
+  $('propertyTitle').textContent = property ? property.nome || property.slug : 'Nuova proprietà';
   $('propertyName').value = property?.nome || '';
   $('propertySlug').value = property?.slug || '';
   $('propertyAddress').value = property?.indirizzo || '';
@@ -339,7 +339,7 @@ const renderProspects = (items = []) => {
 const handleProspectDelete = async slug => {
   const slugTrim = (slug || '').trim();
   if(!slugTrim) return;
-  const ok = window.confirm(`Eliminare il prospetto "${slugTrim}"? L'operazione non puo essere annullata.`);
+  const ok = window.confirm(`Eliminare il prospetto "${slugTrim}"? L'operazione non può essere annullata.`);
   if(!ok) return;
   try{
     setStatus('prospectStatus', 'Eliminazione prospetto in corso...', 'info');
@@ -373,7 +373,7 @@ const loadProperty = async slug => {
     return;
   }
   try{
-    setStatus('propertyStatus', 'Caricamento proprieta...', 'info');
+    setStatus('propertyStatus', 'Caricamento proprietà...', 'info');
   const res = await apiFetch(`${PROPERTIES_PATH}/${encodeURIComponent(slug)}`);
     if(!res.ok){
       throw new Error(`Status ${res.status}`);
@@ -410,7 +410,7 @@ const collectPayload = () => ({
 const saveProperty = async () => {
   const payload = collectPayload();
   if(!payload.nome && !payload.slug){
-    setStatus('propertyStatus', 'Inserisci almeno il nome della proprieta.', 'error');
+    setStatus('propertyStatus', 'Inserisci almeno il nome della proprietà.', 'error');
     return;
   }
   payload.slug = slugify(payload.slug || payload.nome);
@@ -459,14 +459,14 @@ const saveProperty = async () => {
 
 const deleteProperty = async () => {
   if(!currentSlug){
-    setStatus('propertyStatus', 'Nessuna proprieta da eliminare.', 'error');
+    setStatus('propertyStatus', 'Nessuna proprietà da eliminare.', 'error');
     return;
   }
   const prospectCount = Array.isArray(currentProperty?.prospects) ? currentProperty.prospects.length : 0;
   const extraWarning = prospectCount > 0
-    ? `\n\nAttenzione: ${prospectCount === 1 ? '1 prospetto' : `${prospectCount} prospetti`} collegati verranno spostati nella sezione "Prospetti senza proprieta".`
+    ? `\n\nAttenzione: ${prospectCount === 1 ? '1 prospetto' : `${prospectCount} prospetti`} collegati verranno spostati nella sezione "Prospetti senza proprietà".`
     : '';
-  const ok = window.confirm(`Eliminare la proprieta "${currentSlug}"? L'operazione non puo essere annullata.${extraWarning}`);
+  const ok = window.confirm(`Eliminare la proprietà "${currentSlug}"? L'operazione non può essere annullata.${extraWarning}`);
   if(!ok) return;
   try{
     setStatus('propertyStatus', 'Eliminazione in corso...', 'info');
@@ -491,14 +491,14 @@ const deleteProperty = async () => {
     }
     const result = await res.json().catch(() => ({ success: true }));
     const detached = Number.isFinite(+result?.detachedProspects) ? +result.detachedProspects : 0;
-    const extra = detached > 0 ? ` ${detached === 1 ? '1 prospetto spostato' : `${detached} prospetti spostati`} nella sezione senza proprieta.` : '';
+    const extra = detached > 0 ? ` ${detached === 1 ? '1 prospetto spostato' : `${detached} prospetti spostati`} nella sezione senza proprietà.` : '';
     setStatus('propertyStatus', `Proprieta eliminata.${extra}`, 'success');
     setTimeout(() => {
       window.location.href = appendApiToHref('../archivio/index.html');
     }, 700);
   }catch(err){
     console.error(err);
-    const message = (err && err.message) ? err.message : 'Impossibile eliminare la proprieta.';
+    const message = (err && err.message) ? err.message : 'Impossibile eliminare la proprietà.';
     setStatus('propertyStatus', message, 'error');
   }
 };

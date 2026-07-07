@@ -35,19 +35,19 @@
     <div>
       <div class="card" id="prospectManager" data-persist-ignore>
         <h2>Gestione Prospetti</h2>
-  <p class="note">Salva le configurazioni nel backend e gestiscile dall’<a href="pages/archivio/index.html" target="_blank" rel="noopener" data-append-api-link>Archivio Proprieta</a>.</p>
+  <p class="note">Salva le configurazioni nel backend e gestiscile dall’<a href="pages/archivio/index.html" target="_blank" rel="noopener" data-append-api-link>Archivio Proprietà</a>.</p>
         <div class="grid cols-2 property-row">
-          <label><span>Proprieta collegata</span>
-            <div class="dropdown" data-dropdown="prospectProperty" data-placeholder="Nessuna proprieta">
-              <button class="dropdown-toggle" type="button" data-dropdown-toggle aria-haspopup="listbox" aria-expanded="false" title="Associa una proprieta al prospetto">Nessuna proprieta</button>
+          <label><span>Proprietà collegata</span>
+            <div class="dropdown" data-dropdown="prospectProperty" data-placeholder="Nessuna proprietà">
+              <button class="dropdown-toggle" type="button" data-dropdown-toggle aria-haspopup="listbox" aria-expanded="false" title="Associa una proprietà al prospetto">Nessuna proprietà</button>
               <div class="dropdown-menu" data-dropdown-menu role="listbox"></div>
               <input type="hidden" id="prospectProperty" value="">
             </div>
           </label>
           <div class="property-actions">
-            <button class="btn btn-minor" type="button" id="createPropertyBtn" title="Crea una nuova scheda proprieta">Crea scheda proprieta</button>
-            <button class="btn btn-minor" type="button" id="openPropertyBtn" title="Apri la scheda dettagli della proprieta selezionata in una nuova tab" disabled>Apri scheda proprieta</button>
-            <button class="btn btn-minor" type="button" id="refreshPropertiesBtn" data-role="refresh-properties" title="Ricarica l'elenco delle proprieta disponibili">Aggiorna elenco proprieta</button>
+            <button class="btn btn-minor" type="button" id="createPropertyBtn" title="Crea una nuova scheda proprietà">Crea scheda proprietà</button>
+            <button class="btn btn-minor" type="button" id="openPropertyBtn" title="Apri la scheda dettagli della proprietà selezionata in una nuova tab" disabled>Apri scheda proprietà</button>
+            <button class="btn btn-minor" type="button" id="refreshPropertiesBtn" data-role="refresh-properties" title="Ricarica l'elenco delle proprietà disponibili">Aggiorna elenco proprietà</button>
           </div>
         </div>
         <div class="grid cols-2 prospect-row">
@@ -314,7 +314,7 @@
       <div class="prospect-bottom-actions" data-persist-ignore>
         <button class="btn" type="button" id="saveProspectBtnBottom" data-role="save-prospect" title="Salva un nuovo prospetto o aggiorna quello selezionato">Salva / Aggiorna</button>
         <button class="btn btn-minor" type="button" id="applyProspectInputsBtnBottom" data-role="apply-prospect" title="Applica al calcolatore i dati del prospetto salvato">Applica dati al calcolatore</button>
-        <button class="btn btn-minor" type="button" id="refreshPropertiesBtnBottom" data-role="refresh-properties" title="Ricarica l'elenco delle proprieta disponibili">Aggiorna elenco proprieta</button>
+        <button class="btn btn-minor" type="button" id="refreshPropertiesBtnBottom" data-role="refresh-properties" title="Ricarica l'elenco delle proprietà disponibili">Aggiorna elenco proprietà</button>
       </div>
       <div id="prospectStatusBottom" class="prospect-status" data-role="prospect-status" data-persist-ignore></div>
     </div>

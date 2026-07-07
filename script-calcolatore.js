@@ -259,7 +259,7 @@ function populatePropertySelect(selectEl, selectedSlug=''){
   if(!selectEl) return;
   const current = selectedSlug || selectEl.value || '';
   const dropdown = getDropdown(selectEl.id);
-  const optionList = [{ label: 'Nessuna proprieta', value: '' }];
+  const optionList = [{ label: 'Nessuna proprietà', value: '' }];
   propertiesCache.forEach(item => {
     const label = item.nome || item.slug;
     optionList.push({ label, value: item.slug });
@@ -1927,7 +1927,7 @@ const prospectManager = (() => {
     try{
       await loadProperties();
     }catch(err){
-      console.error('Errore caricamento proprieta', err);
+      console.error('Errore caricamento proprietà', err);
     }
   populatePropertySelect(elements.property, config.initialProperty);
   updatePropertyActionState();
@@ -1945,8 +1945,26 @@ const prospectManager = (() => {
       elements.select?.addEventListener('change', e => handleProspectChange(e.target.value));
     }
 
+    const applyPropertyToReport = slug => {
+      const prop = findProperty(slug);
+      if(!prop) return;
+      // Auto-compila "0) Dati per il Report" dalla scheda proprietà,
+      // solo per i campi effettivamente valorizzati nella scheda.
+      const setIfValue = (id, value) => {
+        const v = (value || '').trim();
+        if(!v) return;
+        const el = document.getElementById(id);
+        if(el) el.value = v;
+      };
+      setIfValue('indirizzoRiga1', prop.indirizzo);
+      setIfValue('indirizzoRiga2', prop.citta);
+      // I campi impostati via JS non attivano l'oninput: ricalcolo manuale.
+      if(typeof calculateProfit === 'function') calculateProfit();
+    };
+
     const handlePropertyChange = () => {
       updatePropertyActionState();
+      applyPropertyToReport(getSelectedProperty());
       refreshList('', { silent: false });
     };
     if(elements.propertyDropdown){
@@ -1962,7 +1980,7 @@ const prospectManager = (() => {
     elements.propertyOpenBtn?.addEventListener('click', () => {
       const slug = getSelectedProperty();
       if(!slug){
-        setStatus('Seleziona una proprieta collegata per aprire la scheda.', 'error');
+        setStatus('Seleziona una proprietà collegata per aprire la scheda.', 'error');
         return;
       }
       const url = appendApiToHref(`pages/property/index.html?slug=${encodeURIComponent(slug)}`);
@@ -1973,16 +1991,16 @@ const prospectManager = (() => {
     allPropertyRefreshBtns.forEach(btn => {
       btn.addEventListener('click', async () => {
         const previousSelection = getSelectedProperty() || config.initialProperty || '';
-        setStatus('Aggiornamento elenco proprieta in corso...', 'info');
+        setStatus('Aggiornamento elenco proprietà in corso...', 'info');
         allPropertyRefreshBtns.forEach(b => { b.disabled = true; });
         try{
           await loadProperties(true);
           populatePropertySelect(elements.property, previousSelection);
           updatePropertyActionState();
-          setStatus('Elenco proprieta aggiornato.', 'success');
+          setStatus('Elenco proprietà aggiornato.', 'success');
         }catch(err){
           console.error(err);
-          setStatus('Errore durante l\'aggiornamento delle proprieta.', 'error');
+          setStatus('Errore durante l\'aggiornamento delle proprietà.', 'error');
         }finally{
           allPropertyRefreshBtns.forEach(b => { b.disabled = false; });
         }
@@ -2094,7 +2112,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
     }catch(err){
-      console.error('Errore nel prefill della proprieta', err);
+      console.error('Errore nel prefill della proprietà', err);
     }
   }
   prospectManager.init({ initialSlug, initialProperty, autoApply, autoPrint }).catch(err => {

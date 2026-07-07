@@ -222,7 +222,7 @@ const getPropertyName = slug => {
 };
 
 const buildPropertySelect = (currentSlug = '') => {
-  const options = ['<option value="">Nessuna proprieta</option>'];
+  const options = ['<option value="">Nessuna proprietà</option>'];
   properties.forEach(prop => {
     const selected = prop.slug === currentSlug ? ' selected' : '';
     options.push(`<option value="${escapeHtml(prop.slug)}"${selected}>${escapeHtml(prop.nome || prop.slug)}</option>`);
@@ -239,7 +239,7 @@ const buildProspectCard = (item, opts = {}) => {
   const updated = fmtDate(item.updatedAt);
   const calcUrl = appendApiToHref(`../../index.html?slug=${slugEnc}&apply=1`);
   const printUrl = appendApiToHref(`../../index.html?slug=${slugEnc}&apply=1&print=1`);
-  const propertyLabel = item.property?.nome || item.property?.slug || 'Nessuna proprieta';
+  const propertyLabel = item.property?.nome || item.property?.slug || 'Nessuna proprietà';
   const propertyHtml = escapeHtml(propertyLabel);
   const currentPropertySlug = item.property?.slug || '';
   const selectHtml = buildPropertySelect(currentPropertySlug);
@@ -255,7 +255,7 @@ const buildProspectCard = (item, opts = {}) => {
       </header>
       <div class="prospect-meta">
         <div>
-          <span class="label">Proprieta</span>
+          <span class="label">Proprietà</span>
           <span>${propertyHtml}</span>
         </div>
         <div>
@@ -268,7 +268,7 @@ const buildProspectCard = (item, opts = {}) => {
         </div>
       </div>
       <div class="prospect-assign">
-        <label for="assign-${slugEsc}">Associa a proprieta</label>
+        <label for="assign-${slugEsc}">Associa a proprietà</label>
         <div class="assign-row">
           <select data-role="assign-select" id="assign-${slugEsc}">
             ${selectHtml}
@@ -332,7 +332,7 @@ const applyProspectFilter = () => {
     ? assigned.map(item => buildProspectCard(item, { quickAssignSlug: propertySlug })).join('')
     : `<div class="archive-empty">Nessun prospetto assegnato a ${propertyName}.</div>`;
 
-  html += '<h3 class="list-title">Prospetti senza proprieta</h3>';
+  html += '<h3 class="list-title">Prospetti senza proprietà</h3>';
   html += unassigned.length
     ? unassigned.map(item => buildProspectCard(item, { quickAssignSlug: propertySlug })).join('')
     : '<div class="archive-empty">Nessun prospetto non assegnato.</div>';
@@ -345,7 +345,7 @@ const renderProperties = () => {
   const container = $('propertyList');
   if(!container) return;
   if(!properties.length){
-    container.innerHTML = '<div class="archive-empty">Nessuna proprieta salvata.</div>';
+    container.innerHTML = '<div class="archive-empty">Nessuna proprietà salvata.</div>';
     return;
   }
 
@@ -355,8 +355,8 @@ const renderProperties = () => {
 
   if(list.length === 0){
     const message = selectedProperty
-      ? `La proprieta "${escapeHtml(getPropertyName(selectedProperty) || selectedProperty)}" non esiste.`
-      : 'Nessuna proprieta salvata.';
+      ? `La proprietà"${escapeHtml(getPropertyName(selectedProperty) || selectedProperty)}" non esiste.`
+      : 'Nessuna proprietà salvata.';
     container.innerHTML = `<div class="archive-empty">${message}</div>`;
     return;
   }
@@ -398,7 +398,7 @@ const updatePropertyFilter = () => {
   const select = $('propertyFilter');
   if(!select) return;
   const current = select.value;
-  select.innerHTML = '<option value="">Tutte le proprieta</option>' + properties.map(item => {
+  select.innerHTML = '<option value="">Tutte le proprietà</option>' + properties.map(item => {
     const label = escapeHtml(item.nome || item.slug);
     const sel = item.slug === selectedProperty ? ' selected' : '';
     return `<option value="${escapeHtml(item.slug)}"${sel}>${label}</option>`;
@@ -413,9 +413,9 @@ const updatePropertyStatus = () => {
   if(selectedProperty){
     const name = getPropertyName(selectedProperty) || selectedProperty;
     const exists = properties.some(item => item.slug === selectedProperty);
-    setStatus('propertyStatus', exists ? `Proprieta selezionata: ${name}.` : `La proprieta ${name} non esiste piu.`, 'info');
+    setStatus('propertyStatus', exists ? `Proprietà selezionata: ${name}.` : `La proprietà${name} non esiste più.`, 'info');
   }else{
-    setStatus('propertyStatus', properties.length ? `Proprieta totali: ${properties.length}.` : 'Nessuna proprieta registrata.', 'info');
+    setStatus('propertyStatus', properties.length ? `Proprietà totali: ${properties.length}.` : 'Nessuna proprietà registrata.', 'info');
   }
 };
 
@@ -447,14 +447,14 @@ const loadAllData = async () => {
     updateProspectStatus();
   }catch(err){
     console.error(err);
-    setStatus('propertyStatus', 'Errore nel recupero delle proprieta.', 'error');
+    setStatus('propertyStatus', 'Errore nel recupero delle proprietà.', 'error');
     setStatus('archiveStatus', 'Errore nel recupero dei prospetti.', 'error');
   }
 };
 
 const fetchProperties = async () => {
   try{
-    setStatus('propertyStatus', 'Caricamento proprieta...', 'info');
+    setStatus('propertyStatus', 'Caricamento proprietà...', 'info');
     const res = await apiFetch(PROPERTIES_PATH);
     if(!res.ok) throw new Error(`Status ${res.status}`);
     properties = await res.json();
@@ -463,7 +463,7 @@ const fetchProperties = async () => {
     updatePropertyStatus();
   }catch(err){
     console.error(err);
-    setStatus('propertyStatus', 'Errore nel recupero delle proprieta.', 'error');
+    setStatus('propertyStatus', 'Errore nel recupero delle proprietà.', 'error');
   }
 };
 
@@ -486,7 +486,7 @@ const fetchProspects = async () => {
 const handleProspectDelete = async slug => {
   const slugTrim = (slug || '').trim();
   if(!slugTrim) return;
-  const ok = window.confirm(`Eliminare il prospetto "${slugTrim}"? L'operazione non puo essere annullata.`);
+  const ok = window.confirm(`Eliminare il prospetto "${slugTrim}"? L'operazione non può essere annullata.`);
   if(!ok) return;
 
   try{
@@ -515,20 +515,20 @@ const handlePropertyDelete = async (slug, prospectCount = 0) => {
   if(!slugTrim) return;
   const count = Number.isFinite(+prospectCount) ? +prospectCount : 0;
   const prospectsNote = count > 0
-    ? `\n\nAttenzione: ${count === 1 ? '1 prospetto' : count + ' prospetti'} collegati verranno spostati nella sezione "Prospetti senza proprieta".`
+    ? `\n\nAttenzione: ${count === 1 ? '1 prospetto' : count + ' prospetti'} collegati verranno spostati nella sezione "Prospetti senza proprietà".`
     : '';
-  const ok = window.confirm(`Eliminare la proprieta "${slugTrim}"? L'operazione non puo essere annullata.${prospectsNote}`);
+  const ok = window.confirm(`Eliminare la proprietà"${slugTrim}"? L'operazione non può essere annullata.${prospectsNote}`);
   if(!ok) return;
 
   try{
-    setStatus('propertyStatus', 'Eliminazione proprieta in corso...', 'info');
+    setStatus('propertyStatus', 'Eliminazione proprietà in corso...', 'info');
     const res = await apiFetch(`${PROPERTIES_PATH}/${encodeURIComponent(slugTrim)}`, { method: 'DELETE' });
     if(res.status === 404){
       if(selectedProperty === slugTrim){
         selectedProperty = '';
       }
       await loadAllData();
-      setStatus('propertyStatus', 'La proprieta era già stata rimossa.', 'success');
+      setStatus('propertyStatus', 'La proprietà era già stata rimossa.', 'success');
       return;
     }
     if(!res.ok){
@@ -548,8 +548,8 @@ const handlePropertyDelete = async (slug, prospectCount = 0) => {
     }
     await loadAllData();
     const detached = Number.isFinite(+result?.detachedProspects) ? +result.detachedProspects : 0;
-    const extra = detached > 0 ? ` ${detached === 1 ? '1 prospetto spostato' : `${detached} prospetti spostati`} nella sezione senza proprieta.` : '';
-    setStatus('propertyStatus', `Proprieta eliminata correttamente.${extra}`, 'success');
+    const extra = detached > 0 ? ` ${detached === 1 ? '1 prospetto spostato' : `${detached} prospetti spostati`} nella sezione senza proprietà.` : '';
+    setStatus('propertyStatus', `Proprietà eliminata correttamente.${extra}`, 'success');
   }catch(err){
     console.error(err);
     const message = (err && err.message) ? err.message : 'Eliminazione non riuscita.';
@@ -612,7 +612,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const count = parseInt(btn.dataset.prospectCount || '0', 10) || 0;
     const slug = (btn.dataset.slug || '').trim();
     if(!slug){
-      setStatus('propertyStatus', 'Slug non trovato per la proprieta da eliminare.', 'error');
+      setStatus('propertyStatus', 'Slug non trovato per la proprietà da eliminare.', 'error');
       return;
     }
     console.log('[archive] delete property click', slug);
