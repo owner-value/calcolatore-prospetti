@@ -885,6 +885,12 @@
     current = loc;
     writeStored(loc);
     apply();
+    // Keep the language switcher in sync with the active locale. The buttons
+    // are rendered once at init, so we need to flip aria-pressed here.
+    const buttons = document.querySelectorAll('[data-i18n-menu] button[data-locale]');
+    for (let i = 0; i < buttons.length; i++) {
+      buttons[i].setAttribute('aria-pressed', String(buttons[i].getAttribute('data-locale') === current));
+    }
     for (let i = 0; i < onChangeHandlers.length; i++) {
       try { onChangeHandlers[i](loc); } catch (e) { console.error('i18n onChange', e); }
     }
@@ -909,8 +915,11 @@
       '</div>';
     const buttons = host.querySelectorAll('button[data-locale]');
     for (let i = 0; i < buttons.length; i++) {
-      buttons[i].addEventListener('click', function () {
-        setLocale(this.getAttribute('data-locale'));
+      // Use currentTarget so the handler still works when the click hits an
+      // inner element (flag emoji, label span) instead of the button itself.
+      buttons[i].addEventListener('click', function (e) {
+        const target = e.currentTarget;
+        setLocale(target.getAttribute('data-locale'));
       });
     }
   }
