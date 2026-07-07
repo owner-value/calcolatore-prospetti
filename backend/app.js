@@ -70,26 +70,27 @@ try{
   }
 }catch(e){ console.warn('Unable to load links config', e); }
 
-// Version endpoint: commit SHA (if available) and runtime info
-let COMMIT_SHA = null;
-try{
-  // prefer commit.json produced at build time
-  const commitPath = path.join(__dirname, 'config', 'commit.json');
-  if (fs.existsSync(commitPath)){
-    const cj = JSON.parse(fs.readFileSync(commitPath, 'utf8') || '{}');
-    COMMIT_SHA = cj.commit || null;
-  }
-}catch(e){ /* ignore */ }
+// Version endpoint: resolve the true commit SHA.
+// Precedence: Render's runtime env var (prod truth) -> explicit override ->
+// live git checkout (local dev) -> build-time commit.json (last resort).
+// Runtime env vars are self-correcting; a build-written file can go stale.
+const shortSha = (s) => { const v = (s || '').trim(); return v ? v.slice(0, 7) : null; };
+let COMMIT_SHA = shortSha(process.env.RENDER_GIT_COMMIT) || shortSha(process.env.COMMIT_SHA);
 if (!COMMIT_SHA) {
-  COMMIT_SHA = process.env.COMMIT_SHA || null;
+  try {
+    // live git checkout (works in local dev); execFile = no shell, no injection surface
+    COMMIT_SHA = shortSha(child_process.execFileSync('git', ['rev-parse', '--short', 'HEAD'], { cwd: path.join(__dirname, '..'), stdio: ['ignore', 'pipe', 'ignore'] }).toString());
+  } catch (e) { /* not a git checkout */ }
 }
 if (!COMMIT_SHA) {
   try {
-    // try to get git short sha from repo root as fallback
-    COMMIT_SHA = child_process.execSync('git rev-parse --short HEAD', { cwd: path.join(__dirname, '..'), stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
-  } catch (e) {
-    COMMIT_SHA = null;
-  }
+    // last resort: commit.json produced at build time by write-commit.sh
+    const commitPath = path.join(__dirname, 'config', 'commit.json');
+    if (fs.existsSync(commitPath)) {
+      const cj = JSON.parse(fs.readFileSync(commitPath, 'utf8') || '{}');
+      COMMIT_SHA = shortSha(cj.commit);
+    }
+  } catch (e) { /* ignore */ }
 }
 
 app.get('/_version', (req, res) => {
