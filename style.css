@@ -203,3 +203,48 @@ textarea{min-height:110px;resize:vertical}
 }
 /* (rimosse regole che modificavano il bordo dei box opzionali) */
 .optional-note{ font-size:12px; color:#059669; font-weight:700; margin-top:2px; }
+
+/* ===================== i18n top bar + language switcher ===================== */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  max-width:1200px;margin:18px auto 0;padding:10px 16px;
+  background:var(--card);border:1px solid var(--line);border-radius:14px;
+  box-shadow:0 4px 14px rgba(15,23,42,.05);
+}
+.topbar .topbar-brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink)}
+.topbar .topbar-brand img{height:28px}
+.topbar .topbar-brand .topbar-name{font-weight:800;font-size:14px;letter-spacing:.2px}
+.topbar .topbar-nav{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.topbar .topbar-nav a{
+  display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:10px;
+  text-decoration:none;color:var(--ink);font-weight:600;font-size:14px;
+  border:1px solid transparent;transition:background .15s,border-color .15s,color .15s
+}
+.topbar .topbar-nav a:hover{background:#f1f5f9;border-color:var(--line)}
+.topbar .topbar-nav a.is-active{background:#fff1f3;border-color:var(--brand);color:var(--brand)}
+.topbar .topbar-end{display:flex;align-items:center;gap:10px}
+
+.i18n-menu{
+  display:inline-flex;align-items:center;gap:4px;
+  background:#f1f5f9;border:1px solid var(--line);border-radius:999px;padding:3px
+}
+.i18n-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  border:0;background:transparent;cursor:pointer;
+  padding:6px 10px;border-radius:999px;font-weight:700;font-size:12px;
+  color:var(--muted);transition:background .15s,color .15s
+}
+.i18n-btn:hover{color:var(--ink)}
+.i18n-btn[aria-pressed="true"]{background:#fff;color:var(--brand);box-shadow:0 1px 3px rgba(15,23,42,.08)}
+.i18n-flag{font-size:14px;line-height:1}
+.i18n-label{letter-spacing:.4px}
+@media (max-width:520px){
+  .topbar{flex-wrap:wrap}
+  .topbar .topbar-nav{order:3;width:100%;justify-content:center}
+  .i18n-label{display:none}
+}
+
+/* Print: nascondi topbar quando si esporta il PDF */
+@media print{
+  .topbar{display:none !important}
+}

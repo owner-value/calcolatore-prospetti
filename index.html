@@ -10,6 +10,18 @@
   <link rel="icon" href="https://cdn.prod.website-files.com/62a45e911e39a864ff1d018d/6555267ecf9f403b386fd2dd_Logo-Marchio-Favicon.png">
 </head>
 <body>
+  <div class="topbar" data-persist-ignore>
+    <a class="topbar-brand" href="index.html" data-append-api-link>
+      <img src="https://cdn.prod.website-files.com/62a45e911e39a864ff1d018d/65552313c7ee9c9a8cac0251_Logo-orizzontale%202%20(1).svg" alt="Owner Value">
+      <span class="topbar-name">Owner Value</span>
+    </a>
+    <nav class="topbar-nav" aria-label="Primary">
+      <a href="index.html" class="is-active" data-append-api-link data-i18n="menu.calculator">Calcolatore</a>
+      <a href="pages/archivio/index.html" data-append-api-link data-i18n="menu.archive">Archivio</a>
+      <a href="pages/property/index.html" data-append-api-link data-i18n="menu.properties">Proprietà</a>
+    </nav>
+    <div class="topbar-end" data-i18n-menu></div>
+  </div>
   <!-- BNB Calc (solo visibile a schermo, nascosto in stampa) -->
 <div class="bnbcalc-embed">
   <iframe
@@ -26,73 +38,73 @@
          onerror="this.onerror=null;this.src='https://placehold.co/150x40/0ea5e9/ffffff?text=Owner+Value';" alt="Owner Value">
   </div>
 
-  <h1>Simulatore di Utile Netto Annuale</h1>
+  <h1 data-i18n="calc.h1">Simulatore di Utile Netto Annuale</h1>
   <div class="hr"></div>
-  <p>Formula: <b>Base cedolare = Lordo Affitti − OTA (solo affitti) − PM</b>. Il PM si calcola su <b>Ricavo Lordo Totale (Affitti + Pulizie + Assicurazione) − Pulizie − Assicurazione − OTA</b>. Le commissioni OTA si applicano su <b>Affitti + Pulizie + Assicurazione</b>.</p>
+  <p data-i18n="calc.formula">Formula: <b>Base cedolare = Lordo Affitti − OTA (solo affitti) − PM</b>. Il PM si calcola su <b>Ricavo Lordo Totale (Affitti + Pulizie + Assicurazione) − Pulizie − Assicurazione − OTA</b>. Le commissioni OTA si applicano su <b>Affitti + Pulizie + Assicurazione</b>.</p>
 
   <div class="grid cols-main">
     <!-- ============ INPUT (sinistra) ============ -->
     <div>
       <div class="card" id="prospectManager" data-persist-ignore>
-        <h2>Gestione Prospetti</h2>
-  <p class="note">Salva le configurazioni nel backend e gestiscile dall’<a href="pages/archivio/index.html" target="_blank" rel="noopener" data-append-api-link>Archivio Proprietà</a>.</p>
+        <h2 data-i18n="calc.prospectManagerTitle">Gestione Prospetti</h2>
+  <p class="note" data-i18n="calc.prospectManagerNote">Salva le configurazioni nel backend e gestiscile dall’<a href="pages/archivio/index.html" target="_blank" rel="noopener" data-append-api-link>Archivio Proprietà</a>.</p>
         <div class="grid cols-2 property-row">
-          <label><span>Proprietà collegata</span>
+          <label><span data-i18n="calc.linkedProperty">Proprietà collegata</span>
             <div class="dropdown" data-dropdown="prospectProperty" data-placeholder="Nessuna proprietà">
-              <button class="dropdown-toggle" type="button" data-dropdown-toggle aria-haspopup="listbox" aria-expanded="false" title="Associa una proprietà al prospetto">Nessuna proprietà</button>
+              <button class="dropdown-toggle" type="button" data-dropdown-toggle aria-haspopup="listbox" aria-expanded="false" data-i18n-title="calc.linkedProperty" title="Associa una proprietà al prospetto" data-i18n="calc.noProperty">Nessuna proprietà</button>
               <div class="dropdown-menu" data-dropdown-menu role="listbox"></div>
               <input type="hidden" id="prospectProperty" value="">
             </div>
           </label>
           <div class="property-actions">
-            <button class="btn btn-minor" type="button" id="createPropertyBtn" title="Crea una nuova scheda proprietà">Crea scheda proprietà</button>
-            <button class="btn btn-minor" type="button" id="openPropertyBtn" title="Apri la scheda dettagli della proprietà selezionata in una nuova tab" disabled>Apri scheda proprietà</button>
-            <button class="btn btn-minor" type="button" id="refreshPropertiesBtn" data-role="refresh-properties" title="Ricarica l'elenco delle proprietà disponibili">Aggiorna elenco proprietà</button>
+            <button class="btn btn-minor" type="button" id="createPropertyBtn" data-i18n-title="calc.btnCreateProperty" title="Crea una nuova scheda proprietà" data-i18n="calc.btnCreateProperty">Crea scheda proprietà</button>
+            <button class="btn btn-minor" type="button" id="openPropertyBtn" data-i18n-title="calc.btnOpenProperty" title="Apri la scheda dettagli della proprietà selezionata in una nuova tab" disabled data-i18n="calc.btnOpenProperty">Apri scheda proprietà</button>
+            <button class="btn btn-minor" type="button" id="refreshPropertiesBtn" data-role="refresh-properties" data-i18n-title="calc.btnRefreshProperties" title="Ricarica l'elenco delle proprietà disponibili" data-i18n="calc.btnRefreshProperties">Aggiorna elenco proprietà</button>
           </div>
         </div>
         <div class="grid cols-2 prospect-row">
-          <label><span>Prospetto salvato</span>
+          <label><span data-i18n="calc.savedProspect">Prospetto salvato</span>
             <div class="dropdown" data-dropdown="prospectSelect" data-placeholder="— Seleziona —">
-              <button class="dropdown-toggle" type="button" data-dropdown-toggle aria-haspopup="listbox" aria-expanded="false" title="Scegli un prospetto salvato">— Seleziona —</button>
+              <button class="dropdown-toggle" type="button" data-dropdown-toggle aria-haspopup="listbox" aria-expanded="false" data-i18n="calc.selectProspect">— Seleziona —</button>
               <div class="dropdown-menu" data-dropdown-menu role="listbox"></div>
               <input type="hidden" id="prospectSelect" value="">
             </div>
           </label>
           <div class="prospect-refresh">
-            <button class="btn btn-minor" type="button" id="refreshProspectsBtn" title="Scarica di nuovo l'elenco dei prospetti salvati">Aggiorna elenco</button>
+            <button class="btn btn-minor" type="button" id="refreshProspectsBtn" data-i18n="common.refresh">Aggiorna elenco</button>
           </div>
         </div>
         <div class="grid cols-2">
-          <label class="slug-field"><span>Slug</span>
+          <label class="slug-field"><span data-i18n="calc.fieldSlug">Slug</span>
             <div class="slug-input">
-              <input type="text" id="prospectSlug" placeholder="corso-andrea-podesta">
-              <button class="btn btn-minor" type="button" id="generateSlugBtn" title="Genera automaticamente lo slug dal titolo o dall'indirizzo">Auto</button>
+              <input type="text" id="prospectSlug" data-i18n-placeholder="calc.slugPh" placeholder="corso-andrea-podesta">
+              <button class="btn btn-minor" type="button" id="generateSlugBtn" data-i18n="calc.btnAuto">Auto</button>
             </div>
           </label>
-          <label><span>Titolo</span>
-            <input type="text" id="prospectTitle" placeholder="Titolo prospetto">
+          <label><span data-i18n="calc.fieldTitle">Titolo</span>
+            <input type="text" id="prospectTitle" data-i18n-placeholder="calc.titlePh" placeholder="Titolo prospetto">
           </label>
         </div>
         <div class="prospect-buttons">
-          <button class="btn" type="button" id="saveProspectBtn" data-role="save-prospect" title="Salva un nuovo prospetto o aggiorna quello selezionato">Salva / Aggiorna</button>
-          <button class="btn btn-minor" type="button" id="applyProspectInputsBtn" data-role="apply-prospect" title="Applica al calcolatore i dati del prospetto salvato">Applica dati al calcolatore</button>
-          <button class="btn btn-minor" type="button" id="resetProspectFormBtn" title="Azzera il modulo per iniziare un nuovo prospetto">Nuovo</button>
-          <a class="btn btn-minor" href="pages/archivio/index.html" target="_blank" rel="noopener" data-append-api-link>Apri archivio</a>
+          <button class="btn" type="button" id="saveProspectBtn" data-role="save-prospect" data-i18n="calc.btnSaveProspect">Salva / Aggiorna</button>
+          <button class="btn btn-minor" type="button" id="applyProspectInputsBtn" data-role="apply-prospect" data-i18n="calc.btnApplyProspect">Applica dati al calcolatore</button>
+          <button class="btn btn-minor" type="button" id="resetProspectFormBtn" data-i18n="calc.btnNew">Nuovo</button>
+          <a class="btn btn-minor" href="pages/archivio/index.html" target="_blank" rel="noopener" data-append-api-link data-i18n="calc.btnOpenArchive">Apri archivio</a>
         </div>
         <div id="prospectStatus" class="prospect-status" data-role="prospect-status"></div>
       </div>
 
       <!-- 0) Dati per report -->
       <div class="card">
-        <h2>0) Dati per il Report</h2>
+        <h2 data-i18n="calc.s0Title">0) Dati per il Report</h2>
         <div class="grid cols-3">
-          <label><span>Indirizzo — Riga 1</span>
-            <input type="text" id="indirizzoRiga1" placeholder="Corso Andrea Podestà" oninput="calculateProfit()">
+          <label><span data-i18n="calc.s0Addr1">Indirizzo — Riga 1</span>
+            <input type="text" id="indirizzoRiga1" data-i18n-placeholder="calc.s0Addr1Ph" placeholder="Corso Andrea Podestà" oninput="calculateProfit()">
           </label>
-          <label><span>Indirizzo — Riga 2</span>
-            <input type="text" id="indirizzoRiga2" placeholder="Genova" oninput="calculateProfit()">
+          <label><span data-i18n="calc.s0Addr2">Indirizzo — Riga 2</span>
+            <input type="text" id="indirizzoRiga2" data-i18n-placeholder="calc.s0Addr2Ph" placeholder="Genova" oninput="calculateProfit()">
           </label>
-          <label><span>Data (ISO, opzionale)</span>
+          <label><span data-i18n="calc.s0Date">Data (ISO, opzionale)</span>
             <input type="date" id="dataISO" oninput="calculateProfit()">
           </label>
         </div>
@@ -100,16 +112,16 @@
 
       <!-- 1) Ricavi & volume -->
       <div class="card">
-        <h2>1) Stima Ricavi &amp; Volume</h2>
+        <h2 data-i18n="calc.s1Title">1) Stima Ricavi &amp; Volume</h2>
         <div class="grid cols-3">
-          <label><span>Prezzo Medio a Notte (€)</span>
+          <label><span data-i18n="calc.s1Adr">Prezzo Medio a Notte (€)</span>
             <input type="number" id="prezzoMedioNotte" value="168.00" min="0" step="0.01" oninput="calculateProfit()">
           </label>
-          <label><span>Occupazione Annuale (%)</span>
+          <label><span data-i18n="calc.s1Occ">Occupazione Annuale (%)</span>
             <input type="number" id="occupazioneAnnuale" value="68" min="0" max="100" step="0.1" oninput="calculateProfit()">
           </label>
           <div>
-            <span style="display:block;font-size:13px;color:var(--muted);font-weight:700;margin-bottom:6px">Giorni Occupati Stimati</span>
+            <span data-i18n="calc.s1Days" style="display:block;font-size:13px;color:var(--muted);font-weight:700;margin-bottom:6px">Giorni Occupati Stimati</span>
             <div id="outputGiorniOccupati" class="panel" style="padding:12px 14px;font-weight:800">—</div>
           </div>
         </div>
@@ -117,22 +129,22 @@
 
       <!-- 2a) Parametri per Soggiorno -->
       <div class="card">
-        <h2>2a) Parametri per Soggiorno</h2>
+        <h2 data-i18n="calc.s2aTitle">2a) Parametri per Soggiorno</h2>
         <div class="grid cols-4">
-          <label><span>Durata media soggiorno (notti)</span>
+          <label><span data-i18n="calc.s2aStay">Durata media soggiorno (notti)</span>
             <input type="number" id="durataMediaSoggiorno" value="3" min="1" step="1" oninput="calculateProfit()">
           </label>
-          <label><span>Pulizie e Nolleggio Biancheria (€) per soggiorno </span>
+          <label><span data-i18n="calc.s2aClean">Pulizie e Nolleggio Biancheria (€) per soggiorno</span>
             <input type="number" id="puliziePerSoggiorno" value="90" min="0" step="1" oninput="calculateProfit()">
           </label>
-          <label><span>Welcome kit per soggiorno (€)</span>
+          <label><span data-i18n="calc.s2aKit">Welcome kit per soggiorno (€)</span>
             <input type="number" id="kitPerSoggiorno" value="5" min="0" step="1" oninput="calculateProfit()">
           </label>
-          <label><span>Assicurazione per prenotazione</span>
+          <label><span data-i18n="calc.s2aIns">Assicurazione per prenotazione</span>
             <select id="assicurazionePerSoggiorno" onchange="calculateProfit()">
-              <option value="0" data-plan="Senza assicurazione">— Nessuna assicurazione —</option>
-              <option value="20.10" data-plan="Screening + Protezione danni (fino a €500)">Screening + Protezione danni (fino a €500) — €20,10 / prenotazione</option>
-              <option value="28.75" data-plan="Protezione danni (fino a €50K)">Protezione danni (fino a €50K) — €28,75 / prenotazione</option>
+              <option value="0" data-plan="Senza assicurazione" data-i18n="calc.insNone">— Nessuna assicurazione —</option>
+              <option value="20.10" data-plan="Screening + Protezione danni (fino a €500)" data-i18n="calc.insScreening">Screening + Protezione danni (fino a €500) — €20,10 / prenotazione</option>
+              <option value="28.75" data-plan="Protezione danni (fino a €50K)" data-i18n="calc.insDamage">Protezione danni (fino a €50K) — €28,75 / prenotazione</option>
             </select>
           </label>
         </div>
@@ -141,95 +153,95 @@
       <!-- 2b) Totali annui (auto/manuale) -->
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <h2 style="margin:0">2b) Totali annui (pulizie, kit &amp; assicurazione)</h2>
+          <h2 style="margin:0" data-i18n="calc.s2bTitle">2b) Totali annui (pulizie, kit &amp; assicurazione)</h2>
           <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)">
             <input type="checkbox" id="autoCalcPerSoggiorno" checked>
-            <span>Calcola automaticamente dai soggiorni</span>
+            <span data-i18n="calc.s2bAuto">Calcola automaticamente dai soggiorni</span>
           </label>
         </div>
 
         <!-- Anteprima automatica -->
         <div id="autoFields" class="grid cols-4" style="margin-bottom:10px">
           <div>
-            <span>Soggiorni stimati</span>
+            <span data-i18n="calc.s2bEstStays">Soggiorni stimati</span>
             <div id="previewNumSoggiorni" class="panel" style="padding:12px 14px;font-weight:800">—</div>
           </div>
           <div>
-            <span>Pulizie annue (da soggiorni)</span>
+            <span data-i18n="calc.s2bCleanYear">Pulizie annue (da soggiorni)</span>
             <div id="previewPulizieAnnuo" class="panel" style="padding:12px 14px;font-weight:800">—</div>
           </div>
           <div>
-            <span>Kit annuo (da soggiorni)</span>
+            <span data-i18n="calc.s2bKitYear">Kit annuo (da soggiorni)</span>
             <div id="previewKitAnnuo" class="panel" style="padding:12px 14px;font-weight:800">—</div>
           </div>
           <div>
-            <span>Assicurazione annua (da soggiorni)</span>
+            <span data-i18n="calc.s2bInsYear">Assicurazione annua (da soggiorni)</span>
             <div id="previewAssicurazioneAnnuo" class="panel" style="padding:12px 14px;font-weight:800">—</div>
           </div>
         </div>
 
         <!-- Campi manuali (visibili quando il toggle è OFF) -->
         <div id="manualFields" class="grid cols-2" style="display:none">
-          <label><span>Pulizie totali annue (€)</span>
+          <label><span data-i18n="calc.s2bCleanManual">Pulizie totali annue (€)</span>
             <input type="number" id="totalePulizieOspite" value="6905.00" min="0" step="0.01" oninput="calculateProfit()">
           </label>
-          <label><span>Welcome Kit annuo (€)</span>
+          <label><span data-i18n="calc.s2bKitManual">Welcome Kit annuo (€)</span>
             <input type="number" id="costoWelcomeKit" value="313" min="0" step="1" oninput="calculateProfit()">
           </label>
-          <label><span>Assicurazione annua manuale (€)</span>
+          <label><span data-i18n="calc.s2bInsManual">Assicurazione annua manuale (€)</span>
             <input type="number" id="assicurazioneAnnuaManuale" value="0" min="0" step="0.01" oninput="calculateProfit()">
           </label>
         </div>
 
-  <p class="note">Se disattivi il toggle, puoi impostare manualmente pulizie e kit annui. L'assicurazione resta calcolata in base all'importo per prenotazione.</p>
+  <p class="note" data-i18n="calc.s2bManualNote">Se disattivi il toggle, puoi impostare manualmente pulizie e kit annui. L'assicurazione resta calcolata in base all'importo per prenotazione.</p>
       </div>
 
       <!-- 3) Utenze & amministrazione -->
       <div class="card">
-        <h2>3) Utenze &amp; Amministrazione</h2>
+        <h2 data-i18n="calc.s3Title">3) Utenze &amp; Amministrazione</h2>
         <div style="max-width:220px;margin-bottom:12px">
-          <label><span>Mesi considerati</span>
+          <label><span data-i18n="calc.s3Months">Mesi considerati</span>
             <input type="number" id="utenzeMesi" value="12" min="0" step="1" oninput="calculateProfit()">
           </label>
         </div>
-        <p class="note">Inserisci importi mensili: verranno moltiplicati per il numero di mesi indicato.</p>
+        <p class="note" data-i18n="calc.s3MonthsNote">Inserisci importi mensili: verranno moltiplicati per il numero di mesi indicato.</p>
         <div id="fixedCostsContainer" class="grid cols-4">
-          <label><span>Luce e Gas<br> (€/mese)</span>
+          <label><span data-i18n="calc.s3Light">Luce e Gas<br> (€/mese)</span>
             <input type="number" id="speseLuceGas" value="0.00" min="0" step="0.01" oninput="calculateProfit()">
           </label>
-          <label><span>Wi-Fi / Internet<br> (€/mese)</span>
+          <label><span data-i18n="calc.s3Wifi">Wi-Fi / Internet<br> (€/mese)</span>
             <input type="number" id="speseWifi" value="0.00" min="0" step="0.01" oninput="calculateProfit()">
           </label>
-          <label><span>Amministrazione<br> (€/mese)</span>
+          <label><span data-i18n="calc.s3Admin">Amministrazione<br> (€/mese)</span>
             <input type="number" id="speseAmministrazione" value="0.00" min="0" step="0.01" oninput="calculateProfit()">
           </label>
-          <label><span>Acqua / TARI<br> (€/mese)</span>
+          <label><span data-i18n="calc.s3Water">Acqua / TARI<br> (€/mese)</span>
             <input type="number" id="speseAcquaTari" value="0.00" min="0" step="0.01" oninput="calculateProfit()">
           </label>
         </div>
-        <button class="btn" style="margin-top:10px" onclick="addFixedCostField()">+ Aggiungi costo fisso extra mensile</button>
+        <button class="btn" style="margin-top:10px" onclick="addFixedCostField()" data-i18n="calc.s3AddBtn">+ Aggiungi costo fisso extra mensile</button>
       </div>
 
       <!-- 4) Commissioni -->
       <div class="card">
-        <h2>4) Commissioni</h2>
+        <h2 data-i18n="calc.s4Title">4) Commissioni</h2>
         <div class="grid cols-3">
-          <label><span>Commissioni OTA (%) <br>(Airbnb e Booking)</span>
+          <label><span data-i18n="calc.s4Ota">Commissioni OTA (%) <br>(Airbnb e Booking)</span>
             <input type="number" id="percentualeOta" value="20" min="0" max="100" step="0.1" oninput="calculateProfit()">
           </label>
-          <label><span>Commissione PM (% + IVA 22%)</span>
+          <label><span data-i18n="calc.s4Pm">Commissione PM (% + IVA 22%)</span>
             <input type="number" id="percentualePm" value="30" min="0" max="100" step="0.1" oninput="calculateProfit()">
           </label>
-          <label><span>Cedolare Secca (%)</span>
+          <label><span data-i18n="calc.s4Cedolare">Cedolare Secca (%)</span>
             <input type="number" id="percentualeCedolare" value="21" min="0" max="100" step="0.1" oninput="calculateProfit()">
           </label>
         </div>
         <div style="margin-top:8px;">
-          <label><span>Base PM calcolata come</span>
+          <label><span data-i18n="calc.s4BasePm">Base PM calcolata come</span>
             <select id="basePmMode" onchange="calculateProfit()">
-              <option value="ota-only">Lordo − OTA (default)</option>
-              <option value="pulizie-ota">Lordo − Pulizie − OTA</option>
-              <option value="pulizie-assicurazione-ota">Lordo − Pulizie − Assicurazione − OTA</option>
+              <option value="ota-only" data-i18n="calc.s4BaseOta">Lordo − OTA (default)</option>
+              <option value="pulizie-ota" data-i18n="calc.s4BaseCleanOta">Lordo − Pulizie − OTA</option>
+              <option value="pulizie-assicurazione-ota" data-i18n="calc.s4BaseCleanInsOta">Lordo − Pulizie − Assicurazione − OTA</option>
             </select>
           </label>
         </div>
@@ -237,84 +249,84 @@
 
       <!-- 5) Costi di Start-up -->
       <div class="card">
-        <h2>5)Abbonamenti</h2>
+        <h2 data-i18n="calc.s5Title">5)Abbonamenti</h2>
         <div class="grid cols-3">
-          <label><span>Ring Intercom — abbonamento mensile (€)</span>
+          <label><span data-i18n="calc.s5RingSub">Ring Intercom — abbonamento mensile (€)</span>
             <input type="number" id="abbonamentoMensile" value="0.00" min="0" step="0.01" oninput="calculateProfit()">
           </label>
           <div>
-            <span style="display:block;font-size:13px;color:var(--muted);font-weight:700;margin-bottom:6px">Totale Ring Annuale</span>
+            <span data-i18n="calc.s5RingTotal" style="display:block;font-size:13px;color:var(--muted);font-weight:700;margin-bottom:6px">Totale Ring Annuale</span>
             <div class="panel" style="padding:12px 14px;font-weight:800">
-              <div style="display:flex;justify-content:space-between;gap:10px"><span>Setup</span><span id="outRingSetup">€ 0,00</span></div>
-              <div style="display:flex;justify-content:space-between;gap:10px"><span>Abbonamento (12 mesi)</span><span id="outRingSubAnnuale">€ 0,00</span></div>
+              <div style="display:flex;justify-content:space-between;gap:10px"><span data-i18n="calc.s5Setup">Setup</span><span id="outRingSetup">€ 0,00</span></div>
+              <div style="display:flex;justify-content:space-between;gap:10px"><span data-i18n="calc.s5Sub12">Abbonamento (12 mesi)</span><span id="outRingSubAnnuale">€ 0,00</span></div>
               <div style="height:1px;background:#eef2f7;margin:8px 0"></div>
-              <div style="display:flex;justify-content:space-between;gap:10px;font-weight:900"><span>Totale Ring</span><span id="outputCostoRingAnnuale">€ 0,00</span></div>
+              <div style="display:flex;justify-content:space-between;gap:10px;font-weight:900"><span data-i18n="calc.s5RingTotalLabel">Totale Ring</span><span id="outputCostoRingAnnuale">€ 0,00</span></div>
             </div>
           </div>
         </div>
-        <h2>6) Costi di Start-up</h2>
+        <h2 data-i18n="calc.s6Title">6) Costi di Start-up</h2>
         <div class="grid cols-2 spese-header">
-          <span class="spese-title">Ring Intercom — setup una tantum (€)</span>
-          <label class="spese-input"><span>Costo (€)</span>
+          <span class="spese-title" data-i18n="calc.s6RingSetup">Ring Intercom — setup una tantum (€)</span>
+          <label class="spese-input"><span data-i18n="calc.s6CostLabel">Costo (€)</span>
             <input type="number" id="costoRingSetup" value="0" min="0" step="0.01" oninput="calculateProfit()">
           </label>
-          <span class="spese-title">Kit Sicurezza<br>(Estintore, rilevatore fumo, monossido di carbonio, gas combustibile)</span>
-          <label class="spese-input"><span>Costo (€)</span>
+          <span class="spese-title" data-i18n="calc.s6Kit">Kit Sicurezza<br>(Estintore, rilevatore fumo, monossido di carbonio, gas combustibile)</span>
+          <label class="spese-input"><span data-i18n="calc.s6CostLabel">Costo (€)</span>
             <input type="number" id="speseUnaTantumManuali" value="150.00" min="0" step="0.01" oninput="calculateProfit()">
           </label>
         </div>
 
-        <p class="note">Altre spese extra una tantum (opzionali)</p>
+        <p class="note" data-i18n="calc.s6ExtrasTitle">Altre spese extra una tantum (opzionali)</p>
         <div id="deviceCostsContainer" class="grid" style="gap:14px">
           <!-- riga iniziale -->
           <div class="device-row">
-            <label><span>Descrizione</span>
-              <input type="text" data-type="device-name" placeholder="Spesa Extra" oninput="calculateProfit()">
+            <label><span data-i18n="calc.s6ExtrasDesc">Descrizione</span>
+              <input type="text" data-type="device-name" data-i18n-placeholder="calc.s6AddExtraPh" placeholder="Spesa Extra" oninput="calculateProfit()">
             </label>
-            <label><span>Importo (€)</span>
+            <label><span data-i18n="calc.s6ExtrasAmt">Importo (€)</span>
               <input type="number" data-type="device-extra" value="0" min="0" step="1" oninput="calculateProfit()">
             </label>
             <div class="device-actions">
-              <button type="button" class="btn btn-minor" onclick="removeDeviceRow(this)">Rimuovi</button>
+              <button type="button" class="btn btn-minor" onclick="removeDeviceRow(this)" data-i18n="calc.s6Remove">Rimuovi</button>
             </div>
           </div>
         </div>
-        <button class="btn" style="margin-top:10px" onclick="addDeviceCostField()">+ Aggiungi spesa extra</button>
+        <button class="btn" style="margin-top:10px" onclick="addDeviceCostField()" data-i18n="calc.s6AddExtra">+ Aggiungi spesa extra</button>
       </div>
 
       <!-- Spese Extra Opzionali -->
       <div class="card" id="optionalExtrasCard">
-        <h2>Spese Extra Opzionali</h2>
-        <label style="display:flex;align-items:center;gap:10px"><input type="checkbox" id="includeOptionalExtras" onchange="calculateProfit()"> <span>Includi nel prospetto</span></label>
+        <h2 data-i18n="calc.optTitle">Spese Extra Opzionali</h2>
+        <label style="display:flex;align-items:center;gap:10px"><input type="checkbox" id="includeOptionalExtras" onchange="calculateProfit()"> <span data-i18n="calc.optInclude">Includi nel prospetto</span></label>
         <div id="optionalCostsContainer" class="grid" style="gap:14px;margin-top:10px">
           <div class="opt-row">
-            <label><span>Descrizione</span>
-              <input type="text" data-type="opt-name" placeholder="Spesa Extra Opzionale" oninput="calculateProfit()">
+            <label><span data-i18n="calc.s6ExtrasDesc">Descrizione</span>
+              <input type="text" data-type="opt-name" data-i18n-placeholder="calc.optPh" placeholder="Spesa Extra Opzionale" oninput="calculateProfit()">
             </label>
-            <label><span>Importo (€)</span>
+            <label><span data-i18n="calc.s6ExtrasAmt">Importo (€)</span>
               <input type="number" data-type="opt-amount" value="0" min="0" step="1" oninput="calculateProfit()">
             </label>
             <div class="device-actions">
-              <button type="button" class="btn btn-minor" onclick="removeOptRow(this)">Rimuovi</button>
+              <button type="button" class="btn btn-minor" onclick="removeOptRow(this)" data-i18n="calc.s6Remove">Rimuovi</button>
             </div>
           </div>
         </div>
-        <button class="btn" style="margin-top:10px" onclick="addOptionalCostField()">+ Aggiungi spesa extra opzionale</button>
+        <button class="btn" style="margin-top:10px" onclick="addOptionalCostField()" data-i18n="calc.optAdd">+ Aggiungi spesa extra opzionale</button>
       </div>
 
       <!-- 6) Punti di forza -->
       <div class="card">
-        <h2>7) Punti di Forza</h2>
-        <label><span>Punti di forza (una riga per punto)</span>
-          <textarea id="puntiForza">- Ottima connettività con i mezzi pubblici.
+        <h2 data-i18n="calc.s7Title">7) Punti di Forza</h2>
+        <label><span data-i18n="calc.s7Punti">Punti di forza (una riga per punto)</span>
+          <textarea id="puntiForza" data-i18n-placeholder="calc.s7Default">- Ottima connettività con i mezzi pubblici.
 - Alta domanda turistica nel quartiere.
 - Immobile ristrutturato e pronto all'uso.</textarea>
         </label>
       </div>
       <div class="prospect-bottom-actions" data-persist-ignore>
-        <button class="btn" type="button" id="saveProspectBtnBottom" data-role="save-prospect" title="Salva un nuovo prospetto o aggiorna quello selezionato">Salva / Aggiorna</button>
-        <button class="btn btn-minor" type="button" id="applyProspectInputsBtnBottom" data-role="apply-prospect" title="Applica al calcolatore i dati del prospetto salvato">Applica dati al calcolatore</button>
-        <button class="btn btn-minor" type="button" id="refreshPropertiesBtnBottom" data-role="refresh-properties" title="Ricarica l'elenco delle proprietà disponibili">Aggiorna elenco proprietà</button>
+        <button class="btn" type="button" id="saveProspectBtnBottom" data-role="save-prospect" data-i18n="calc.btnSaveProspect">Salva / Aggiorna</button>
+        <button class="btn btn-minor" type="button" id="applyProspectInputsBtnBottom" data-role="apply-prospect" data-i18n="calc.btnApplyProspect">Applica dati al calcolatore</button>
+        <button class="btn btn-minor" type="button" id="refreshPropertiesBtnBottom" data-role="refresh-properties" data-i18n="calc.btnRefreshProperties">Aggiorna elenco proprietà</button>
       </div>
       <div id="prospectStatusBottom" class="prospect-status" data-role="prospect-status" data-persist-ignore></div>
     </div>
@@ -322,43 +334,43 @@
     <!-- ============ OUTPUT (destra) ============ -->
     <div>
       <div class="panel summary" id="summaryPanel">
-    <h2>Riepilogo</h2>
-    <div class="row"><span>Ricavo Lordo Prenotazioni</span><strong id="outputLordoPrenotazioni">€ 0,00</strong></div>
-    <div class="row"><span>Pulizie</span><strong class="bad" id="outputPulizieOspite">€ 0,00</strong></div>
-    <div class="row"><span>Assicurazione</span><strong class="bad" id="outputAssicurazione">€ 0,00</strong></div>
-    <div class="row"><span>Ricavo Lordo Totale<br> (Affitti + Pulizie + Assicurazione)</span><strong id="outputLordoTotale">€ 0,00</strong></div>
-    <div class="row"><span>Welcome Kit</span><strong class="bad" id="outputWelcomeKit">€ 0,00</strong></div>
-  <div class="row"><span>Commissioni OTA<br>(Airbnb e Booking) (<span id="percOtaOutput">0%</span>)</span><strong class="bad" id="outputCommissioniOta">€ 0,00</strong></div>
-  <div class="row"><span>Base PM<br> (Lordo - Pulizie - Assicurazione - OTA)</span><strong id="outputBasePM">€ 0,00</strong></div>
-  <div class="row"><span>IVA su PM (22%)</span><strong class="bad" id="outputIvaPm">€ 0,00</strong></div>
-  <div class="row"><span>Costo PM + IVA (<span id="percPmOutput">0%</span>)</span><strong class="bad" id="outputCostoPm">€ 0,00</strong></div>
-  <div class="row"><span>Utenze Totali (annue)</span><strong class="bad" id="outputUtenzeTotali">€ 0,00</strong></div>
-    <div class="row"><span>Ring — setup</span><strong class="bad" id="outSumRingSetup">€ 0,00</strong></div>
-      <div class="row"><span>Ring — abbonamento (12 mesi)</span><strong class="bad" id="outSumRingSubAnnuale">€ 0,00</strong></div>
+    <h2 data-i18n="calc.summary">Riepilogo</h2>
+    <div class="row"><span data-i18n="calc.sumLordoPren">Ricavo Lordo Prenotazioni</span><strong id="outputLordoPrenotazioni">€ 0,00</strong></div>
+    <div class="row"><span data-i18n="calc.sumClean">Pulizie</span><strong class="bad" id="outputPulizieOspite">€ 0,00</strong></div>
+    <div class="row"><span data-i18n="calc.sumIns">Assicurazione</span><strong class="bad" id="outputAssicurazione">€ 0,00</strong></div>
+    <div class="row"><span data-i18n="calc.sumLordoTot">Ricavo Lordo Totale<br> (Affitti + Pulizie + Assicurazione)</span><strong id="outputLordoTotale">€ 0,00</strong></div>
+    <div class="row"><span data-i18n="calc.sumKit">Welcome Kit</span><strong class="bad" id="outputWelcomeKit">€ 0,00</strong></div>
+  <div class="row"><span data-i18n="calc.sumOta">Commissioni OTA<br>(Airbnb e Booking) (<span id="percOtaOutput">0%</span>)</span><strong class="bad" id="outputCommissioniOta">€ 0,00</strong></div>
+  <div class="row"><span data-i18n="calc.sumBasePm">Base PM<br> (Lordo - Pulizie - Assicurazione - OTA)</span><strong id="outputBasePM">€ 0,00</strong></div>
+  <div class="row"><span data-i18n="calc.sumIvaPm">IVA su PM (22%)</span><strong class="bad" id="outputIvaPm">€ 0,00</strong></div>
+  <div class="row"><span data-i18n="calc.sumCostoPm">Costo PM + IVA (<span id="percPmOutput">0%</span>)</span><strong class="bad" id="outputCostoPm">€ 0,00</strong></div>
+  <div class="row"><span data-i18n="calc.sumUtenze">Utenze Totali (annue)</span><strong class="bad" id="outputUtenzeTotali">€ 0,00</strong></div>
+    <div class="row"><span data-i18n="calc.sumRingSetup">Ring — setup</span><strong class="bad" id="outSumRingSetup">€ 0,00</strong></div>
+      <div class="row"><span data-i18n="calc.sumRingSub">Ring — abbonamento (12 mesi)</span><strong class="bad" id="outSumRingSubAnnuale">€ 0,00</strong></div>
         <div id="securityExtraList"></div>
-        <div class="row"><span>Base Imponibile Cedolare</span><strong id="outputBaseImponibile">€ 0,00</strong></div>
-        <div class="row"><span>Imposta Cedolare (<span id="percCedolareOutput">0%</span>)</span><strong class="bad" id="outputImposta">€ 0,00</strong></div>
+        <div class="row"><span data-i18n="calc.sumBaseImp">Base Imponibile Cedolare</span><strong id="outputBaseImponibile">€ 0,00</strong></div>
+        <div class="row"><span data-i18n="calc.sumImposta">Imposta Cedolare (<span id="percCedolareOutput">0%</span>)</span><strong class="bad" id="outputImposta">€ 0,00</strong></div>
 
         <div class="row" style="border-top:2px solid var(--brand);margin-top:6px;padding-top:12px">
-          <span style="font-weight:900">UTILE NETTO ANNUALE</span>
+          <span data-i18n="calc.sumUtileAnno" style="font-weight:900">UTILE NETTO ANNUALE</span>
           <strong style="color:var(--brand);font-size:20px" id="outputUtileNetto">€ 0,00</strong>
         </div>
-        <div class="row"><span style="font-weight:800">Mensile</span><strong style="color:var(--brand)" id="outputUtileMensile">€ 0,00</strong></div>
+        <div class="row"><span data-i18n="calc.sumUtileMese" style="font-weight:800">Mensile</span><strong style="color:var(--brand)" id="outputUtileMensile">€ 0,00</strong></div>
 
-        <button class="btn" style="width:100%;margin-top:12px" onclick="saveToReport()">Aggiorna Report (Embed 2)</button>
-        <div class="note">Il report (Embed 2) si aggiorna anche in automatico ad ogni modifica.</div>
+        <button class="btn" style="width:100%;margin-top:12px" onclick="saveToReport()" data-i18n="calc.btnUpdateReport">Aggiorna Report (Embed 2)</button>
+        <div class="note" data-i18n="calc.reportNote">Il report (Embed 2) si aggiorna anche in automatico ad ogni modifica.</div>
 
         <!-- Admin OV dentro il riepilogo -->
         <div class="ov-admin">
           <div class="grp">
-            <label><span>Aliquota IRES (SRL)</span><input type="number" id="aliquotaIres" value="24" min="0" max="100" step="0.1" oninput="calculateProfit()"></label>
-            <label><span>Aliquota IRAP</span><input type="number" id="aliquotaIrap" value="3.9" min="0" max="100" step="0.1" oninput="calculateProfit()"></label>
+            <label><span data-i18n="calc.ovIres">Aliquota IRES (SRL)</span><input type="number" id="aliquotaIres" value="24" min="0" max="100" step="0.1" oninput="calculateProfit()"></label>
+            <label><span data-i18n="calc.ovIrap">Aliquota IRAP</span><input type="number" id="aliquotaIrap" value="3.9" min="0" max="100" step="0.1" oninput="calculateProfit()"></label>
           </div>
-          <div class="row"><span>Commissione OV (annua)</span><strong id="outputPmLordo">€ 0,00</strong></div>
-          <div class="row"><span>Tasse OV (stima IRES+IRAP)</span><strong class="bad" id="outputPmTasse">€ 0,00</strong></div>
-          <div class="row"><span><b>Netto OV (annuo)</b></span><strong style="color:green" id="outputPmNetto">€ 0,00</strong></div>
-          <div class="row"><span>Netto OV (mensile)</span><strong id="outputPmNettoMensile">€ 0,00</strong></div>
-          <div class="note">Il netto socio dipende dalla politica di distribuzione utili (dividendi) e dal numero di soci.</div>
+          <div class="row"><span data-i18n="calc.ovComm">Commissione OV (annua)</span><strong id="outputPmLordo">€ 0,00</strong></div>
+          <div class="row"><span data-i18n="calc.ovTasse">Tasse OV (stima IRES+IRAP)</span><strong class="bad" id="outputPmTasse">€ 0,00</strong></div>
+          <div class="row"><span data-i18n="calc.ovNettoAnno"><b>Netto OV (annuo)</b></span><strong style="color:green" id="outputPmNetto">€ 0,00</strong></div>
+          <div class="row"><span data-i18n="calc.ovNettoMese">Netto OV (mensile)</span><strong id="outputPmNettoMensile">€ 0,00</strong></div>
+          <div class="note" data-i18n="calc.ovNettoNote">Il netto socio dipende dalla politica di distribuzione utili (dividendi) e dal numero di soci.</div>
         </div>
       </div>
     </div>
@@ -373,8 +385,8 @@
              onerror="this.onerror=null;this.src='https://placehold.co/160x36/ff5a6f/fff?text=OwnerValue';" alt="OwnerValue">
         <div class="date" id="p1-data">—</div>
       </div>
-      <div class="h1">Proposta di<br>Gestione</div>
-      <p class="lead muted">offerta per l’immobile sito in</p>
+      <div class="h1" data-i18n="pdf.p1Title">Proposta di<br>Gestione</div>
+      <p class="lead muted" data-i18n="pdf.p1Subtitle">offerta per l’immobile sito in</p>
       <p class="kv"><b id="p1-indirizzo-riga1">—</b><br><b id="p1-indirizzo-riga2">—</b></p>
     </div>
   </section>
@@ -387,11 +399,11 @@
         <div class="date" id="p2-data">—</div>
       </div>
       <div class="info-container">
-      <div class="h2">Perché affidarsi a <br>Owner Value?</div>
-  <p>Siamo una realtà specializzata nella gestione professionale degli affitti brevi turistici a Genova e nelle principali località limitrofe.</p>
-  <p>Conosciamo in profondità il mercato locale e le dinamiche delle piattaforme di prenotazione come Airbnb e Booking: ottimizziamo annunci, pricing e revenue management per garantire il <b>massimo rendimento</b> ai proprietari.</p>
-  <p>Coordiniamo <b>pulizie e biancheria</b> con partner certificati, gestiamo <b>check-in/check-out smart</b> e presidiamo ogni <b>adempimento amministrativo e fiscale</b>.</p>
-  <p>Affidarvi a Owner Value significa una gestione completa, trasparente e orientata ai risultati: voi godete dei profitti, noi pensiamo a tutto il resto.</p>
+      <div class="h2" data-i18n="pdf.p2Title">Perché affidarsi a <br>Owner Value?</div>
+  <p data-i18n="pdf.p2P1">Siamo una realtà specializzata nella gestione professionale degli affitti brevi turistici a Genova e nelle principali località limitrofe.</p>
+  <p data-i18n="pdf.p2P2">Conosciamo in profondità il mercato locale e le dinamiche delle piattaforme di prenotazione come Airbnb e Booking: ottimizziamo annunci, pricing e revenue management per garantire il <b>massimo rendimento</b> ai proprietari.</p>
+  <p data-i18n="pdf.p2P3">Coordiniamo <b>pulizie e biancheria</b> con partner certificati, gestiamo <b>check-in/check-out smart</b> e presidiamo ogni <b>adempimento amministrativo e fiscale</b>.</p>
+  <p data-i18n="pdf.p2P4">Affidarvi a Owner Value significa una gestione completa, trasparente e orientata ai risultati: voi godete dei profitti, noi pensiamo a tutto il resto.</p>
     </div>
     </div>
   </section>
@@ -403,34 +415,34 @@
         <img src="https://cdn.prod.website-files.com/62a45e911e39a864ff1d018d/65552313c7ee9c9a8cac0251_Logo-orizzontale%202%20(1).svg" alt="">
         <div class="date" id="p3-data">—</div>
       </div>
-  <div class="h2">I nostri servizi e le<br>nostre garanzie</div>
+  <div class="h2" data-i18n="pdf.p3Title">I nostri servizi e le<br>nostre garanzie</div>
   <div class="info-container services-padding">
       <table class="table">
         <tr>
-          <td>Creazione annuncio professionale e pubblicazione sui maggiori siti <br>OTA (Online Travel Agencies) come Airbnb, Booking</td>
+          <td data-i18n="pdf.svc1">Creazione annuncio professionale e pubblicazione sui maggiori siti <br>OTA (Online Travel Agencies) come Airbnb, Booking</td>
           <td class="icon-cell">
             <i class="fa-brands fa-airbnb" aria-hidden="true" title="Airbnb"></i>
             <i class="fa-solid fa-b" aria-hidden="true" title="Booking.com"></i>
           </td>
         </tr>
         <tr>
-          <td>Servizio fotografico professionale per valorizzare la casa</td>
+          <td data-i18n="pdf.svc2">Servizio fotografico professionale per valorizzare la casa</td>
           <td class="icon-cell"><i class="fa-solid fa-camera" aria-hidden="true"></i></td>
         </tr>
         <tr>
-          <td>Pulizia e noleggio biancheria</td>
+          <td data-i18n="pdf.svc3">Pulizia e noleggio biancheria</td>
           <td class="icon-cell"><i class="fa-solid fa-broom" aria-hidden="true"></i></td>
         </tr>
         <tr>
-          <td>Manutenzione ordinaria e straordinaria</td>
+          <td data-i18n="pdf.svc4">Manutenzione ordinaria e straordinaria</td>
           <td class="icon-cell"><i class="fa-solid fa-wrench" aria-hidden="true"></i></td>
         </tr>
         <tr>
-          <td>Marketing online per aumentare le prenotazioni extra-OTA</td>
+          <td data-i18n="pdf.svc5">Marketing online per aumentare le prenotazioni extra-OTA</td>
           <td class="icon-cell"><i class="fa-solid fa-bullhorn" aria-hidden="true"></i></td>
         </tr>
         <tr>
-          <td>Completa gestione amministrativa: AlloggiatiWeb, Istat, Imposte di soggiorno</td>
+          <td data-i18n="pdf.svc6">Completa gestione amministrativa: AlloggiatiWeb, Istat, Imposte di soggiorno</td>
           <td class="icon-cell"><i class="fa-solid fa-file-signature" aria-hidden="true"></i></td>
         </tr>
       </table>
@@ -445,9 +457,9 @@
         <img src="https://cdn.prod.website-files.com/62a45e911e39a864ff1d018d/65552313c7ee9c9a8cac0251_Logo-orizzontale%202%20(1).svg" alt="">
         <div class="date" id="p4-data">—</div>
       </div>
-      <div class="h2">Descrizione dell’appartamento</div>
+      <div class="h2" data-i18n="pdf.p4Title">Descrizione dell’appartamento</div>
       <p id="p4-descr" class="lead muted">—</p>
-      <div class="h3">Punti di forza:</div>
+      <div class="h3" data-i18n="pdf.p4Punti">Punti di forza:</div>
       <div>
       <ul id="p4-punti" class="list"></ul>
       </div>
@@ -461,15 +473,15 @@
         <img src="https://cdn.prod.website-files.com/62a45e911e39a864ff1d018d/65552313c7ee9c9a8cac0251_Logo-orizzontale%202%20(1).svg" alt="">
         <div class="date" id="p5-data">—</div>
       </div>
-      <div class="h2">Previsioni</div>
-      <div class="h3 muted">Statistiche</div>
-      <div class="stat"><div class="lbl">Tasso di occupazione medio</div><div id="p5-occ" class="big">—</div></div>
-      <div class="stat"><div class="lbl">Media affitto giornaliera</div><div id="p5-adr" class="big">—</div></div>
-      <div class="h3 muted" style="margin-top:26px">Reddito lordo stimato</div>
+      <div class="h2" data-i18n="pdf.p5Title">Previsioni</div>
+      <div class="h3 muted" data-i18n="pdf.p5Stat">Statistiche</div>
+      <div class="stat"><div class="lbl" data-i18n="pdf.p5Occ">Tasso di occupazione medio</div><div id="p5-occ" class="big">—</div></div>
+      <div class="stat"><div class="lbl" data-i18n="pdf.p5Adr">Media affitto giornaliera</div><div id="p5-adr" class="big">—</div></div>
+      <div class="h3 muted" style="margin-top:26px" data-i18n="pdf.p5Lordo">Reddito lordo stimato</div>
       <div class="stat">
-        <div class="lbl">Fatturato Lordo Annuo</div><div id="p5-fatt" class="big">—</div>
+        <div class="lbl" data-i18n="pdf.p5Fatt">Fatturato Lordo Annuo</div><div id="p5-fatt" class="big">—</div>
       </div>
-  <span id="fatturatoNote" class="small">Per “fatturato lordo annuo” si intende quanto ricevuto dalle piattaforme o prenotazioni dirette (affitti, pulizie e assicurazione).</span>
+  <span id="fatturatoNote" class="small" data-i18n="pdf.p5FattNote">Per “fatturato lordo annuo” si intende quanto ricevuto dalle piattaforme o prenotazioni dirette (affitti, pulizie e assicurazione).</span>
     </div>
   </section>
 
@@ -480,12 +492,12 @@
         <img src="https://cdn.prod.website-files.com/62a45e911e39a864ff1d018d/65552313c7ee9c9a8cac0251_Logo-orizzontale%202%20(1).svg" alt="">
         <div class="date" id="p6-data">—</div>
       </div>
-      <div class="h2">Previsioni di Spesa</div>
+      <div class="h2" data-i18n="pdf.p6Title">Previsioni di Spesa</div>
       <div class="info-container">
         <div class="box expense-box" id="p6-pulizie-row">
           <div class="box-row">
             <div class="label-stack">
-              <div class="lbl">Pulizie / Noleggio biancheria</div>
+              <div class="lbl" data-i18n="pdf.p6Pulizie">Pulizie / Noleggio biancheria</div>
             </div>
             <div id="p6-pulizie" class="big">—</div>
           </div>
@@ -493,7 +505,7 @@
         <div class="box expense-box" id="p6-assicurazione-row">
           <div class="box-row">
             <div class="label-stack">
-              <div class="lbl">Assicurazione per soggiorno</div>
+              <div class="lbl" data-i18n="pdf.p6Assicurazione">Assicurazione per soggiorno</div>
               <div class="label-sub" id="p6-assicurazione-sub"></div>
             </div>
             <div id="p6-assicurazione" class="big">—</div>
@@ -502,7 +514,7 @@
         <div class="box expense-box" id="p6-kit-row">
           <div class="box-row">
             <div class="label-stack">
-              <div class="lbl">Welcome Kit (annuo)</div>
+              <div class="lbl" data-i18n="pdf.p6Kit">Welcome Kit (annuo)</div>
             </div>
             <div id="p6-kit" class="big">—</div>
           </div>
@@ -510,7 +522,7 @@
         <div class="box expense-box" id="p6-ua-row">
           <div class="box-row">
             <div class="label-stack">
-              <div class="lbl" id="p6-ua-label">Utenze</div>
+              <div class="lbl" id="p6-ua-label" data-i18n="pdf.p6Utenze">Utenze</div>
             </div>
             <div id="p6-ua" class="big">—</div>
           </div>
@@ -519,8 +531,8 @@
         <div class="box expense-box" id="p6-ota-row">
           <div class="box-row">
             <div class="label-stack">
-              <div class="lbl">Commissioni OTA <br>(Airbnb e Booking)</div>
-              <div class="label-sub">(<span id="p6-ota-percent"></span> su affitti + pulizie + assicurazione)</div>
+              <div class="lbl" data-i18n="pdf.p6Ota">Commissioni OTA <br>(Airbnb e Booking)</div>
+              <div class="label-sub" data-i18n="pdf.p6OtaSub">(<span id="p6-ota-percent"></span> su affitti + pulizie + assicurazione)</div>
             </div>
             <div id="p6-ota" class="big">—</div>
           </div>
@@ -528,8 +540,8 @@
         <div class="box expense-box" id="p6-pm-row">
           <div class="box-row">
             <div class="label-stack">
-              <div class="lbl">Commissione Owner Value</div>
-              <div class="label-sub">(<span id="p6-pm-pct">—</span>)</div>
+              <div class="lbl" data-i18n="pdf.p6Pm">Commissione Owner Value</div>
+              <div class="label-sub" data-i18n="pdf.p6PmSub">(<span id="p6-pm-pct">—</span>)</div>
             </div>
             <div id="p6-pm" class="big">—</div>
           </div>
@@ -537,7 +549,7 @@
         <div class="box expense-box" id="p6-ring-annual-row">
           <div class="box-row">
             <div class="label-stack">
-              <div class="lbl">Ring Intercom — abbonamento (annuo)</div>
+              <div class="lbl" data-i18n="pdf.p6RingAnnual">Ring Intercom — abbonamento (annuo)</div>
             </div>
             <div id="p6-ring-annual" class="big">—</div>
           </div>
@@ -545,8 +557,8 @@
         <div class="box expense-box" id="p6-cedolare-row">
           <div class="box-row">
             <div class="label-stack">
-              <div class="lbl">Imposta cedolare secca</div>
-              <div class="label-sub">(<span id="p6-cedolare-percent">—</span> al netto delle commissioni OTA, <br>commissioni Owner Value e<br>costi Pulizie+Biancheria)</div>
+              <div class="lbl" data-i18n="pdf.p6Cedolare">Imposta cedolare secca</div>
+              <div class="label-sub" data-i18n="pdf.p6CedolareSub">(<span id="p6-cedolare-percent">—</span> al netto delle commissioni OTA, <br>commissioni Owner Value e<br>costi Pulizie+Biancheria)</div>
             </div>
             <div id="p6-cedolare" class="big">—</div>
           </div>
@@ -554,7 +566,7 @@
         <div class="box box-accent" id="p6-totale-costi-row" style="margin-top:8px">
           <div class="box-row">
             <div class="label-stack">
-              <div class="lbl">Totale Spese</div>
+              <div class="lbl" data-i18n="pdf.p6Totale">Totale Spese</div>
             </div>
             <div id="p6-totale-costi" class="big">—</div>
           </div>
@@ -570,12 +582,12 @@
         <img src="https://cdn.prod.website-files.com/62a45e911e39a864ff1d018d/65552313c7ee9c9a8cac0251_Logo-orizzontale%202%20(1).svg" alt="">
         <div class="date" id="p7-data">—</div>
       </div>
-      <div class="h2">Costi di Start-up</div>
+      <div class="h2" data-i18n="pdf.p7Title">Costi di Start-up</div>
       <div class="info-container">
         <div class="box expense-box" id="p6-ring-setup-row">
           <div class="box-row">
             <div class="label-stack">
-              <div class="lbl">Ring Intercom – setup (una tantum)</div>
+              <div class="lbl" data-i18n="pdf.p6RingSetup">Ring Intercom – setup (una tantum)</div>
             </div>
             <div id="p6-ring-setup" class="big">—</div>
           </div>
@@ -584,7 +596,7 @@
         <div class="box expense-box" id="p6-una-row">
           <div class="box-row">
             <div class="label-stack">
-              <div class="lbl" id="p6-una-label">Kit Sicurezza<br>(Estintore, rilevatore fumo, monossido di carbonio, gas combustibile)</div>
+              <div class="lbl" id="p6-una-label" data-i18n="pdf.p6Una">Kit Sicurezza<br>(Estintore, rilevatore fumo, monossido di carbonio, gas combustibile)</div>
             </div>
             <div id="p6-una" class="big">—</div>
           </div>
@@ -596,7 +608,7 @@
         <div class="box box-accent" id="p6-totale-startup-row" style="margin-top:8px">
           <div class="box-row">
             <div class="label-stack">
-              <div class="lbl">Totale Costi di Start-up (una tantum)</div>
+              <div class="lbl" data-i18n="pdf.p6TotaleStartup">Totale Costi di Start-up (una tantum)</div>
             </div>
             <div id="p6-totale-startup" class="big">—</div>
           </div>
@@ -612,12 +624,12 @@
         <img src="https://cdn.prod.website-files.com/62a45e911e39a864ff1d018d/65552313c7ee9c9a8cac0251_Logo-orizzontale%202%20(1).svg" alt="">
         <div class="date" id="p7-data">—</div>
       </div>
-      <div class="h2">Utile Lordo e Netto</div>
+      <div class="h2" data-i18n="pdf.p7UtileTitle">Utile Lordo e Netto</div>
       <div class="info-container">
       <div class="box box-accent">
   <div class="box-row">
     <div class="label-stack">
-      <div class="lbl">Utile Lordo Annuo</div>
+      <div class="lbl" data-i18n="pdf.p7UtileLordo">Utile Lordo Annuo</div>
     </div>
     <div id="p7-utile-lordo" class="big"></div>
   </div>
@@ -626,23 +638,23 @@
       <div class="box box-accent">
         <div class="box-row">
           <div class="label-stack">
-            <div class="lbl">Utile Netto Annuo</div>
+            <div class="lbl" data-i18n="pdf.p7UtileNetto">Utile Netto Annuo</div>
           </div>
           <div id="p7-utile-netto" class="big">—</div>
         </div>
       </div>
-      <p class="center">Mensile Netto: <span id="p7-mensile-netto" class="big">—</span></p>
-      <p class="small" style="margin-top:18px">
+      <p class="center"><span data-i18n="pdf.p7MensileNetto">Mensile Netto: </span><span id="p7-mensile-netto" class="big">—</span></p>
+      <p class="small" style="margin-top:18px" data-i18n="pdf.p7TaxNote">
         *La tassazione viene calcolata sull’incasso al netto delle spese di pulizia, commissioni OTA (Airbnb, Booking), Prenotazioni dirette e delle spese di gestione di Owner Value, secondo l’ottimizzazione fiscale impostata.
       </p>
       <div class="hr" style="border-top:1px solid #E5E7EB; margin:20px 0;"></div>
       <div id="messaggio-stime">
-      <p style="margin:0 0 28px 0;">
+      <p style="margin:0 0 28px 0;" data-i18n="pdf.p7EstimatesP1">
         Queste stime sono basate su un’analisi di appartamenti simili, che tiene conto di un primo anno iniziale in cui si deve costruire la reputazione positiva sui siti.
         I risultati, sia in termini di tariffa media a notte che di tasso di occupazione, sono quindi
         <span style="color:#FF5A6F; font-style:italic;">potenzialmente incrementabili a partire dal secondo anno.</span>
       </p>
-      <p style="margin:0 0 28px 0;">
+      <p style="margin:0 0 28px 0;" data-i18n="pdf.p7EstimatesP2">
         Si intende che in nessun modo sono garanzia di un risultato futuro, ma come Società di Affitti Brevi la nostra missione è quella di
         <span style="font-weight:700;">massimizzare il vostro guadagno, ridurre i costi e ottimizzare la gestione.</span>
       </p>
@@ -651,10 +663,46 @@
     </div>
   </section>
   <div class="toolbar">
-  <button class="btn" onclick="printWithDate()">Stampa / PDF</button>
+  <button class="btn" onclick="printWithDate()" data-i18n="calc.btnPrint">Stampa / PDF</button>
 </div>
 </div>
+<script src="i18n.js"></script>
 <script src="script-calcolatore.js"></script>
 <script src="template.js"></script>
+<script>
+  // Initialize i18n once DOM is ready, then re-apply on locale change so
+  // any page-side content that depends on locale (e.g. report template,
+  // dynamic dropdowns) can refresh itself.
+  document.addEventListener('DOMContentLoaded', function () {
+    I18N.init({
+      onChange: function (loc) {
+        document.title = I18N.t('calc.title');
+        // Re-render dynamic UI bits that were built in Italian at page load.
+        if (typeof window.onLocaleChange === 'function') window.onLocaleChange(loc);
+        // Persist the locale preference onto the active property select label
+        // without clobbering its value.
+        const placeholder = document.querySelector('[data-dropdown="prospectProperty"] .dropdown-toggle');
+        if (placeholder && !placeholder.getAttribute('data-i18n')) {
+          // no-op fallback (the option list will be re-rendered by calc)
+        }
+        if (typeof calculateProfit === 'function') calculateProfit();
+        if (typeof populatePropertySelect === 'function') {
+          const sel = document.getElementById('prospectProperty');
+          populatePropertySelect(sel, sel && sel.value);
+        }
+        if (typeof renderProspectList === 'function') {
+          renderProspectList();
+        }
+        // Update topbar active link label
+        document.querySelectorAll('.topbar-nav a').forEach(function (a) {
+          const k = a.getAttribute('data-i18n');
+          if (k) a.textContent = I18N.t(k);
+        });
+      }
+    });
+    // First-time title in chosen locale
+    document.title = I18N.t('calc.title');
+  });
+</script>
 </body>
 </html>

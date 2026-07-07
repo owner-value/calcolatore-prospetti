@@ -43,7 +43,7 @@
         ((m?.spese?.utenzeDettaglio?.amministrazioneAnnua ?? 0) > 0);
         const wifiMensile = Number(m?.spese?.utenzeDettaglio?.wifiMensile ?? 0) || 0;
         const wifiLabel = wifiMensile > 0 ? ', WIFI' : '';
-        uaLabel.textContent = hasAdmin ? `Costi Immobile (Utenze, amministrazione${wifiLabel})` : 'Utenze';
+        uaLabel.textContent = hasAdmin ? I18N.t('pdf.p6UtenzeAdmin', { wifi: wifiLabel }) : I18N.t('pdf.p6Utenze');
     }
     const uaRow = $('p6-ua-row');
     if(uaRow){ uaRow.style.display = uaVal > 0 ? '' : 'none'; }

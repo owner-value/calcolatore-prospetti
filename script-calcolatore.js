@@ -259,7 +259,7 @@ function populatePropertySelect(selectEl, selectedSlug=''){
   if(!selectEl) return;
   const current = selectedSlug || selectEl.value || '';
   const dropdown = getDropdown(selectEl.id);
-  const optionList = [{ label: 'Nessuna proprietà', value: '' }];
+  const optionList = [{ label: I18N.t('calc.noProperty'), value: '' }];
   propertiesCache.forEach(item => {
     const label = item.nome || item.slug;
     optionList.push({ label, value: item.slug });
@@ -429,11 +429,12 @@ function initDropdown(root, options = {}){
 }
 
 /* ============= Campi dinamici costi fissi & dispositivi ============= */
-function addFixedCostField(label="Costo fisso extra mensile (€)", value=0, options={}){
+function addFixedCostField(label, value=0, options={}){
   const cont=$g('fixedCostsContainer'); if(!cont) return;
   const opts = (options && typeof options === 'object') ? options : {};
+  const finalLabel = label || I18N.t('calc.s3AddBtn');
   const wrap=document.createElement('label');
-  wrap.innerHTML=`<span>${label}</span><input type="number" data-type="fixed-extra" value="${value}" min="0" step="1">`;
+  wrap.innerHTML=`<span>${finalLabel}</span><input type="number" data-type="fixed-extra" value="${value}" min="0" step="1">`;
   cont.appendChild(wrap);
   wrap.querySelector('input').addEventListener('input', calculateProfit);
   if(!opts.skipCalc) calculateProfit();
@@ -445,16 +446,16 @@ function addDeviceCostField(name='', amount=0, options={}){
   const row=document.createElement('div');
   row.className='device-row';
   const labelName=document.createElement('label');
-  labelName.innerHTML='<span>Descrizione</span>';
+  labelName.innerHTML='<span>'+I18N.t('calc.s6ExtrasDesc')+'</span>';
   const inputName=document.createElement('input');
   inputName.type='text';
   inputName.dataset.type='device-name';
-  inputName.placeholder='Spesa Extra';
+  inputName.placeholder=I18N.t('calc.s6AddExtraPh');
   inputName.value=name;
   labelName.appendChild(inputName);
 
   const labelAmount=document.createElement('label');
-  labelAmount.innerHTML='<span>Importo (€)</span>';
+  labelAmount.innerHTML='<span>'+I18N.t('calc.s6ExtrasAmt')+'</span>';
   const inputAmount=document.createElement('input');
   inputAmount.type='number';
   inputAmount.dataset.type='device-extra';
@@ -468,7 +469,7 @@ function addDeviceCostField(name='', amount=0, options={}){
   const btn=document.createElement('button');
   btn.type='button';
   btn.className='btn btn-minor';
-  btn.textContent='Rimuovi';
+  btn.textContent=I18N.t('calc.s6Remove');
   btn.addEventListener('click', function(){ removeDeviceRow(this); });
   actions.appendChild(btn);
 
@@ -489,16 +490,16 @@ function addOptionalCostField(name='', amount=0, opts={}){
   const wrap = document.createElement('div');
   wrap.className = 'opt-row';
   const l1 = document.createElement('label');
-  l1.innerHTML = '<span>Descrizione</span>';
+  l1.innerHTML = '<span>'+I18N.t('calc.s6ExtrasDesc')+'</span>';
   const inputName = document.createElement('input');
   inputName.type = 'text';
   inputName.dataset.type = 'opt-name';
-  inputName.placeholder = 'Spesa Extra Opzionale';
+  inputName.placeholder = I18N.t('calc.optPh');
   inputName.value = name || '';
   l1.appendChild(inputName);
 
   const l2 = document.createElement('label');
-  l2.innerHTML = '<span>Importo (€)</span>';
+  l2.innerHTML = '<span>'+I18N.t('calc.s6ExtrasAmt')+'</span>';
   const inputAmount = document.createElement('input');
   inputAmount.type = 'number';
   inputAmount.dataset.type = 'opt-amount';
@@ -512,7 +513,7 @@ function addOptionalCostField(name='', amount=0, opts={}){
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 'btn btn-minor';
-  btn.textContent = 'Rimuovi';
+  btn.textContent = I18N.t('calc.s6Remove');
   btn.addEventListener('click', () => { wrap.remove(); calculateProfit(); });
   actions.appendChild(btn);
 
@@ -615,8 +616,8 @@ function calculateProfit(){
   if(fattNote){
     const includeAss = assicurazioneAnnuo > 0;
     fattNote.textContent = includeAss
-      ? 'Per “fatturato lordo annuo” si intende quanto ricevuto dalle piattaforme o prenotazioni dirette (affitti, pulizie e assicurazione).'
-      : 'Per “fatturato lordo annuo” si intende quanto ricevuto dalle piattaforme o prenotazioni dirette (affitti e pulizie).';
+      ? I18N.t('pdf.p5FattNote')
+      : I18N.t('pdf.p5FattNote').replace(', assicurazione,', ',').replace(' e assicurazione', '');
   }
 
   // Preview sezione 2b (solo se presenti)
@@ -652,9 +653,22 @@ function calculateProfit(){
     if(lordoRow && lordoRow.parentNode){
       const span = lordoRow.parentNode.querySelector('span');
       if(span){
-        span.innerHTML = includeAss
-          ? 'Ricavo Lordo Totale<br> (Affitti + Pulizie + Assicurazione)'
-          : 'Ricavo Lordo Totale<br> (Affitti + Pulizie)';
+        // Build from the translated base string, swapping the "+ Assicurazione"
+        // tail when insurance is excluded. data-i18n attribute on the span lets
+        // I18N.apply() restore the Italian full form on locale changes.
+        const baseHtml = I18N.t('calc.sumLordoTot');
+        const tailHtml = includeAss ? '' : I18N.locale() === 'en'
+          ? 'Rent + Cleaning' === '' ? '' : ''
+          : '';
+        // Simpler approach: keep the full string from the dictionary; the
+        // difference between forms is " + Assicurazione" / " + Insurance",
+        // which we can splice off the end when insurance is excluded.
+        if (includeAss) {
+          span.innerHTML = baseHtml;
+        } else {
+          // Strip everything after the last " + " (handles both IT and EN).
+          span.innerHTML = baseHtml.replace(/\s*\+\s*[^<+]+$/, '');
+        }
       }
     }
   }catch(_){ }
@@ -688,9 +702,9 @@ function calculateProfit(){
       const span = baseRow.parentNode.querySelector('span');
       if(span){
         const labels = {
-          'ota-only': 'Base PM<br> (Lordo - OTA)',
-          'pulizie-ota': 'Base PM<br> (Lordo - Pulizie - OTA)',
-          'pulizie-assicurazione-ota': 'Base PM<br> (Lordo - Pulizie - Assicurazione - OTA)'
+          'ota-only': I18N.t('calc.basePmOta'),
+          'pulizie-ota': I18N.t('calc.basePmCleanOta'),
+          'pulizie-assicurazione-ota': I18N.t('calc.basePmCleanInsOta')
         };
         span.innerHTML = labels[basePmMode] || labels['ota-only'];
       }
@@ -700,9 +714,9 @@ function calculateProfit(){
   // Inform the report about the PM percentage label and the selected basis
   try{
     const basisLabels = {
-      'ota-only': 'su Fatturato Lordo − OTA',
-      'pulizie-ota': 'su Fatturato Lordo − Pulizie − OTA',
-      'pulizie-assicurazione-ota': 'su FatturatoLordo − Pulizie − Assicurazione − OTA'
+      'ota-only': I18N.t('calc.basisOta'),
+      'pulizie-ota': I18N.t('calc.basisCleanOta'),
+      'pulizie-assicurazione-ota': I18N.t('calc.basisCleanInsOta')
     };
     const basisLabel = basisLabels[basePmMode] || basisLabels['ota-only'];
     const pmPctLabel = `${fmtPct(pPM)} + IVA 22% • ${basisLabel}`;
@@ -863,7 +877,7 @@ function calculateProfit(){
         row.className='row';
         row.setAttribute('data-role','optional-summary');
         const span=document.createElement('span');
-        span.textContent='Spese Extra Opzionali';
+        span.textContent=I18N.t('calc.optTitle');
         const strong=document.createElement('strong');
         strong.className='bad';
         strong.textContent=fmtEUR(totalOpt);
@@ -922,12 +936,12 @@ function calculateProfit(){
           left.className = 'label-stack';
           const lbl = document.createElement('div');
           lbl.className = 'lbl';
-          lbl.textContent = it.label || 'Spesa extra opzionale';
+          lbl.textContent = it.label || I18N.t('calc.optPh');
           // when flag is OFF, show a small note "OPZIONALE" under the label
           if(!includeOptional){
             const note = document.createElement('div');
             note.className = 'label-sub optional-note';
-            note.textContent = 'OPZIONALE';
+            note.textContent = I18N.t('calc.optNote');
             left.appendChild(lbl);
             left.appendChild(note);
           }else{
@@ -974,7 +988,7 @@ function calculateProfit(){
       left.className = 'label-stack';
       const lbl = document.createElement('div');
       lbl.className = 'lbl';
-      lbl.textContent = 'Spese Extra Opzionali';
+      lbl.textContent = I18N.t('calc.optTitle');
       left.appendChild(lbl);
       const right = document.createElement('div');
       right.className = 'big';
@@ -1047,7 +1061,7 @@ function calculateProfit(){
             }
             const lblNode = box.querySelector('.lbl');
             const amtNode = box.querySelector('.big');
-            if(lblNode) lblNode.textContent = it.label || 'Spesa extra';
+            if(lblNode) lblNode.textContent = it.label || I18N.t('calc.s6AddExtraPh');
             if(amtNode) amtNode.textContent = (it.amount && it.amount > 0) ? fmtEUR(it.amount) : '—';
           });
           // Remove stale boxes beyond current count
@@ -1479,7 +1493,7 @@ function restoreFormValues(state){
   resetFixedExtras();
   fixedExtras.forEach(extra => {
     if(!extra) return;
-    addFixedCostField(extra.label || 'Costo fisso extra mensile (€)', extra.value ?? 0, { skipCalc: true });
+    addFixedCostField(extra.label || I18N.t('calc.s3AddBtn'), extra.value ?? 0, { skipCalc: true });
   });
 
   setDeviceRows(deviceCosts);
@@ -1610,7 +1624,7 @@ const prospectManager = (() => {
     }
     if(elements.slug) elements.slug.value = '';
     if(elements.title) elements.title.value = '';
-    setStatus('Modulo pronto per un nuovo prospetto', 'info', options);
+    setStatus(I18N.t('calc.prospectNewInfo'), 'info', options);
   };
 
   const refreshList = async (selectedSlug = '', options = {}) => {
@@ -1618,13 +1632,13 @@ const prospectManager = (() => {
     const silent = !!options.silent;
     try{
       const propertySlug = getSelectedProperty();
-      if(!silent) setStatus('Caricamento elenco prospetti...', 'info');
+      if(!silent) setStatus(I18N.t('calc.prospectListLoading'), 'info');
     const path = propertySlug ? `${PROSPECTS_PATH}?property=${encodeURIComponent(propertySlug)}` : PROSPECTS_PATH;
     const res = await apiFetch(path);
       if(!res.ok) throw new Error(`Status ${res.status}`);
       const data = await res.json();
     knownProspects = Array.isArray(data) ? data.slice() : [];
-      const dropdownOptions = [{ label: '— Seleziona —', value: '' }];
+      const dropdownOptions = [{ label: I18N.t('calc.selectProspect'), value: '' }];
       data.forEach(item => {
         const labelParts = [item.titolo || item.indirizzo1 || item.slug];
         if(item.property && (item.property.nome || item.property.slug)){
@@ -1652,7 +1666,7 @@ const prospectManager = (() => {
 
       if(!silent){
         const suffix = propertySlug ? ` per "${propertySlug}"` : '';
-        setStatus(data.length ? `Trovati ${data.length} prospetti salvati${suffix}` : `Nessun prospetto salvato${suffix}`, 'info');
+        setStatus(data.length ? I18N.t('calc.prospectListFound', { count: data.length, suffix: suffix }) : I18N.t('calc.prospectListNone', { suffix: suffix }), 'info');
       }
       if(selectedSlug){
         const stillExists = data.some(item => item.slug === selectedSlug);
@@ -1667,7 +1681,7 @@ const prospectManager = (() => {
       return data;
     }catch(err){
       console.error(err);
-      setStatus('Errore nel caricare l\'elenco dei prospetti', 'error');
+      setStatus(I18N.t('calc.prospectListErr'), 'error');
       return [];
     }
   };
@@ -1676,7 +1690,7 @@ const prospectManager = (() => {
     if(!slug) return null;
     const silent = !!options.silent;
     try{
-      if(!silent) setStatus('Caricamento prospetto...', 'info');
+      if(!silent) setStatus(I18N.t('calc.prospectLoading'), 'info');
   const res = await apiFetch(`${PROSPECTS_PATH}/${encodeURIComponent(slug)}`);
       if(!res.ok) throw new Error(`Status ${res.status}`);
       const data = await res.json();
@@ -1690,13 +1704,13 @@ const prospectManager = (() => {
       }
       fillProspectFields(data);
       if(!silent){
-        setStatus('Prospetto caricato. Usa "Applica dati" per ripristinare i valori.', 'success');
+        setStatus(I18N.t('calc.prospectLoaded'), 'success');
       }
       return data;
     }catch(err){
       console.error(err);
       if(options.clearOnError) resetForm({ silent: true });
-      setStatus('Errore nel caricare il prospetto selezionato', 'error');
+      setStatus(I18N.t('calc.prospectLoadErr'), 'error');
       return null;
     }
   };
@@ -1714,7 +1728,7 @@ const prospectManager = (() => {
     const fallbackSource = elements.title?.value?.trim() || model?.indirizzoRiga1 || '';
     let slug = slugify(providedSlug || fallbackSource);
     if(!slug){
-      setStatus('Inserisci un indirizzo o un titolo per generare lo slug', 'error');
+      setStatus(I18N.t('calc.prospectNeedAddr'), 'error');
       return;
     }
     const resolvedSlug = ensureUniqueSlugValue(slug, currentProspect?.slug || '');
@@ -1739,7 +1753,7 @@ const prospectManager = (() => {
 
     if(propertySlugs.has(slug)){
       if(currentProspect && currentProspect.slug === slug){
-        setStatus('Lo slug del prospetto coincide con quello di una proprietà esistente. Modificalo prima di salvare.', 'error');
+        setStatus(I18N.t('calc.prospectSlugConflict'), 'error');
         return;
       }
 
@@ -1761,7 +1775,7 @@ const prospectManager = (() => {
         candidateSlug = `${root}-${counter}`;
       }
       slug = candidateSlug;
-      slugAdjustedMessage = `Slug già utilizzato da una proprietà. Impostato automaticamente su "${slug}".`;
+      slugAdjustedMessage = I18N.t('calc.prospectSlugAdjusted', { slug: slug });
     }
     if(elements.slug) elements.slug.value = slug;
     const formState = gatherFormValues();
@@ -1784,7 +1798,7 @@ const prospectManager = (() => {
     try{
       // Debug: log the cedolare value being saved so we can trace mismatches
       try{ console.log('Saving prospect metadata.percentualeCedolare =', metadata?.formState?.fields?.percentualeCedolare); }catch(e){}
-      setStatus('Salvataggio in corso...', 'info');
+      setStatus(I18N.t('calc.prospectSaving'), 'info');
   const res = await apiFetch(PROSPECTS_PATH, { method: 'POST', body: fd });
       if(!res.ok){
         let payload;
@@ -1813,16 +1827,16 @@ const prospectManager = (() => {
       if(slugAdjustedMessage){
         showToast(slugAdjustedMessage, 5000);
       }
-      setStatus(slugAdjustedMessage ? `Prospetto salvato correttamente. ${slugAdjustedMessage}` : 'Prospetto salvato correttamente', 'success');
+      setStatus(slugAdjustedMessage ? I18N.t('calc.prospectSaved') + ' ' + slugAdjustedMessage : I18N.t('calc.prospectSaved'), 'success');
     }catch(err){
       console.error(err);
-      setStatus(`Errore durante il salvataggio del prospetto: ${err?.message || 'richiesta non riuscita'}`, 'error');
+      setStatus(I18N.t('calc.prospectSaveErr', { msg: err?.message || I18N.t('calc.prospectSaveErrFallback') }), 'error');
     }
   };
 
   const applyInputs = (options = {}) => {
     if(!currentProspect){
-      setStatus('Seleziona prima un prospetto da applicare', 'error', options);
+      setStatus(I18N.t('calc.prospectApplyPick'), 'error', options);
       return false;
     }
 
@@ -1832,7 +1846,7 @@ const prospectManager = (() => {
         payload = JSON.parse(payload);
         currentProspect.datiJson = payload;
       }catch(err){
-        console.warn('Impossibile leggere datiJson del prospetto', err);
+        console.warn(I18N.t('calc.prospectDatiJsonWarn'), err);
         payload = null;
       }
     }
@@ -1842,7 +1856,7 @@ const prospectManager = (() => {
       try{
         state = JSON.parse(state);
       }catch(err){
-        console.warn('Impossibile leggere formState salvato', err);
+        console.warn(I18N.t('calc.prospectFormStateWarn'), err);
         state = null;
       }
     }
@@ -1870,13 +1884,13 @@ const prospectManager = (() => {
         }
         updatePropertyActionState();
       }
-      setStatus('Dati applicati al calcolatore', 'success', options);
+      setStatus(I18N.t('calc.prospectApplied'), 'success', options);
       // show a visible toast so users notice the apply succeeded
-      showToast('Dati applicati al calcolatore', 3000);
+      showToast(I18N.t('calc.prospectApplied'), 3000);
       return true;
     }
 
-    setStatus('Il prospetto non contiene dati del calcolatore salvati', 'error', options);
+    setStatus(I18N.t('calc.prospectNoData'), 'error', options);
     return false;
   };
 
@@ -1885,12 +1899,12 @@ const prospectManager = (() => {
     const indirizzo = document.getElementById('indirizzoRiga1')?.value?.trim() || '';
     const source = title || indirizzo;
     if(!source){
-      setStatus('Inserisci un titolo o un indirizzo per generare lo slug', 'error');
+      setStatus(I18N.t('calc.prospectSlugAutoInfo'), 'error');
       return;
     }
     const slug = slugify(source);
     if(elements.slug) elements.slug.value = slug;
-    setStatus('Slug aggiornato automaticamente', 'success');
+    setStatus(I18N.t('calc.prospectSlugAutoOk'), 'success');
   };
 
   const init = async (options = {}) => {
@@ -1927,7 +1941,7 @@ const prospectManager = (() => {
     try{
       await loadProperties();
     }catch(err){
-      console.error('Errore caricamento proprietà', err);
+      console.error(I18N.t('calc.errLoadProperties'), err);
     }
   populatePropertySelect(elements.property, config.initialProperty);
   updatePropertyActionState();
@@ -1980,7 +1994,7 @@ const prospectManager = (() => {
     elements.propertyOpenBtn?.addEventListener('click', () => {
       const slug = getSelectedProperty();
       if(!slug){
-        setStatus('Seleziona una proprietà collegata per aprire la scheda.', 'error');
+        setStatus(I18N.t('calc.warnOpenProperty'), 'error');
         return;
       }
       const url = appendApiToHref(`pages/property/index.html?slug=${encodeURIComponent(slug)}`);
@@ -1991,16 +2005,16 @@ const prospectManager = (() => {
     allPropertyRefreshBtns.forEach(btn => {
       btn.addEventListener('click', async () => {
         const previousSelection = getSelectedProperty() || config.initialProperty || '';
-        setStatus('Aggiornamento elenco proprietà in corso...', 'info');
+        setStatus(I18N.t('calc.refreshingProps'), 'info');
         allPropertyRefreshBtns.forEach(b => { b.disabled = true; });
         try{
           await loadProperties(true);
           populatePropertySelect(elements.property, previousSelection);
           updatePropertyActionState();
-          setStatus('Elenco proprietà aggiornato.', 'success');
+          setStatus(I18N.t('calc.refreshedProps'), 'success');
         }catch(err){
           console.error(err);
-          setStatus('Errore durante l\'aggiornamento delle proprietà.', 'error');
+          setStatus(I18N.t('calc.errPropertyListPrefill'), 'error');
         }finally{
           allPropertyRefreshBtns.forEach(b => { b.disabled = false; });
         }
@@ -2025,7 +2039,7 @@ const prospectManager = (() => {
   if(config.initialSlug){
     const prospect = await loadProspect(config.initialSlug, { silent: true, setSelect: true });
     if(!prospect){
-      setStatus('Il prospetto richiesto non è stato trovato.', 'error');
+      setStatus(I18N.t('calc.prospectNotFound'), 'error');
       return;
     }
     if(config.autoApply){
@@ -2040,10 +2054,10 @@ const prospectManager = (() => {
         }
       }
     }else{
-      setStatus('Prospetto caricato. Usa "Applica dati" per ripristinare i valori.', 'info');
+      setStatus(I18N.t('calc.prospectLoadedInfo'), 'info');
     }
   }else{
-    setStatus('Modulo pronto per un nuovo prospetto', 'info');
+    setStatus(I18N.t('calc.prospectNewInfo'), 'info');
   }
   updatePropertyActionState();
   };
@@ -2112,7 +2126,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
     }catch(err){
-      console.error('Errore nel prefill della proprietà', err);
+      console.error(I18N.t('calc.errPropertyListPrefill'), err);
     }
   }
   prospectManager.init({ initialSlug, initialProperty, autoApply, autoPrint }).catch(err => {

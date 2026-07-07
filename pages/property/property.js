@@ -216,7 +216,7 @@ const getProperty = async slug => {
     if(!res.ok) throw new Error(`Status ${res.status}`);
     return await res.json();
   }catch(err){
-    console.error('Errore recupero proprietà', err);
+    console.error(I18N.t('property.statusLoadErr'), err);
     return null;
   }
 };
@@ -229,7 +229,7 @@ const getProspect = async slug => {
     if(!res.ok) throw new Error(`Status ${res.status}`);
     return await res.json();
   }catch(err){
-    console.error('Errore recupero prospetto', err);
+    console.error(I18N.t('property.statusErrProspectDelete'), err);
     return null;
   }
 };
@@ -267,7 +267,7 @@ const setStatus = (id, message = '', type = 'info') => {
 };
 
 const fillForm = property => {
-  $('propertyTitle').textContent = property ? property.nome || property.slug : 'Nuova proprietà';
+  $('propertyTitle').textContent = property ? property.nome || property.slug : I18N.t('property.newTitle');
   $('propertyName').value = property?.nome || '';
   $('propertySlug').value = property?.slug || '';
   $('propertyAddress').value = property?.indirizzo || '';
@@ -339,14 +339,14 @@ const renderProspects = (items = []) => {
 const handleProspectDelete = async slug => {
   const slugTrim = (slug || '').trim();
   if(!slugTrim) return;
-  const ok = window.confirm(`Eliminare il prospetto "${slugTrim}"? L'operazione non può essere annullata.`);
+  const ok = window.confirm(I18N.t('property.prospectDelConfirm', { slug: slugTrim }));
   if(!ok) return;
   try{
-    setStatus('prospectStatus', 'Eliminazione prospetto in corso...', 'info');
+    setStatus('prospectStatus', I18N.t('property.prospectDelStart'), 'info');
     const res = await apiFetch(`${PROSPECTS_PATH}/${encodeURIComponent(slugTrim)}`, { method: 'DELETE' });
     if(res.status === 404){
       await loadProperty(currentSlug);
-      setStatus('prospectStatus', 'Il prospetto era già stato eliminato.', 'success');
+      setStatus('prospectStatus', I18N.t('property.prospectAlreadyDel'), 'success');
       return;
     }
     if(!res.ok){
@@ -354,10 +354,10 @@ const handleProspectDelete = async slug => {
       throw new Error(txt || `Status ${res.status}`);
     }
     await loadProperty(currentSlug);
-    setStatus('prospectStatus', 'Prospetto eliminato correttamente.', 'success');
+    setStatus('prospectStatus', I18N.t('property.prospectDelDone'), 'success');
   }catch(err){
     console.error(err);
-    const message = (err && err.message) ? err.message : 'Errore durante l\'eliminazione del prospetto.';
+    const message = (err && err.message) ? err.message : I18N.t('property.prospectDelErr');
     setStatus('prospectStatus', message, 'error');
   }
 };
@@ -373,7 +373,7 @@ const loadProperty = async slug => {
     return;
   }
   try{
-    setStatus('propertyStatus', 'Caricamento proprietà...', 'info');
+    setStatus('propertyStatus', I18N.t('property.statusLoading'), 'info');
   const res = await apiFetch(`${PROPERTIES_PATH}/${encodeURIComponent(slug)}`);
     if(!res.ok){
       throw new Error(`Status ${res.status}`);
@@ -383,12 +383,12 @@ const loadProperty = async slug => {
     currentProperty = data;
     fillForm(data);
     renderProspects(data.prospects || []);
-    setStatus('propertyStatus', 'Proprieta caricata.', 'success');
-    setStatus('prospectStatus', (data.prospects?.length || 0) ? '' : 'Nessun prospetto collegato.', 'info');
+    setStatus('propertyStatus', I18N.t('property.prospectLoaded'), 'success');
+    setStatus('prospectStatus', (data.prospects?.length || 0) ? '' : I18N.t('property.prospectNoLinked'), 'info');
     $('newProspectBtn').disabled = false;
   }catch(err){
     console.error(err);
-    setStatus('propertyStatus', 'Proprieta non trovata.', 'error');
+    setStatus('propertyStatus', I18N.t('property.prospectMissing'), 'error');
     currentSlug = '';
     currentProperty = null;
     fillForm(null);
@@ -410,18 +410,18 @@ const collectPayload = () => ({
 const saveProperty = async () => {
   const payload = collectPayload();
   if(!payload.nome && !payload.slug){
-    setStatus('propertyStatus', 'Inserisci almeno il nome della proprietà.', 'error');
+    setStatus('propertyStatus', I18N.t('property.statusRequiredName'), 'error');
     return;
   }
   payload.slug = slugify(payload.slug || payload.nome);
   if(!payload.slug){
-    setStatus('propertyStatus', 'Slug non valido.', 'error');
+    setStatus('propertyStatus', I18N.t('property.statusInvalidSlug'), 'error');
     return;
   }
   payload.slug = await ensureUniqueSlug(payload.slug, currentSlug);
   $('propertySlug').value = payload.slug;
   try{
-    setStatus('propertyStatus', 'Salvataggio in corso...', 'info');
+    setStatus('propertyStatus', I18N.t('property.statusSaving'), 'info');
   const res = await apiFetch(PROPERTIES_PATH, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -442,7 +442,7 @@ const saveProperty = async () => {
     currentSlug = saved.slug;
     currentProperty = saved;
     fillForm(saved);
-    setStatus('propertyStatus', 'Proprieta salvata correttamente.', 'success');
+    setStatus('propertyStatus', I18N.t('property.statusSaved'), 'success');
     $('newProspectBtn').disabled = false;
     $('deletePropertyBtn').disabled = false;
     $('newProspectBtn').dataset.slug = saved.slug;
@@ -453,26 +453,26 @@ const saveProperty = async () => {
     await loadProperty(saved.slug);
   }catch(err){
     console.error(err);
-    setStatus('propertyStatus', `Errore durante il salvataggio: ${err?.message || 'richiesta non riuscita'}.`, 'error');
+    setStatus('propertyStatus', I18N.t('property.statusSaveErr', { msg: err?.message || I18N.t('property.statusSaveErrFallback') }) + '.', 'error');
   }
 };
 
 const deleteProperty = async () => {
   if(!currentSlug){
-    setStatus('propertyStatus', 'Nessuna proprietà da eliminare.', 'error');
+    setStatus('propertyStatus', I18N.t('property.statusNoDelete'), 'error');
     return;
   }
   const prospectCount = Array.isArray(currentProperty?.prospects) ? currentProperty.prospects.length : 0;
   const extraWarning = prospectCount > 0
-    ? `\n\nAttenzione: ${prospectCount === 1 ? '1 prospetto' : `${prospectCount} prospetti`} collegati verranno spostati nella sezione "Prospetti senza proprietà".`
+    ? (prospectCount === 1 ? I18N.t('property.detachWarningOne') : I18N.t('property.detachWarningMany', { count: prospectCount }))
     : '';
-  const ok = window.confirm(`Eliminare la proprietà "${currentSlug}"? L'operazione non può essere annullata.${extraWarning}`);
+  const ok = window.confirm(I18N.t('property.confirmDelete', { slug: currentSlug }) + extraWarning);
   if(!ok) return;
   try{
-    setStatus('propertyStatus', 'Eliminazione in corso...', 'info');
+    setStatus('propertyStatus', I18N.t('property.statusDelStart'), 'info');
     const res = await apiFetch(`${PROPERTIES_PATH}/${encodeURIComponent(currentSlug)}`, { method: 'DELETE' });
     if(res.status === 404){
-      setStatus('propertyStatus', 'Proprieta già rimossa.', 'success');
+      setStatus('propertyStatus', I18N.t('property.statusAlreadyDel'), 'success');
       setTimeout(() => {
         window.location.href = appendApiToHref('../archivio/index.html');
       }, 500);
@@ -491,14 +491,14 @@ const deleteProperty = async () => {
     }
     const result = await res.json().catch(() => ({ success: true }));
     const detached = Number.isFinite(+result?.detachedProspects) ? +result.detachedProspects : 0;
-    const extra = detached > 0 ? ` ${detached === 1 ? '1 prospetto spostato' : `${detached} prospetti spostati`} nella sezione senza proprietà.` : '';
-    setStatus('propertyStatus', `Proprieta eliminata.${extra}`, 'success');
+    const extra = detached > 0 ? (detached === 1 ? I18N.t('property.detachOne') : I18N.t('property.detachMany', { count: detached })) + I18N.t('property.detachSuffix') : '';
+    setStatus('propertyStatus', I18N.t('property.statusDeleted') + extra, 'success');
     setTimeout(() => {
       window.location.href = appendApiToHref('../archivio/index.html');
     }, 700);
   }catch(err){
     console.error(err);
-    const message = (err && err.message) ? err.message : 'Impossibile eliminare la proprietà.';
+    const message = (err && err.message) ? err.message : I18N.t('property.statusDeleteErr');
     setStatus('propertyStatus', message, 'error');
   }
 };
@@ -515,9 +515,9 @@ document.addEventListener('DOMContentLoaded', () => {
     slug = await ensureUniqueSlug(slug, currentSlug);
     $('propertySlug').value = slug;
     if(!slug){
-      setStatus('propertyStatus', 'Inserisci nome o indirizzo per generare lo slug.', 'error');
+      setStatus('propertyStatus', I18N.t('property.statusRequiredSlug'), 'error');
     }else{
-      setStatus('propertyStatus', 'Slug generato.', 'success');
+      setStatus('propertyStatus', I18N.t('property.statusSlugGenOk'), 'success');
     }
   });
 
@@ -538,11 +538,11 @@ document.addEventListener('DOMContentLoaded', () => {
     e.stopPropagation();
     const slug = (btn.dataset.slug || '').trim();
     if(!slug){
-      setStatus('prospectStatus', 'Slug non trovato per il prospetto da eliminare.', 'error');
+      setStatus('prospectStatus', I18N.t('property.statusProspectSlugMissing'), 'error');
       return;
     }
     console.log('[property] delete prospect click', slug);
-    setStatus('prospectStatus', `Eliminazione del prospetto "${slug}" in corso...`, 'info');
+    setStatus('prospectStatus', I18N.t('property.statusProspectDelStart', { slug: slug }), 'info');
     handleProspectDelete(slug);
   };
 
