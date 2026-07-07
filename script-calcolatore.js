@@ -354,10 +354,6 @@ function initDropdown(root, options = {}){
     searchInput.setAttribute('spellcheck', 'false');
     searchWrap.appendChild(searchInput);
     menu.insertBefore(searchWrap, menu.firstChild);
-    // Start hidden; renderOptions() will show it when there are 2+ options
-    // to actually filter. This avoids the confusing state where the user sees
-    // a search bar with "Nessun risultato" because properties haven't loaded.
-    searchWrap.style.display = 'none';
 
     searchInput.addEventListener('input', () => {
       state.query = (searchInput.value || '').trim().toLowerCase();
@@ -442,27 +438,20 @@ function initDropdown(root, options = {}){
     // or the menu itself (classic mode).
     const target = optionsList || menu;
     target.innerHTML = '';
-    // Search bar appears only when there are enough *real* options to be worth
-    // searching. The first option in state.options is usually the empty
-    // placeholder ("Nessuna proprietà"), so we count items with a non-empty
-    // value. With 0–1 real properties, the user just sees a clean dropdown
-    // — no confusing "search bar + Nessun risultato" while the API loads.
-    const realOptions = state.options.filter(opt => opt && opt.value);
-    const hasEnoughToSearch = realOptions.length >= 2;
+    // Search bar is always visible when data-dropdown-search is on the dropdown.
+    // Showing it unconditionally keeps the layout stable and lets the user
+    // search the moment options land (or notice right away that no options
+    // are present). The "Nessun risultato" empty state covers the
+    // no-match / no-data case in one place.
     if (searchWrap) {
-      searchWrap.style.display = (searchEnabled && hasEnoughToSearch) ? '' : 'none';
+      searchWrap.style.display = searchEnabled ? '' : 'none';
     }
     const visible = filteredOptions();
     if(!visible.length){
       if (searchEnabled) {
-        // Show the empty-state helper only when the search bar is actually
-        // visible (i.e. there are 2+ options to filter through). Otherwise
-        // fall through to the classic placeholder button so the user sees
-        // a normal dropdown even with 0 options.
-        if (hasEnoughToSearch && searchWrap && searchWrap.style.display !== 'none') {
-          if (emptyState) emptyState.style.display = '';
-          return;
-        }
+        // Show the empty-state helper to explain that no options match.
+        if (emptyState) emptyState.style.display = '';
+        return;
       }
       const emptyBtn=document.createElement('button');
       emptyBtn.type='button';
