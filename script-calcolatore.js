@@ -322,6 +322,7 @@ function initDropdown(root, options = {}){
   // the menu so the search input + the options list can be styled separately
   // and the input stays sticky at the top of the menu.
   let searchInput = null;
+  let searchWrap = null;
   let optionsList = null;
   let emptyState = null;
   if (searchEnabled && menu) {
@@ -341,7 +342,7 @@ function initDropdown(root, options = {}){
     emptyState.style.display = 'none';
     menu.appendChild(emptyState);
 
-    const searchWrap = document.createElement('div');
+    searchWrap = document.createElement('div');
     searchWrap.className = 'dropdown-search';
     searchWrap.setAttribute('data-dropdown-search-wrap', '');
     searchInput = document.createElement('input');
@@ -353,6 +354,10 @@ function initDropdown(root, options = {}){
     searchInput.setAttribute('spellcheck', 'false');
     searchWrap.appendChild(searchInput);
     menu.insertBefore(searchWrap, menu.firstChild);
+    // Start hidden; renderOptions() will show it when there are 2+ options
+    // to actually filter. This avoids the confusing state where the user sees
+    // a search bar with "Nessun risultato" because properties haven't loaded.
+    searchWrap.style.display = 'none';
 
     searchInput.addEventListener('input', () => {
       state.query = (searchInput.value || '').trim().toLowerCase();
@@ -437,12 +442,27 @@ function initDropdown(root, options = {}){
     // or the menu itself (classic mode).
     const target = optionsList || menu;
     target.innerHTML = '';
+    // Search bar appears only when there are enough *real* options to be worth
+    // searching. The first option in state.options is usually the empty
+    // placeholder ("Nessuna proprietà"), so we count items with a non-empty
+    // value. With 0–1 real properties, the user just sees a clean dropdown
+    // — no confusing "search bar + Nessun risultato" while the API loads.
+    const realOptions = state.options.filter(opt => opt && opt.value);
+    const hasEnoughToSearch = realOptions.length >= 2;
+    if (searchWrap) {
+      searchWrap.style.display = (searchEnabled && hasEnoughToSearch) ? '' : 'none';
+    }
     const visible = filteredOptions();
     if(!visible.length){
       if (searchEnabled) {
-        // Show the empty-state helper instead of the placeholder button.
-        if (emptyState) emptyState.style.display = '';
-        return;
+        // Show the empty-state helper only when the search bar is actually
+        // visible (i.e. there are 2+ options to filter through). Otherwise
+        // fall through to the classic placeholder button so the user sees
+        // a normal dropdown even with 0 options.
+        if (hasEnoughToSearch && searchWrap && searchWrap.style.display !== 'none') {
+          if (emptyState) emptyState.style.display = '';
+          return;
+        }
       }
       const emptyBtn=document.createElement('button');
       emptyBtn.type='button';
