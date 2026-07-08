@@ -1482,7 +1482,7 @@ window.addEventListener('beforeprint', () => {
       document.querySelectorAll(s).forEach(el => { toHide.push(el); });
     });
     // hide any element whose text contains the status message
-    const statusText = 'Dati applicati al calcolatore';
+    const statusText = I18N.t('calc.prospectApplied');
     document.querySelectorAll('body *').forEach(el => {
       if(el.children && el.children.length) return; // prefer leaf nodes
       const txt = (el.textContent || '').trim();

@@ -86,11 +86,12 @@
                 }
               }
               const pctVal = pct(m?.spese?.otaPct ?? 20);
-              if(assicurazioneVal > 0){
-                labelSub.innerHTML = `(<span id="p6-ota-percent">${pctVal}</span> su affitti + pulizie + assicurazione)`;
-              } else {
-                labelSub.innerHTML = `(<span id="p6-ota-percent">${pctVal}</span> su affitti + pulizie)`;
-              }
+              const subKey = assicurazioneVal > 0 ? 'pdf.p6OtaSub' : 'pdf.p6OtaSubNoIns';
+              // The i18n string already contains an <span id="p6-ota-percent"></span>
+              // placeholder; inject the actual percentage value into it before
+              // assigning to innerHTML so the PDF text follows the current locale.
+              const subTpl = I18N.t(subKey);
+              labelSub.innerHTML = subTpl.replace('id="p6-ota-percent"></span>', 'id="p6-ota-percent">' + pctVal + '</span>');
             };
             // initial
             updateOtaLabel();
@@ -155,7 +156,9 @@
       }
       if($('p6-ring-label')){
         if(subMonth > 0){
-          $('p6-ring-label').innerHTML = `Ring Intercom<br><span style="font-weight:400;font-size:0.95em">${eur(subMonth)} al mese di abbonamento</span>`;
+          // Translate the "per month subscription" suffix to the active locale.
+          // "Ring Intercom" is a brand name and stays as-is.
+          $('p6-ring-label').innerHTML = 'Ring Intercom' + I18N.t('pdf.ringPerMonth', { amount: eur(subMonth) });
         } else {
           $('p6-ring-label').innerHTML = 'Ring Intercom';
         }
