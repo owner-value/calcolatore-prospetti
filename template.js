@@ -90,7 +90,11 @@
               // The i18n string already contains an <span id="p6-ota-percent"></span>
               // placeholder; inject the actual percentage value into it before
               // assigning to innerHTML so the PDF text follows the current locale.
-              const subTpl = I18N.t(subKey);
+              let subTpl = I18N.t(subKey);
+              // Welcome Kit is charged to guests like cleaning, so OTA applies to it too.
+              if(Number(m?.spese?.kit ?? 0) > 0){
+                subTpl = subTpl.replace(/(pulizie|cleaning)/, '$1 + welcome kit');
+              }
               labelSub.innerHTML = subTpl.replace('id="p6-ota-percent"></span>', 'id="p6-ota-percent">' + pctVal + '</span>');
             };
             // initial
@@ -112,7 +116,10 @@
         }
       }catch(_){ }
     }
-    if($('p6-kit'))     $('p6-kit').textContent     = eur(m?.spese?.kit ?? 0);
+    const kitVal = m?.spese?.kit ?? 0;
+    if($('p6-kit'))     $('p6-kit').textContent     = eur(kitVal);
+    const kitRow = $('p6-kit-row');
+    if(kitRow) kitRow.style.display = kitVal > 0 ? '' : 'none';
     const assVal = m?.spese?.assicurazione ?? 0;
     if($('p6-assicurazione')) $('p6-assicurazione').textContent = eur(assVal);
     const assRow = $('p6-assicurazione-row');
@@ -136,9 +143,9 @@
     if($('p6-pm-pct')){
       const baseMode = m?.spese?.basePmMode || 'ota-only';
       const basisMap = {
-        'ota-only': 'su Fatturato Lordo − OTA',
-        'pulizie-ota': 'su Fatturato Lordo − Pulizie − OTA',
-        'pulizie-assicurazione-ota': 'su FatturatoLordo − Pulizie − Assicurazione − OTA'
+        'ota-only': I18N.t('calc.basisOta'),
+        'pulizie-ota': I18N.t('calc.basisCleanOta'),
+        'pulizie-assicurazione-ota': I18N.t('calc.basisCleanInsOta')
       };
       const basisLabel = basisMap[baseMode] || basisMap['ota-only'];
       $('p6-pm-pct').textContent = `${pct(m?.spese?.pmPct ?? m?.percentualePm ?? 0)} + IVA 22% • ${basisLabel}`;

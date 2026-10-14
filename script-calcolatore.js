@@ -733,15 +733,19 @@ function calculateProfit(){
     $set('previewAssicurazioneAnnuo', fmtEUR(assicurazioneAnnuo));
   }
 
-  // Publish Welcome Kit to report (so it appears in Previsioni di Spesa and totals)
+  // Publish Welcome Kit to report (so it appears in Previsioni di Spesa and totals).
+  // Row hidden when kit is 0 so the PDF doesn't show an empty "€ 0" box.
   try{
     $set('p6-kit', fmtEUR(kitAnnuo));
+    const kitRow = $g('p6-kit-row');
+    if(kitRow) kitRow.style.display = kitAnnuo > 0 ? '' : 'none';
     try{ window.postMessage({ type: 'ov:update', field: 'p6-kit', value: fmtEUR(kitAnnuo) }, '*'); }catch(e){}
   }catch(e){ }
 
   // 3) Lordi
+  // Welcome Kit è addebitato all'ospite come le pulizie → entra nel lordo.
   const lordoAffitti = adr * giorni;
-  const lordoTotale = lordoAffitti + pulizieAnnuo + assicurazioneAnnuo;
+  const lordoTotale = lordoAffitti + pulizieAnnuo + kitAnnuo + assicurazioneAnnuo;
   $set('outputLordoPrenotazioni', fmtEUR(lordoAffitti));
   toggleRow('outputLordoPrenotazioni', lordoAffitti);
   $set('outputLordoTotale', fmtEUR(lordoTotale));
@@ -756,6 +760,7 @@ function calculateProfit(){
     const items = [];
     if(lordoAffitti > 0)        items.push(I18N.t('pdf.p5FattNoteRent'));
     if(pulizieAnnuo > 0)         items.push(I18N.t('pdf.p5FattNoteCleaning'));
+    if(kitAnnuo > 0)             items.push(I18N.t('pdf.p5FattNoteKit'));
     if(assicurazioneAnnuo > 0)  items.push(I18N.t('pdf.p5FattNoteInsurance'));
     const listText = items.length === 0
       ? I18N.t('pdf.p5FattNoteRent') // fallback: niente selezionato, mostra almeno affitti
@@ -772,29 +777,20 @@ function calculateProfit(){
                   : items.slice(0, -1).join(', ') + ' e ' + items[items.length - 1])));
     fattNote.textContent = I18N.t('pdf.p5FattNote', { items: listText });
   }
-  // Update visible label to omit 'Assicurazione' when not selected
+  // Update visible label: list only the components actually included.
+  // The dictionary string holds the full list in parentheses, in the order
+  // Affitti + Pulizie + Welcome Kit + Assicurazione; keep only those > 0.
   try{
-    const includeAss = assicurazioneAnnuo > 0;
     const lordoRow = document.getElementById('outputLordoTotale');
     if(lordoRow && lordoRow.parentNode){
       const span = lordoRow.parentNode.querySelector('span');
       if(span){
-        // Build from the translated base string, swapping the "+ Assicurazione"
-        // tail when insurance is excluded. data-i18n attribute on the span lets
-        // I18N.apply() restore the Italian full form on locale changes.
         const baseHtml = I18N.t('calc.sumLordoTot');
-        const tailHtml = includeAss ? '' : I18N.locale() === 'en'
-          ? 'Rent + Cleaning' === '' ? '' : ''
-          : '';
-        // Simpler approach: keep the full string from the dictionary; the
-        // difference between forms is " + Assicurazione" / " + Insurance",
-        // which we can splice off the end when insurance is excluded.
-        if (includeAss) {
-          span.innerHTML = baseHtml;
-        } else {
-          // Strip everything after the last " + " (handles both IT and EN).
-          span.innerHTML = baseHtml.replace(/\s*\+\s*[^<+]+$/, '');
-        }
+        const flags = [true, pulizieAnnuo > 0, kitAnnuo > 0, assicurazioneAnnuo > 0];
+        span.innerHTML = baseHtml.replace(/\(([^)]*)\)\s*$/, (_, inner) => {
+          const parts = inner.split(/\s*\+\s*/).filter((_, i) => flags[i] !== false);
+          return '(' + parts.join(' + ') + ')';
+        });
       }
     }
   }catch(_){ }
@@ -806,8 +802,9 @@ function calculateProfit(){
 
   const otaAffitti = lordoAffitti * (pOTA/100);
   const otaPulizie = pulizieAnnuo * (pOTA/100);
+  const otaKit     = kitAnnuo * (pOTA/100);
   const otaAssicurazione = assicurazioneAnnuo * (pOTA/100);
-  const costoOTA   = otaAffitti + otaPulizie + otaAssicurazione;
+  const costoOTA   = otaAffitti + otaPulizie + otaKit + otaAssicurazione;
 
   // Compute Base PM according to user-selectable mode (default: OTA-only)
   const basePmMode = (document.getElementById('basePmMode')?.value || 'ota-only');
@@ -815,9 +812,9 @@ function calculateProfit(){
   if(basePmMode === 'ota-only'){
     basePM = Math.max(lordoTotale - costoOTA, 0);
   }else if(basePmMode === 'pulizie-ota'){
-    basePM = Math.max(lordoTotale - pulizieAnnuo - costoOTA, 0);
+    basePM = Math.max(lordoTotale - pulizieAnnuo - kitAnnuo - costoOTA, 0);
   }else{ // pulizie-assicurazione-ota
-    basePM = Math.max(lordoTotale - pulizieAnnuo - assicurazioneAnnuo - costoOTA, 0);
+    basePM = Math.max(lordoTotale - pulizieAnnuo - kitAnnuo - assicurazioneAnnuo - costoOTA, 0);
   }
   $set('outputBasePM', fmtEUR(basePM));
   toggleRow('outputBasePM', basePM);
@@ -1208,8 +1205,8 @@ function calculateProfit(){
   }catch(e){ console.warn('extras container scheduling failed', e); }
 
   // 7) Base imponibile & imposta cedolare
-  // Cedolare secca su netto: Lordo Totale - Pulizie - Assicurazione - OTA - Costo PM
-  const baseCedolare = Math.max(lordoTotale - pulizieAnnuo - assicurazioneAnnuo - costoOTA - costoPmTotale, 0);
+  // Cedolare secca su netto: Lordo Totale - Pulizie - Kit - Assicurazione - OTA - Costo PM
+  const baseCedolare = Math.max(lordoTotale - pulizieAnnuo - kitAnnuo - assicurazioneAnnuo - costoOTA - costoPmTotale, 0);
   const imposta = baseCedolare * (pCed/100);
   // Exclude one-time startup security costs from annual operating costs
   const costiOperativi = costoOTA + costoPmTotale + pulizieAnnuo + utenze + kitAnnuo + assicurazioneAnnuo + sicurezzaRicorrente;
@@ -1227,6 +1224,7 @@ function calculateProfit(){
       assicurazioneAnnuo,
       otaAffitti,
       otaPulizie,
+      otaKit,
       otaAssicurazione,
       costoOTA,
       basePM,
