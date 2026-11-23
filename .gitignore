@@ -2,3 +2,5 @@ frontend.log
 backend.log
 backend/storage/audit-log.jsonl
 backend/storage/backups/
+
+.DS_Store
