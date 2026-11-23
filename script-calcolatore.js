@@ -854,7 +854,12 @@ function calculateProfit(){
   const keybox = Math.max(0, num('costoKeybox'));
   if(keybox > 0) extraDevices.unshift({ label: 'Keybox', amount: keybox });
 
-  const unaTantumManuali = Math.max(0, num('speseUnaTantumManuali'));
+  const unaTantumManuali = Math.max(0, num('costoEstintore'));
+  const includeRilevatore = !!document.getElementById('includeRilevatore')?.checked;
+  const detectorInput = document.getElementById('costoRilevatore');
+  if(detectorInput) detectorInput.disabled = !includeRilevatore;
+  const costoRilevatore = includeRilevatore ? Math.max(0, num('costoRilevatore')) : 0;
+  if(includeRilevatore) extraDevices.push({ label: I18N.t('pdf.p6Detector'), amount: costoRilevatore });
   // Add ringSetup and device extras to extra one-time payments
   const extraDev = unaTantumManuali + ringSetup + extraDevices.reduce((sum, item) => sum + item.amount, 0);
 
@@ -877,17 +882,9 @@ function calculateProfit(){
     try{
       window.postMessage({ type: 'ov:update', field: 'p6-ring-setup', value: fmtEUR(ringSetup) }, '*');
     }catch(e){ /* noop */ }
-  // Nascondi la box Kit Sicurezza nel PDF se il valore è zero, nullo o '—'
-  const kitBoxPdf = document.getElementById('p6-una-row');
-  if(kitBoxPdf) {
-    if(!unaTantumManuali || unaTantumManuali <= 0 || fmtEUR(unaTantumManuali) === '—') {
-      kitBoxPdf.style.display = 'none';
-    } else {
-      kitBoxPdf.style.display = '';
-      const kitVal = document.getElementById('p6-una');
-      if(kitVal) kitVal.textContent = fmtEUR(unaTantumManuali);
-    }
-  }
+  const extinguisherRow = document.getElementById('p6-una-row');
+  if(extinguisherRow) extinguisherRow.style.display = '';
+  $set('p6-una', fmtEUR(unaTantumManuali));
     // Notify embedded report about kit value so the template updates live
     try{
       window.postMessage({ type: 'ov:update', field: 'p6-una', value: fmtEUR(unaTantumManuali) }, '*');
@@ -1283,6 +1280,9 @@ function calculateProfit(){
         ringSetup,
         keybox,
         extraManuale: unaTantumManuali,
+        estintore: unaTantumManuali,
+        includeRilevatore,
+        rilevatore: costoRilevatore,
         extraDettagli: extraDevices,
         totale: sicurezzaTotale
       },
@@ -1523,7 +1523,8 @@ function setDeviceRows(items){
 
 function restoreFormValues(state){
   if(!state || typeof state !== 'object') return;
-  const { fields = {}, fixedExtras = [], deviceCosts = [], optionalExtras = [], includeOptionalExtras = false } = state;
+  const { fields = {}, fixedExtras = [], optionalExtras = [], includeOptionalExtras = false } = state;
+  const deviceCosts = [...(state.deviceCosts || [])];
 
   Object.entries(fields).forEach(([id, value]) => {
     const el = document.getElementById(id);
@@ -1534,6 +1535,16 @@ function restoreFormValues(state){
       el.value = value;
     }
   });
+
+  // Il vecchio kit era un prezzo unico: conservarlo senza inventare una ripartizione.
+  const hasSplitSecurity = Object.prototype.hasOwnProperty.call(fields, 'costoEstintore');
+  if(!hasSplitSecurity && Object.prototype.hasOwnProperty.call(fields, 'speseUnaTantumManuali')){
+    const previousKit = Math.max(0, Number(fields.speseUnaTantumManuali) || 0);
+    if(previousKit > 0) deviceCosts.push({ name: I18N.t('calc.s6Kit').replace(/<br>/g, ' '), amount: previousKit });
+    document.getElementById('costoEstintore').value = '';
+    document.getElementById('costoRilevatore').value = '';
+    document.getElementById('includeRilevatore').checked = false;
+  }
 
   // Compatibilità con i prospetti salvati durante la precedente variante Lordo/Netto.
   const baseSelect = document.getElementById('basePmMode');

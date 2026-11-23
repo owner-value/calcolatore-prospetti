@@ -109,7 +109,9 @@
       const sicurezza = m?.spese?.sicurezza || {};
       // DO NOT sum extras here; show only the Kit amount
       const kitOnly = typeof sicurezza.extraManuale === 'number' ? Math.max(0, sicurezza.extraManuale) : 0;
-      $('p6-una').textContent = kitOnly > 0 ? eur(kitOnly) : '—';
+      $('p6-una').textContent = eur(sicurezza.estintore ?? kitOnly);
+      if($('p6-una-row')) $('p6-una-row').style.display = '';
+      if($('p6-una-label')) $('p6-una-label').innerHTML = I18N.t(sicurezza.estintore !== undefined ? 'pdf.p6Extinguisher' : 'pdf.p6Una');
     }
     // Ring Intercom una tantum
     if($('p6-ring-setup')){

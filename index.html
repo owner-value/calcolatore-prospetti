@@ -260,9 +260,13 @@
           <label class="spese-input"><span data-i18n="calc.s6CostLabel">Costo (€)</span>
             <input type="number" id="costoKeybox" value="15" min="0" step="0.01" oninput="calculateProfit()">
           </label>
-          <span class="spese-title" data-i18n="calc.s6Kit">Kit Sicurezza<br>(Estintore, rilevatore fumo, monossido di carbonio, gas combustibile)</span>
+          <span class="spese-title"><input type="checkbox" checked disabled aria-label="Estintore incluso"> <span data-i18n="calc.s6Extinguisher">Estintore — sempre incluso</span></span>
           <label class="spese-input"><span data-i18n="calc.s6CostLabel">Costo (€)</span>
-            <input type="number" id="speseUnaTantumManuali" value="150.00" min="0" step="0.01" oninput="calculateProfit()">
+            <input type="number" id="costoEstintore" value="40" min="0" step="0.01" oninput="calculateProfit()">
+          </label>
+          <label class="spese-title"><input type="checkbox" id="includeRilevatore" onchange="calculateProfit()"> <span data-i18n="calc.s6Detector">Rilevatore combinato (fumo, monossido di carbonio, gas combustibili)</span></label>
+          <label class="spese-input"><span data-i18n="calc.s6CostLabel">Costo (€)</span>
+            <input type="number" id="costoRilevatore" value="40" min="0" step="0.01" oninput="calculateProfit()">
           </label>
         </div>
 
@@ -576,7 +580,7 @@
         <div class="box expense-box" id="p6-una-row">
           <div class="box-row">
             <div class="label-stack">
-              <div class="lbl" id="p6-una-label" data-i18n="pdf.p6Una">Kit Sicurezza<br>(Estintore, rilevatore fumo, monossido di carbonio, gas combustibile)</div>
+              <div class="lbl" id="p6-una-label" data-i18n="pdf.p6Extinguisher">Estintore</div>
             </div>
             <div id="p6-una" class="big">—</div>
           </div>
