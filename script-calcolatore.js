@@ -853,6 +853,8 @@ function calculateProfit(){
   // Keybox: campo dedicato, mostrato nel PDF tra le spese extra di start-up
   const keybox = Math.max(0, num('costoKeybox'));
   if(keybox > 0) extraDevices.unshift({ label: 'Keybox', amount: keybox });
+  const fotoshooting = Math.max(0, num('costoFotoshooting'));
+  if(fotoshooting > 0) extraDevices.push({ label: I18N.t('calc.s6Photoshoot'), amount: fotoshooting });
 
   const unaTantumManuali = Math.max(0, num('costoEstintore'));
   const includeRilevatore = !!document.getElementById('includeRilevatore')?.checked;
@@ -1279,6 +1281,7 @@ function calculateProfit(){
       sicurezza:{
         ringSetup,
         keybox,
+        fotoshooting,
         extraManuale: unaTantumManuali,
         estintore: unaTantumManuali,
         includeRilevatore,
@@ -1535,6 +1538,11 @@ function restoreFormValues(state){
       el.value = value;
     }
   });
+
+  // Non aggiungere nuovi costi ai prospetti salvati prima di questa voce.
+  if(!Object.prototype.hasOwnProperty.call(fields, 'costoFotoshooting')){
+    document.getElementById('costoFotoshooting').value = '0';
+  }
 
   // Il vecchio kit era un prezzo unico: conservarlo senza inventare una ripartizione.
   const hasSplitSecurity = Object.prototype.hasOwnProperty.call(fields, 'costoEstintore');
