@@ -145,32 +145,12 @@
       const basisMap = {
         'ota-only': I18N.t('calc.basisOta'),
         'pulizie-ota': I18N.t('calc.basisCleanOta'),
-        'pulizie-assicurazione-ota': I18N.t('calc.basisCleanInsOta')
+        'pulizie-assicurazione-ota': I18N.t('calc.basisCleanInsOta'),
+        'lordo': I18N.t('calc.basisLordo')
       };
       const basisLabel = basisMap[baseMode] || basisMap['ota-only'];
       $('p6-pm-pct').textContent = `${pct(m?.spese?.pmPct ?? m?.percentualePm ?? 0)} + IVA 22% • ${basisLabel}`;
     }
-    // Update Ring label (show monthly amount) but do NOT render a Ring box in Start-up
-    try{
-      const setup = m?.spese?.ringSetup ?? 0;
-      let subMonth = 0;
-      if (typeof m?.spese?.sicurezza?.ringSubMonth === 'number') {
-        subMonth = m.spese.sicurezza.ringSubMonth;
-      } else if (typeof m?.spese?.abbonamentoMensile === 'number') {
-        subMonth = m.spese.abbonamentoMensile;
-      } else if (m?.spese?.sicurezza?.ringSubAnn) {
-        subMonth = m.spese.sicurezza.ringSubAnn / 12;
-      }
-      if($('p6-ring-label')){
-        if(subMonth > 0){
-          // Translate the "per month subscription" suffix to the active locale.
-          // "Ring Intercom" is a brand name and stays as-is.
-          $('p6-ring-label').innerHTML = 'Ring Intercom' + I18N.t('pdf.ringPerMonth', { amount: eur(subMonth) });
-        } else {
-          $('p6-ring-label').innerHTML = 'Ring Intercom';
-        }
-      }
-    }catch(_){ }
     if($('p6-una')){
       const sicurezza = m?.spese?.sicurezza || {};
       // DO NOT sum extras here; show only the Kit amount
@@ -300,19 +280,9 @@
         try{
           const el = d.field ? document.getElementById(d.field) : null;
           if(el && typeof d.value === 'string') el.textContent = d.value;
-          // Special handling: hide annual Ring row when zero
-          if(d.field === 'p6-ring-annual'){
-            try{
-              const txt = (d.value || '').toString();
-              const s = txt.replace(/[^0-9,\-.]/g,'').replace(/\./g,'').replace(',', '.');
-              const n = parseFloat(s);
-              const row = document.getElementById('p6-ring-annual-row');
-              if(row){ row.style.display = (Number.isFinite(n) && n > 0) ? '' : 'none'; }
-            }catch(_){ }
-          }
         }catch(_){ }
         try{
-          if(['p6-ring-annual','p6-ring-setup','p6-una','p6-kit','p6-ota','p6-extras-container','p6-kit-sicurezza'].includes(d.field)){
+          if(['p6-ring-setup','p6-una','p6-kit','p6-ota','p6-extras-container','p6-kit-sicurezza'].includes(d.field)){
             recalculateTotalCosti();
             try{ recalculateTotaleStartup(); }catch(_){ }
           }

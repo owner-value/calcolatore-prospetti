@@ -242,6 +242,7 @@
               <option value="ota-only" data-i18n="calc.s4BaseOta">Lordo − OTA (default)</option>
               <option value="pulizie-ota" data-i18n="calc.s4BaseCleanOta">Lordo − Pulizie − OTA</option>
               <option value="pulizie-assicurazione-ota" data-i18n="calc.s4BaseCleanInsOta">Lordo − Pulizie − Assicurazione − OTA</option>
+              <option value="lordo" data-i18n="calc.s4BaseLordo">Lordo totale (nessuna deduzione)</option>
             </select>
           </label>
         </div>
@@ -249,26 +250,15 @@
 
       <!-- 5) Costi di Start-up -->
       <div class="card">
-        <h2 data-i18n="calc.s5Title">5)Abbonamenti</h2>
-        <div class="grid cols-3">
-          <label><span data-i18n="calc.s5RingSub">Ring Intercom — abbonamento mensile (€)</span>
-            <input type="number" id="abbonamentoMensile" value="0.00" min="0" step="0.01" oninput="calculateProfit()">
-          </label>
-          <div>
-            <span data-i18n="calc.s5RingTotal" style="display:block;font-size:13px;color:var(--muted);font-weight:700;margin-bottom:6px">Totale Ring Annuale</span>
-            <div class="panel" style="padding:12px 14px;font-weight:800">
-              <div style="display:flex;justify-content:space-between;gap:10px"><span data-i18n="calc.s5Setup">Setup</span><span id="outRingSetup">€ 0,00</span></div>
-              <div style="display:flex;justify-content:space-between;gap:10px"><span data-i18n="calc.s5Sub12">Abbonamento (12 mesi)</span><span id="outRingSubAnnuale">€ 0,00</span></div>
-              <div style="height:1px;background:#eef2f7;margin:8px 0"></div>
-              <div style="display:flex;justify-content:space-between;gap:10px;font-weight:900"><span data-i18n="calc.s5RingTotalLabel">Totale Ring</span><span id="outputCostoRingAnnuale">€ 0,00</span></div>
-            </div>
-          </div>
-        </div>
-        <h2 data-i18n="calc.s6Title">6) Costi di Start-up</h2>
+        <h2 data-i18n="calc.s6Title">5) Costi di Start-up</h2>
         <div class="grid cols-2 spese-header">
           <span class="spese-title" data-i18n="calc.s6RingSetup">Ring Intercom — setup una tantum (€)</span>
           <label class="spese-input"><span data-i18n="calc.s6CostLabel">Costo (€)</span>
-            <input type="number" id="costoRingSetup" value="0" min="0" step="0.01" oninput="calculateProfit()">
+            <input type="number" id="costoRingSetup" value="100" min="0" step="0.01" oninput="calculateProfit()">
+          </label>
+          <span class="spese-title" data-i18n="calc.s6Keybox">Keybox (€)</span>
+          <label class="spese-input"><span data-i18n="calc.s6CostLabel">Costo (€)</span>
+            <input type="number" id="costoKeybox" value="15" min="0" step="0.01" oninput="calculateProfit()">
           </label>
           <span class="spese-title" data-i18n="calc.s6Kit">Kit Sicurezza<br>(Estintore, rilevatore fumo, monossido di carbonio, gas combustibile)</span>
           <label class="spese-input"><span data-i18n="calc.s6CostLabel">Costo (€)</span>
@@ -346,7 +336,6 @@
   <div class="row"><span data-i18n="calc.sumCostoPm">Costo PM + IVA (<span id="percPmOutput">0%</span>)</span><strong class="bad" id="outputCostoPm">€ 0,00</strong></div>
   <div class="row"><span data-i18n="calc.sumUtenze">Utenze Totali (annue)</span><strong class="bad" id="outputUtenzeTotali">€ 0,00</strong></div>
     <div class="row"><span data-i18n="calc.sumRingSetup">Ring — setup</span><strong class="bad" id="outSumRingSetup">€ 0,00</strong></div>
-      <div class="row"><span data-i18n="calc.sumRingSub">Ring — abbonamento (12 mesi)</span><strong class="bad" id="outSumRingSubAnnuale">€ 0,00</strong></div>
         <div id="securityExtraList"></div>
         <div class="row"><span data-i18n="calc.sumBaseImp">Base Imponibile Cedolare</span><strong id="outputBaseImponibile">€ 0,00</strong></div>
         <div class="row"><span data-i18n="calc.sumImposta">Imposta Cedolare (<span id="percCedolareOutput">0%</span>)</span><strong class="bad" id="outputImposta">€ 0,00</strong></div>
@@ -546,14 +535,6 @@
             <div id="p6-pm" class="big">—</div>
           </div>
         </div>
-        <div class="box expense-box" id="p6-ring-annual-row">
-          <div class="box-row">
-            <div class="label-stack">
-              <div class="lbl" data-i18n="pdf.p6RingAnnual">Ring Intercom — abbonamento (annuo)</div>
-            </div>
-            <div id="p6-ring-annual" class="big">—</div>
-          </div>
-        </div>
         <div class="box expense-box" id="p6-cedolare-row">
           <div class="box-row">
             <div class="label-stack">
@@ -592,7 +573,6 @@
             <div id="p6-ring-setup" class="big">—</div>
           </div>
         </div>
-        <!-- Ring monthly subscription is shown in Previsioni di Spesa (page 6) as annual amount -->
         <div class="box expense-box" id="p6-una-row">
           <div class="box-row">
             <div class="label-stack">
@@ -667,6 +647,7 @@
 </div>
 </div>
 <script src="i18n.js"></script>
+<script src="base-pm.js"></script>
 <script src="script-calcolatore.js"></script>
 <script src="template.js"></script>
 <script>

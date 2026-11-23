@@ -808,14 +808,9 @@ function calculateProfit(){
 
   // Compute Base PM according to user-selectable mode (default: OTA-only)
   const basePmMode = (document.getElementById('basePmMode')?.value || 'ota-only');
-  let basePM = 0;
-  if(basePmMode === 'ota-only'){
-    basePM = Math.max(lordoTotale - costoOTA, 0);
-  }else if(basePmMode === 'pulizie-ota'){
-    basePM = Math.max(lordoTotale - pulizieAnnuo - kitAnnuo - costoOTA, 0);
-  }else{ // pulizie-assicurazione-ota
-    basePM = Math.max(lordoTotale - pulizieAnnuo - kitAnnuo - assicurazioneAnnuo - costoOTA, 0);
-  }
+  const basePM = computeBasePM(basePmMode, {
+    lordoTotale, pulizie: pulizieAnnuo, kit: kitAnnuo, assicurazione: assicurazioneAnnuo, ota: costoOTA
+  });
   $set('outputBasePM', fmtEUR(basePM));
   toggleRow('outputBasePM', basePM);
   // Update Base PM label to reflect selected mode
@@ -827,7 +822,8 @@ function calculateProfit(){
         const labels = {
           'ota-only': I18N.t('calc.basePmOta'),
           'pulizie-ota': I18N.t('calc.basePmCleanOta'),
-          'pulizie-assicurazione-ota': I18N.t('calc.basePmCleanInsOta')
+          'pulizie-assicurazione-ota': I18N.t('calc.basePmCleanInsOta'),
+          'lordo': I18N.t('calc.basePmLordo')
         };
         span.innerHTML = labels[basePmMode] || labels['ota-only'];
       }
@@ -839,7 +835,8 @@ function calculateProfit(){
     const basisLabels = {
       'ota-only': I18N.t('calc.basisOta'),
       'pulizie-ota': I18N.t('calc.basisCleanOta'),
-      'pulizie-assicurazione-ota': I18N.t('calc.basisCleanInsOta')
+      'pulizie-assicurazione-ota': I18N.t('calc.basisCleanInsOta'),
+      'lordo': I18N.t('calc.basisLordo')
     };
     const basisLabel = basisLabels[basePmMode] || basisLabels['ota-only'];
     const pmPctLabel = `${fmtPct(pPM)} + IVA 22% • ${basisLabel}`;
@@ -870,7 +867,6 @@ function calculateProfit(){
   // 6) Sicurezza (breakdown)
   // Ring Intercom: setup is now a one-time payment, not included in annual/monthly fees
   const ringSetup   = Math.max(0, num('costoRingSetup'));
-  const ringSubAnn  = Math.max(0, num('abbonamentoMensile')) * 12;
   // Collect device extras but avoid mirroring while the user is actively typing.
   // Collect device extras and allow live mirroring while typing.
   // Keep rows that have either a label or a positive amount (including the active/edited row),
@@ -888,16 +884,16 @@ function calculateProfit(){
     // Include rows that have either a label or an amount > 0 so preview updates live
     .filter(item => (item.label && item.label.length) || (item.amount && item.amount > 0))
     .map(({label, amount}) => ({ label, amount }));
+  // Keybox: campo dedicato, mostrato nel PDF tra le spese extra di start-up
+  const keybox = Math.max(0, num('costoKeybox'));
+  if(keybox > 0) extraDevices.unshift({ label: 'Keybox', amount: keybox });
 
   const unaTantumManuali = Math.max(0, num('speseUnaTantumManuali'));
   // Add ringSetup and device extras to extra one-time payments
   const extraDev = unaTantumManuali + ringSetup + extraDevices.reduce((sum, item) => sum + item.amount, 0);
 
-  // Only the monthly fee is recurring; setup and device extras are one-time
-  const ringTotale  = ringSubAnn;
-  const sicurezzaUnaTantum = extraDev; // one-time security/startup costs
-  const sicurezzaRicorrente = ringTotale; // recurring annual security cost
-  const sicurezzaTotale = sicurezzaRicorrente + sicurezzaUnaTantum;
+  // Setup Ring, Keybox, Kit and device extras are all one-time start-up costs
+  const sicurezzaTotale = extraDev;
 
   // Output sezione 5 (box locale)
     // Mostra/nascondi la box Ring Intercom una tantum
@@ -915,17 +911,6 @@ function calculateProfit(){
     try{
       window.postMessage({ type: 'ov:update', field: 'p6-ring-setup', value: fmtEUR(ringSetup) }, '*');
     }catch(e){ /* noop */ }
-  // Nascondi la box Ring nel PDF se il valore è zero, nullo o '—'
-  const ringBoxPdf = document.getElementById('p6-ring-row');
-  if(ringBoxPdf) {
-    if(!ringTotale || ringTotale <= 0 || fmtEUR(ringTotale) === '—') {
-      ringBoxPdf.style.display = 'none';
-    } else {
-      ringBoxPdf.style.display = '';
-      const ringVal = document.getElementById('p6-ring');
-      if(ringVal) ringVal.textContent = fmtEUR(ringTotale);
-    }
-  }
   // Nascondi la box Kit Sicurezza nel PDF se il valore è zero, nullo o '—'
   const kitBoxPdf = document.getElementById('p6-una-row');
   if(kitBoxPdf) {
@@ -941,30 +926,10 @@ function calculateProfit(){
     try{
       window.postMessage({ type: 'ov:update', field: 'p6-una', value: fmtEUR(unaTantumManuali) }, '*');
     }catch(e){ /* noop */ }
-  $set('outRingSetup', fmtEUR(ringSetup));
-  $set('outRingSubAnnuale', fmtEUR(ringSubAnn));
-  $set('outputCostoRingAnnuale', fmtEUR(ringTotale));
-  // Publish annual Ring subscription to Previsioni di Spesa (page 6)
-  $set('p6-ring-annual', fmtEUR(ringSubAnn));
-  // Notify embedded report (live update for annual value)
-  try{
-    window.postMessage({ type: 'ov:update', field: 'p6-ring-annual', value: fmtEUR(ringSubAnn) }, '*');
-  }catch(e){ /* noop */ }
-
   // Output riepilogo sicurezza
   $set('outSumRingSetup', fmtEUR(ringSetup));
-  $set('outSumRingSubAnnuale', fmtEUR(ringSubAnn));
   const extraList = $g('securityExtraList');
   if(extraList){
-    // Nascondi la box Ring Abbonamento (12 mesi) nel riepilogo se valore non valido
-    const ringAbbonamentoBoxSummary = document.getElementById('outSumRingSubAnnuale');
-    if(ringAbbonamentoBoxSummary) {
-      if(!ringSubAnn || ringSubAnn <= 0 || fmtEUR(ringSubAnn) === '—') {
-        ringAbbonamentoBoxSummary.parentElement.style.display = 'none';
-      } else {
-        ringAbbonamentoBoxSummary.parentElement.style.display = '';
-      }
-    }
     // Nascondi la box Assicurazione nel riepilogo se valore non valido
     const assicurazioneBoxSummary = document.getElementById('outputAssicurazione');
     if(assicurazioneBoxSummary) {
@@ -1209,7 +1174,7 @@ function calculateProfit(){
   const baseCedolare = Math.max(lordoTotale - pulizieAnnuo - kitAnnuo - assicurazioneAnnuo - costoOTA - costoPmTotale, 0);
   const imposta = baseCedolare * (pCed/100);
   // Exclude one-time startup security costs from annual operating costs
-  const costiOperativi = costoOTA + costoPmTotale + pulizieAnnuo + utenze + kitAnnuo + assicurazioneAnnuo + sicurezzaRicorrente;
+  const costiOperativi = costoOTA + costoPmTotale + pulizieAnnuo + utenze + kitAnnuo + assicurazioneAnnuo;
   const utileAnn = lordoTotale - costiOperativi - imposta;
   const utileMese = utileAnn / 12;
 
@@ -1349,8 +1314,7 @@ function calculateProfit(){
       unaTantum: sicurezzaTotale,
       sicurezza:{
         ringSetup,
-        ringSubAnn,
-        ringSubMonth: Math.max(0, num('abbonamentoMensile')),
+        keybox,
         extraManuale: unaTantumManuali,
         extraDettagli: extraDevices,
         totale: sicurezzaTotale
@@ -1372,8 +1336,6 @@ const utileLordoReport =
    utenze +
    kitAnnuo +
    assicurazioneAnnuo +
-   // Exclude one-time startup security costs from Utile Lordo
-   sicurezzaRicorrente +
    costoPmTotale);
 
 // Aggiorna il valore nel DOM (pagina 7: Utile Lordo Annuo)
@@ -1458,14 +1420,6 @@ window.addEventListener('beforeprint', () => {
   try{ window.__ov_noTitle = true; }catch(e){}
   // ensure we prepare the report (dates, recalc) before print
   prepareReportForPrint(false);
-
-  // Fallback: sync Ring total into print field if any drift occurred
-  try{
-    const local = document.getElementById('outputCostoRingAnnuale');
-    const printNode = document.getElementById('p6-ring');
-    const txt = (local && local.textContent || '').trim();
-    if(printNode && txt){ printNode.textContent = txt; }
-  }catch(e){ /* ignore */ }
 
   // blank the document title so browser native header doesn't include address
   // Do not blank the document title here — keep the title so the browser
