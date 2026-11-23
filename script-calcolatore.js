@@ -808,21 +808,9 @@ function calculateProfit(){
 
   // Compute Base PM according to user-selectable mode (default: OTA-only)
   const basePmMode = (document.getElementById('basePmMode')?.value || 'ota-only');
-  const pmVatMode = document.getElementById('pmVatMode')?.value || 'netto';
-  document.getElementById('pmVatMode')?.setAttribute('aria-label', I18N.t('calc.pmVatMode'));
-  const pmVatLabel = I18N.t(pmVatMode === 'lordo' ? 'calc.pmVatGrossLabel' : 'calc.pmVatNetLabel');
-  const pmLabel = document.getElementById('pmCommissionLabel');
-  if(pmLabel){
-    pmLabel.setAttribute('data-i18n', pmVatMode === 'lordo' ? 'calc.s4PmGross' : 'calc.s4Pm');
-    pmLabel.textContent = I18N.t(pmLabel.getAttribute('data-i18n'));
-  }
-  const baseSelect = document.getElementById('basePmMode');
-  if(baseSelect) baseSelect.disabled = pmVatMode === 'lordo';
-  const grossHint = document.getElementById('pmGrossBasisHint');
-  if(grossHint) grossHint.hidden = pmVatMode !== 'lordo';
   const basePM = computeBasePM(basePmMode, {
     lordoTotale, pulizie: pulizieAnnuo, kit: kitAnnuo, assicurazione: assicurazioneAnnuo, ota: costoOTA
-  }, pmVatMode);
+  });
   $set('outputBasePM', fmtEUR(basePM));
   toggleRow('outputBasePM', basePM);
   // Update Base PM label to reflect selected mode
@@ -834,9 +822,10 @@ function calculateProfit(){
         const labels = {
           'ota-only': I18N.t('calc.basePmOta'),
           'pulizie-ota': I18N.t('calc.basePmCleanOta'),
-          'pulizie-assicurazione-ota': I18N.t('calc.basePmCleanInsOta')
+          'pulizie-assicurazione-ota': I18N.t('calc.basePmCleanInsOta'),
+          'lordo': I18N.t('calc.basePmLordo')
         };
-        span.innerHTML = pmVatMode === 'lordo' ? I18N.t('calc.basePmGrossTotal') : (labels[basePmMode] || labels['ota-only']);
+        span.innerHTML = labels[basePmMode] || labels['ota-only'];
       }
     }
   }catch(_){ }
@@ -846,14 +835,15 @@ function calculateProfit(){
     const basisLabels = {
       'ota-only': I18N.t('calc.basisOta'),
       'pulizie-ota': I18N.t('calc.basisCleanOta'),
-      'pulizie-assicurazione-ota': I18N.t('calc.basisCleanInsOta')
+      'pulizie-assicurazione-ota': I18N.t('calc.basisCleanInsOta'),
+      'lordo': I18N.t('calc.basisLordo')
     };
-    const basisLabel = pmVatMode === 'lordo' ? I18N.t('calc.basisGrossTotal') : (basisLabels[basePmMode] || basisLabels['ota-only']);
-    const pmPctLabel = `${fmtPct(pPM)} ${pmVatLabel} • ${basisLabel}`;
+    const basisLabel = basisLabels[basePmMode] || basisLabels['ota-only'];
+    const pmPctLabel = `${fmtPct(pPM)} + IVA 22% • ${basisLabel}`;
     try{ window.postMessage({ type: 'ov:update', field: 'p6-pm-pct', value: pmPctLabel }, '*'); }catch(e){}
   }catch(e){ /* ignore */ }
   const ivaPmPct = 22;
-  const { netto: costoPmNetto, iva: costoPmIva, totale: costoPmTotale } = computePMCommission(basePM, pPM, pmVatMode);
+  const { netto: costoPmNetto, iva: costoPmIva, totale: costoPmTotale } = computePMCommission(basePM, pPM);
 
   // 5) Utenze fisse annuali
   const mesiField = $g('utenzeMesi');
@@ -1219,7 +1209,7 @@ function calculateProfit(){
 
   // 9) Output riepilogo principale
   $set('percOtaOutput', fmtPct(pOTA));             $set('outputCommissioniOta', fmtEUR(costoOTA));
-  $set('percPmOutput',  `${fmtPct(pPM)} ${pmVatLabel}`); $set('outputCostoPm', fmtEUR(costoPmTotale));
+  $set('percPmOutput',  `${fmtPct(pPM)} + IVA ${fmtPct(ivaPmPct)}`); $set('outputCostoPm', fmtEUR(costoPmTotale));
   $set('outputIvaPm', fmtEUR(costoPmIva));
   $set('outputPulizieOspite', fmtEUR(pulizieAnnuo));
   toggleRow('outputPulizieOspite', pulizieAnnuo);
@@ -1318,7 +1308,6 @@ function calculateProfit(){
       pmIva: costoPmIva,
       pmIvaPct: ivaPmPct,
       pmPct: pPM,
-      pmVatMode,
       basePmMode,
       unaTantum: sicurezzaTotale,
       sicurezza:{
@@ -1577,11 +1566,12 @@ function restoreFormValues(state){
     }
   });
 
-  // I prospetti precedenti aggiungevano sempre IVA alla percentuale PM.
-  const vatSelect = document.getElementById('pmVatMode');
-  if(vatSelect) vatSelect.value = fields.pmVatMode === 'lordo' ? 'lordo' : 'netto';
+  // Compatibilità con i prospetti salvati durante la precedente variante Lordo/Netto.
   const baseSelect = document.getElementById('basePmMode');
-  if(baseSelect && !baseSelect.value) baseSelect.value = 'ota-only';
+  if(baseSelect){
+    if(fields.pmVatMode === 'lordo') baseSelect.value = 'lordo';
+    else if(!baseSelect.value) baseSelect.value = 'ota-only';
+  }
 
   resetFixedExtras();
   fixedExtras.forEach(extra => {

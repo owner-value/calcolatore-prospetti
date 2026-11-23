@@ -145,11 +145,11 @@
       const basisMap = {
         'ota-only': I18N.t('calc.basisOta'),
         'pulizie-ota': I18N.t('calc.basisCleanOta'),
-        'pulizie-assicurazione-ota': I18N.t('calc.basisCleanInsOta')
+        'pulizie-assicurazione-ota': I18N.t('calc.basisCleanInsOta'),
+        'lordo': I18N.t('calc.basisLordo')
       };
-      const basisLabel = m?.spese?.pmVatMode === 'lordo' ? I18N.t('calc.basisGrossTotal') : (basisMap[baseMode] || basisMap['ota-only']);
-      const vatLabel = I18N.t(m?.spese?.pmVatMode === 'lordo' ? 'calc.pmVatGrossLabel' : 'calc.pmVatNetLabel');
-      $('p6-pm-pct').textContent = `${pct(m?.spese?.pmPct ?? m?.percentualePm ?? 0)} ${vatLabel} • ${basisLabel}`;
+      const basisLabel = basisMap[baseMode] || basisMap['ota-only'];
+      $('p6-pm-pct').textContent = `${pct(m?.spese?.pmPct ?? m?.percentualePm ?? 0)} + IVA 22% • ${basisLabel}`;
     }
     if($('p6-una')){
       const sicurezza = m?.spese?.sicurezza || {};
