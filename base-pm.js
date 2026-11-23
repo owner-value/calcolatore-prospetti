@@ -1,6 +1,7 @@
 // Base su cui si calcola la commissione PM, secondo la modalità scelta.
 // v: { lordoTotale, pulizie, kit, assicurazione, ota } (importi annui)
-function computeBasePM(mode, v){
+function computeBasePM(mode, v, commissionMode = 'netto'){
+  if(commissionMode === 'lordo') return Math.max(v.lordoTotale, 0);
   const deduzioni = {
     'ota-only': v.ota,
     'pulizie-ota': v.pulizie + v.kit + v.ota,

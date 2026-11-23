@@ -12,12 +12,14 @@ test('modalità esistenti invariate', () => {
 test('mai negativa', () => assert.strictEqual(computeBasePM('ota-only', { ...v, ota: 20000 }), 0));
 
 for(const mode of ['ota-only', 'pulizie-ota', 'pulizie-assicurazione-ota']){
-  test(`IVA netta/lorda rispetta le deduzioni: ${mode}`, () => {
+  test(`Netto applica deduzioni e Lordo usa il totale: ${mode}`, () => {
     const base = computeBasePM(mode, v);
     const net = computePMCommission(base, 25, 'netto');
-    const gross = computePMCommission(base, 25, 'lordo');
+    const grossBase = computeBasePM(mode, v, 'lordo');
+    assert.strictEqual(grossBase, v.lordoTotale);
+    const gross = computePMCommission(grossBase, 25, 'lordo');
     assert.ok(Math.abs(net.totale - base * 0.305) < 1e-9);
-    assert.strictEqual(gross.totale, base * 0.25);
+    assert.strictEqual(gross.totale, 2500);
     assert.ok(Math.abs(gross.netto * 1.22 - gross.totale) < 1e-9);
     assert.strictEqual(gross.netto + gross.iva, gross.totale);
   });

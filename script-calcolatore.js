@@ -816,9 +816,13 @@ function calculateProfit(){
     pmLabel.setAttribute('data-i18n', pmVatMode === 'lordo' ? 'calc.s4PmGross' : 'calc.s4Pm');
     pmLabel.textContent = I18N.t(pmLabel.getAttribute('data-i18n'));
   }
+  const baseSelect = document.getElementById('basePmMode');
+  if(baseSelect) baseSelect.disabled = pmVatMode === 'lordo';
+  const grossHint = document.getElementById('pmGrossBasisHint');
+  if(grossHint) grossHint.hidden = pmVatMode !== 'lordo';
   const basePM = computeBasePM(basePmMode, {
     lordoTotale, pulizie: pulizieAnnuo, kit: kitAnnuo, assicurazione: assicurazioneAnnuo, ota: costoOTA
-  });
+  }, pmVatMode);
   $set('outputBasePM', fmtEUR(basePM));
   toggleRow('outputBasePM', basePM);
   // Update Base PM label to reflect selected mode
@@ -832,7 +836,7 @@ function calculateProfit(){
           'pulizie-ota': I18N.t('calc.basePmCleanOta'),
           'pulizie-assicurazione-ota': I18N.t('calc.basePmCleanInsOta')
         };
-        span.innerHTML = labels[basePmMode] || labels['ota-only'];
+        span.innerHTML = pmVatMode === 'lordo' ? I18N.t('calc.basePmGrossTotal') : (labels[basePmMode] || labels['ota-only']);
       }
     }
   }catch(_){ }
@@ -844,7 +848,7 @@ function calculateProfit(){
       'pulizie-ota': I18N.t('calc.basisCleanOta'),
       'pulizie-assicurazione-ota': I18N.t('calc.basisCleanInsOta')
     };
-    const basisLabel = basisLabels[basePmMode] || basisLabels['ota-only'];
+    const basisLabel = pmVatMode === 'lordo' ? I18N.t('calc.basisGrossTotal') : (basisLabels[basePmMode] || basisLabels['ota-only']);
     const pmPctLabel = `${fmtPct(pPM)} ${pmVatLabel} • ${basisLabel}`;
     try{ window.postMessage({ type: 'ov:update', field: 'p6-pm-pct', value: pmPctLabel }, '*'); }catch(e){}
   }catch(e){ /* ignore */ }
