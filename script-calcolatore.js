@@ -750,50 +750,18 @@ function calculateProfit(){
   toggleRow('outputLordoPrenotazioni', lordoAffitti);
   $set('outputLordoTotale', fmtEUR(lordoTotale));
   toggleRow('outputLordoTotale', lordoTotale);
-  // Aggiorna nota sul fatturato lordo: cita solo le voci effettivamente presenti
-  // (affitti, pulizie, assicurazione). Omettere quelle a 0 evita di promettere
-  // "assicurazione inclusa" quando non lo è, e mantiene il testo conciso.
-  // Placed AFTER lordoAffitti / pulizieAnnuo / assicurazioneAnnuo are
-  // declared — they're const, so reading them earlier would hit the TDZ.
-  const fattNote = document.getElementById('fatturatoNote');
-  if(fattNote){
-    const items = [];
-    if(lordoAffitti > 0)        items.push(I18N.t('pdf.p5FattNoteRent'));
-    if(pulizieAnnuo > 0)         items.push(I18N.t('pdf.p5FattNoteCleaning'));
-    if(kitAnnuo > 0)             items.push(I18N.t('pdf.p5FattNoteKit'));
-    if(assicurazioneAnnuo > 0)  items.push(I18N.t('pdf.p5FattNoteInsurance'));
-    const listText = items.length === 0
-      ? I18N.t('pdf.p5FattNoteRent') // fallback: niente selezionato, mostra almeno affitti
-      : (I18N.locale() === 'en'
-          ? (items.length === 1
-              ? items[0]
-              : (items.length === 2
-                  ? items.join(' and ')
-                  : items.slice(0, -1).join(', ') + ' and ' + items[items.length - 1]))
-          : (items.length === 1
-              ? items[0]
-              : (items.length === 2
-                  ? items.join(' e ')
-                  : items.slice(0, -1).join(', ') + ' e ' + items[items.length - 1])));
-    fattNote.textContent = I18N.t('pdf.p5FattNote', { items: listText });
+  const revenueItems = I18N.revenueItems({
+    rent: lordoAffitti, cleaning: pulizieAnnuo, kit: kitAnnuo, insurance: assicurazioneAnnuo
+  });
+  const grossItems = revenueItems.join(' + ') || '—';
+  for(const [id, amount] of [['outputPulizieOspite', pulizieAnnuo], ['outputWelcomeKit', kitAnnuo], ['outputAssicurazione', assicurazioneAnnuo]]){
+    const row = document.getElementById(id)?.closest('.row');
+    if(row) row.style.display = amount > 0 ? '' : 'none';
   }
-  // Update visible label: list only the components actually included.
-  // The dictionary string holds the full list in parentheses, in the order
-  // Affitti + Pulizie + Welcome Kit + Assicurazione; keep only those > 0.
-  try{
-    const lordoRow = document.getElementById('outputLordoTotale');
-    if(lordoRow && lordoRow.parentNode){
-      const span = lordoRow.parentNode.querySelector('span');
-      if(span){
-        const baseHtml = I18N.t('calc.sumLordoTot');
-        const flags = [true, pulizieAnnuo > 0, kitAnnuo > 0, assicurazioneAnnuo > 0];
-        span.innerHTML = baseHtml.replace(/\(([^)]*)\)\s*$/, (_, inner) => {
-          const parts = inner.split(/\s*\+\s*/).filter((_, i) => flags[i] !== false);
-          return '(' + parts.join(' + ') + ')';
-        });
-      }
-    }
-  }catch(_){ }
+  const fattNote = document.getElementById('fatturatoNote');
+  if(fattNote) fattNote.textContent = I18N.t('pdf.p5FattNote', { items: grossItems });
+  const grossLabel = document.getElementById('outputLordoTotale')?.parentNode.querySelector('span');
+  if(grossLabel) grossLabel.innerHTML = I18N.t('calc.sumLordoTot', { items: grossItems });
 
   // 4) Commissioni
   const pOTA = readPct('percentualeOta', 20);
@@ -836,7 +804,7 @@ function calculateProfit(){
       'ota-only': I18N.t('calc.basisOta'),
       'pulizie-ota': I18N.t('calc.basisCleanOta'),
       'pulizie-assicurazione-ota': I18N.t('calc.basisCleanInsOta'),
-      'lordo': I18N.t('calc.basisLordo')
+      'lordo': I18N.t('calc.basisLordo', { items: grossItems })
     };
     const basisLabel = basisLabels[basePmMode] || basisLabels['ota-only'];
     const pmPctLabel = `${fmtPct(pPM)} + IVA 22% • ${basisLabel}`;
@@ -1279,7 +1247,8 @@ function calculateProfit(){
       occupazionePct: occ,
       adr: adr,
       fatturatoLordoNettoPulizie: lordoTotale,
-      fatturatoLordoTotale: lordoTotale
+      fatturatoLordoTotale: lordoTotale,
+      lordoAffitti
     },
     spese:{
       pulizie: pulizieAnnuo,

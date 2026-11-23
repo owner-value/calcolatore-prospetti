@@ -331,7 +331,7 @@
       'calc.sumLordoPren':        'Ricavo Lordo Prenotazioni',
       'calc.sumClean':            'Pulizie',
       'calc.sumIns':              'Assicurazione',
-      'calc.sumLordoTot':         'Ricavo Lordo Totale<br> (Affitti + Pulizie + Welcome Kit + Assicurazione)',
+      'calc.sumLordoTot':         'Ricavo Lordo Totale<br> ({items})',
       'calc.basePmOta':           'Base PM<br> (Lordo - OTA)',
       'calc.basePmCleanOta':      'Base PM<br> (Lordo - Pulizie/Kit - OTA)',
       'calc.basePmCleanInsOta':   'Base PM<br> (Lordo - Pulizie/Kit - Assicurazione - OTA)',
@@ -339,7 +339,7 @@
       'calc.basisOta':            'su Fatturato Lordo − OTA',
       'calc.basisCleanOta':       'su Fatturato Lordo − Pulizie/Kit − OTA',
       'calc.basisCleanInsOta':    'su Fatturato Lordo − Pulizie/Kit − Assicurazione − OTA',
-      'calc.basisLordo':          'su Ricavo Lordo Totale (Affitti + Pulizie + Welcome Kit + Assicurazione)',
+      'calc.basisLordo':          'su Ricavo Lordo Totale ({items})',
       'calc.sumKit':              'Welcome Kit',
       'calc.sumOta':              'Commissioni OTA<br>(Airbnb e Booking) (<span id="percOtaOutput">0%</span>)',
       'calc.sumBasePm':           'Base PM<br> (Lordo - Pulizie/Kit - Assicurazione - OTA)',
@@ -403,6 +403,7 @@
       'pdf.p6UtenzeAdmin':        'Costi Immobile (Utenze, amministrazione{wifi})',
       'pdf.p6UtenzeWifi':         ', WIFI',
       'pdf.p6Ota':                'Commissioni OTA <br>(Airbnb e Booking)',
+      'pdf.p6OtaBasis':           '(<span id="p6-ota-percent">{percent}</span> su {items})',
       'pdf.p6OtaSub':             '(<span id="p6-ota-percent"></span> su affitti + pulizie + assicurazione)',
       'pdf.p6OtaSubNoIns':        '(<span id="p6-ota-percent"></span> su affitti + pulizie)',
       'pdf.ringPerMonth':         '<br><span style="font-weight:400;font-size:0.95em">{amount} al mese di abbonamento</span>',
@@ -740,7 +741,7 @@
       'calc.sumLordoPren':        'Gross Booking Revenue',
       'calc.sumClean':            'Cleaning',
       'calc.sumIns':              'Insurance',
-      'calc.sumLordoTot':         'Total Gross Revenue<br> (Rent + Cleaning + Welcome Kit + Insurance)',
+      'calc.sumLordoTot':         'Total Gross Revenue<br> ({items})',
       'calc.basePmOta':           'PM Base<br> (Gross - OTA)',
       'calc.basePmCleanOta':      'PM Base<br> (Gross - Cleaning/Kit - OTA)',
       'calc.basePmCleanInsOta':   'PM Base<br> (Gross - Cleaning/Kit - Insurance - OTA)',
@@ -748,7 +749,7 @@
       'calc.basisOta':            'on Gross Revenue − OTA',
       'calc.basisCleanOta':       'on Gross Revenue − Cleaning/Kit − OTA',
       'calc.basisCleanInsOta':    'on Gross Revenue − Cleaning/Kit − Insurance − OTA',
-      'calc.basisLordo':          'on Total Gross Revenue (Rent + Cleaning + Welcome Kit + Insurance)',
+      'calc.basisLordo':          'on Total Gross Revenue ({items})',
       'calc.sumKit':              'Welcome Kit',
       'calc.sumOta':              'OTA Commissions<br>(Airbnb and Booking) (<span id="percOtaOutput">0%</span>)',
       'calc.sumBasePm':           'PM Base<br> (Gross − Cleaning/Kit − Insurance − OTA)',
@@ -812,6 +813,7 @@
       'pdf.p6UtenzeAdmin':        'Property costs (Utilities, administration{wifi})',
       'pdf.p6UtenzeWifi':         ', Wi-Fi',
       'pdf.p6Ota':                'OTA Commissions <br>(Airbnb and Booking)',
+      'pdf.p6OtaBasis':           '(<span id="p6-ota-percent">{percent}</span> on {items})',
       'pdf.p6OtaSub':             '(<span id="p6-ota-percent"></span> on rent + cleaning + insurance)',
       'pdf.p6OtaSubNoIns':        '(<span id="p6-ota-percent"></span> on rent + cleaning)',
       'pdf.ringPerMonth':         '<br><span style="font-weight:400;font-size:0.95em">{amount} per month subscription</span>',
@@ -959,6 +961,11 @@
   // expose
   global.I18N = {
     t: t,
+    revenueItems: function (amounts) {
+      return [['rent', 'Rent'], ['cleaning', 'Cleaning'], ['kit', 'Kit'], ['insurance', 'Insurance']]
+        .filter(function (entry) { return Number(amounts[entry[0]]) > 0; })
+        .map(function (entry) { return t('pdf.p5FattNote' + entry[1]); });
+    },
     locale: function () { return current; },
     setLocale: setLocale,
     onChange: onChange,

@@ -14,6 +14,13 @@
 
   function render(m){
     if(!m || typeof m!=='object') return;
+    const revenueItems = I18N.revenueItems({
+      rent: m.kpi?.lordoAffitti ?? Math.max(0, (m.kpi?.fatturatoLordoTotale ?? m.kpi?.fatturatoLordoNettoPulizie ?? 0) - (m.spese?.pulizie ?? 0) - (m.spese?.kit ?? 0) - (m.spese?.assicurazione ?? 0)),
+      cleaning: m.spese?.pulizie, kit: m.spese?.kit, insurance: m.spese?.assicurazione
+    });
+    const grossItems = revenueItems.join(' + ') || '—';
+    if($('fatturatoNote')) $('fatturatoNote').textContent = I18N.t('pdf.p5FattNote', { items: grossItems });
+
 
     const d = m?.dataISO ? new Date(m.dataISO) : new Date();
     const dateStr = d.toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'});
@@ -34,6 +41,7 @@
     if($('p5-fatt')) $('p5-fatt').textContent = eur(m?.kpi?.fatturatoLordoNettoPulizie ?? 0);
 
     if($('p6-pulizie')) $('p6-pulizie').textContent = eur(m?.spese?.pulizie ?? 0);
+    if($('p6-pulizie-row')) $('p6-pulizie-row').style.display = Number(m?.spese?.pulizie ?? 0) > 0 ? '' : 'none';
     const uaVal = m?.spese?.utenzeAmm ?? 0;
     if($('p6-ua'))      $('p6-ua').textContent      = eur(uaVal);
     const uaLabel = $('p6-ua-label');
@@ -55,63 +63,9 @@
         if(container){
           const labelSub = container.querySelector('.label-sub');
           if(labelSub){
-            const updateOtaLabel = () => {
-              let assicurazioneVal = 0;
-              // prefer explicit select if present
-              const sel = document.getElementById('assicurazionePerSoggiorno');
-              if(sel){
-                const v = parseFloat(sel.value || '0');
-                assicurazioneVal = Number.isFinite(v) ? Math.max(0, v * (document.getElementById('previewNumSoggiorni') ? parseFloat((document.getElementById('previewNumSoggiorni').textContent||'').replace(/[^0-9\.]/g,'')) || 0 : 0)) : 0;
-                // if select holds a per-stay amount, the previewAssicurazioneAnnuo may be more reliable; try preview as fallback
-                if(assicurazioneVal === 0){
-                  const preview = document.getElementById('previewAssicurazioneAnnuo');
-                  if(preview){
-                    const txt = (preview.textContent || preview.innerText || '').trim();
-                    const s = txt.replace(/[^0-9,\-.]/g,'').replace(/\./g,'').replace(',', '.');
-                    const n = parseFloat(s);
-                    assicurazioneVal = Number.isFinite(n) ? n : 0;
-                  } else {
-                    assicurazioneVal = Number(m?.spese?.assicurazione ?? 0);
-                  }
-                }
-              } else {
-                const preview = document.getElementById('previewAssicurazioneAnnuo');
-                if(preview){
-                  const txt = (preview.textContent || preview.innerText || '').trim();
-                  const s = txt.replace(/[^0-9,\-.]/g,'').replace(/\./g,'').replace(',', '.');
-                  const n = parseFloat(s);
-                  assicurazioneVal = Number.isFinite(n) ? n : 0;
-                } else {
-                  assicurazioneVal = Number(m?.spese?.assicurazione ?? 0);
-                }
-              }
-              const pctVal = pct(m?.spese?.otaPct ?? 20);
-              const subKey = assicurazioneVal > 0 ? 'pdf.p6OtaSub' : 'pdf.p6OtaSubNoIns';
-              // The i18n string already contains an <span id="p6-ota-percent"></span>
-              // placeholder; inject the actual percentage value into it before
-              // assigning to innerHTML so the PDF text follows the current locale.
-              let subTpl = I18N.t(subKey);
-              // Welcome Kit is charged to guests like cleaning, so OTA applies to it too.
-              if(Number(m?.spese?.kit ?? 0) > 0){
-                subTpl = subTpl.replace(/(pulizie|cleaning)/, '$1 + welcome kit');
-              }
-              labelSub.innerHTML = subTpl.replace('id="p6-ota-percent"></span>', 'id="p6-ota-percent">' + pctVal + '</span>');
-            };
-            // initial
-            updateOtaLabel();
-            // listen to select changes
-            try{
-              const sel = document.getElementById('assicurazionePerSoggiorno');
-              if(sel) sel.addEventListener('change', updateOtaLabel);
-            }catch(_){ }
-            // observe preview changes as well
-            try{
-              const preview = document.getElementById('previewAssicurazioneAnnuo');
-              if(preview && 'MutationObserver' in window){
-                const mo = new MutationObserver(() => updateOtaLabel());
-                mo.observe(preview, { characterData: true, childList: true, subtree: true });
-              }
-            }catch(_){ }
+            labelSub.innerHTML = I18N.t('pdf.p6OtaBasis', {
+              percent: pct(m?.spese?.otaPct ?? 20), items: grossItems
+            });
           }
         }
       }catch(_){ }
@@ -146,7 +100,7 @@
         'ota-only': I18N.t('calc.basisOta'),
         'pulizie-ota': I18N.t('calc.basisCleanOta'),
         'pulizie-assicurazione-ota': I18N.t('calc.basisCleanInsOta'),
-        'lordo': I18N.t('calc.basisLordo')
+        'lordo': I18N.t('calc.basisLordo', { items: grossItems })
       };
       const basisLabel = basisMap[baseMode] || basisMap['ota-only'];
       $('p6-pm-pct').textContent = `${pct(m?.spese?.pmPct ?? m?.percentualePm ?? 0)} + IVA 22% • ${basisLabel}`;
