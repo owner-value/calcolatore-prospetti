@@ -857,11 +857,8 @@ function calculateProfit(){
   if(fotoshooting > 0) extraDevices.push({ label: I18N.t('calc.s6Photoshoot'), amount: fotoshooting });
 
   const unaTantumManuali = Math.max(0, num('costoEstintore'));
-  const includeRilevatore = !!document.getElementById('includeRilevatore')?.checked;
-  const detectorInput = document.getElementById('costoRilevatore');
-  if(detectorInput) detectorInput.disabled = !includeRilevatore;
-  const costoRilevatore = includeRilevatore ? Math.max(0, num('costoRilevatore')) : 0;
-  if(includeRilevatore) extraDevices.push({ label: I18N.t('pdf.p6Detector'), amount: costoRilevatore });
+  const costoRilevatore = Math.max(0, num('costoRilevatore'));
+  if(costoRilevatore > 0) extraDevices.push({ label: I18N.t('pdf.p6Detector'), amount: costoRilevatore });
   // Add ringSetup and device extras to extra one-time payments
   const extraDev = unaTantumManuali + ringSetup + extraDevices.reduce((sum, item) => sum + item.amount, 0);
 
@@ -885,7 +882,7 @@ function calculateProfit(){
       window.postMessage({ type: 'ov:update', field: 'p6-ring-setup', value: fmtEUR(ringSetup) }, '*');
     }catch(e){ /* noop */ }
   const extinguisherRow = document.getElementById('p6-una-row');
-  if(extinguisherRow) extinguisherRow.style.display = '';
+  if(extinguisherRow) extinguisherRow.style.display = unaTantumManuali > 0 ? '' : 'none';
   $set('p6-una', fmtEUR(unaTantumManuali));
     // Notify embedded report about kit value so the template updates live
     try{
@@ -1284,7 +1281,6 @@ function calculateProfit(){
         fotoshooting,
         extraManuale: unaTantumManuali,
         estintore: unaTantumManuali,
-        includeRilevatore,
         rilevatore: costoRilevatore,
         extraDettagli: extraDevices,
         totale: sicurezzaTotale
@@ -1544,6 +1540,11 @@ function restoreFormValues(state){
     document.getElementById('costoFotoshooting').value = '0';
   }
 
+  // Conserva l'esclusione del rilevatore nei prospetti con il vecchio checkbox.
+  if(fields.includeRilevatore === false){
+    document.getElementById('costoRilevatore').value = '0';
+  }
+
   // Il vecchio kit era un prezzo unico: conservarlo senza inventare una ripartizione.
   const hasSplitSecurity = Object.prototype.hasOwnProperty.call(fields, 'costoEstintore');
   if(!hasSplitSecurity && Object.prototype.hasOwnProperty.call(fields, 'speseUnaTantumManuali')){
@@ -1551,7 +1552,6 @@ function restoreFormValues(state){
     if(previousKit > 0) deviceCosts.push({ name: I18N.t('calc.s6Kit').replace(/<br>/g, ' '), amount: previousKit });
     document.getElementById('costoEstintore').value = '';
     document.getElementById('costoRilevatore').value = '';
-    document.getElementById('includeRilevatore').checked = false;
   }
 
   // Compatibilità con i prospetti salvati durante la precedente variante Lordo/Netto.
