@@ -808,6 +808,14 @@ function calculateProfit(){
 
   // Compute Base PM according to user-selectable mode (default: OTA-only)
   const basePmMode = (document.getElementById('basePmMode')?.value || 'ota-only');
+  const pmVatMode = document.getElementById('pmVatMode')?.value || 'netto';
+  document.getElementById('pmVatMode')?.setAttribute('aria-label', I18N.t('calc.pmVatMode'));
+  const pmVatLabel = I18N.t(pmVatMode === 'lordo' ? 'calc.pmVatGrossLabel' : 'calc.pmVatNetLabel');
+  const pmLabel = document.getElementById('pmCommissionLabel');
+  if(pmLabel){
+    pmLabel.setAttribute('data-i18n', pmVatMode === 'lordo' ? 'calc.s4PmGross' : 'calc.s4Pm');
+    pmLabel.textContent = I18N.t(pmLabel.getAttribute('data-i18n'));
+  }
   const basePM = computeBasePM(basePmMode, {
     lordoTotale, pulizie: pulizieAnnuo, kit: kitAnnuo, assicurazione: assicurazioneAnnuo, ota: costoOTA
   });
@@ -822,8 +830,7 @@ function calculateProfit(){
         const labels = {
           'ota-only': I18N.t('calc.basePmOta'),
           'pulizie-ota': I18N.t('calc.basePmCleanOta'),
-          'pulizie-assicurazione-ota': I18N.t('calc.basePmCleanInsOta'),
-          'lordo': I18N.t('calc.basePmLordo')
+          'pulizie-assicurazione-ota': I18N.t('calc.basePmCleanInsOta')
         };
         span.innerHTML = labels[basePmMode] || labels['ota-only'];
       }
@@ -835,17 +842,14 @@ function calculateProfit(){
     const basisLabels = {
       'ota-only': I18N.t('calc.basisOta'),
       'pulizie-ota': I18N.t('calc.basisCleanOta'),
-      'pulizie-assicurazione-ota': I18N.t('calc.basisCleanInsOta'),
-      'lordo': I18N.t('calc.basisLordo')
+      'pulizie-assicurazione-ota': I18N.t('calc.basisCleanInsOta')
     };
     const basisLabel = basisLabels[basePmMode] || basisLabels['ota-only'];
-    const pmPctLabel = `${fmtPct(pPM)} + IVA 22% • ${basisLabel}`;
+    const pmPctLabel = `${fmtPct(pPM)} ${pmVatLabel} • ${basisLabel}`;
     try{ window.postMessage({ type: 'ov:update', field: 'p6-pm-pct', value: pmPctLabel }, '*'); }catch(e){}
   }catch(e){ /* ignore */ }
   const ivaPmPct = 22;
-  const costoPmNetto = basePM * (pPM/100);
-  const costoPmIva = costoPmNetto * (ivaPmPct/100);
-  const costoPmTotale = costoPmNetto + costoPmIva;
+  const { netto: costoPmNetto, iva: costoPmIva, totale: costoPmTotale } = computePMCommission(basePM, pPM, pmVatMode);
 
   // 5) Utenze fisse annuali
   const mesiField = $g('utenzeMesi');
@@ -1211,7 +1215,7 @@ function calculateProfit(){
 
   // 9) Output riepilogo principale
   $set('percOtaOutput', fmtPct(pOTA));             $set('outputCommissioniOta', fmtEUR(costoOTA));
-  $set('percPmOutput',  `${fmtPct(pPM)} + IVA ${fmtPct(ivaPmPct)}`); $set('outputCostoPm', fmtEUR(costoPmTotale));
+  $set('percPmOutput',  `${fmtPct(pPM)} ${pmVatLabel}`); $set('outputCostoPm', fmtEUR(costoPmTotale));
   $set('outputIvaPm', fmtEUR(costoPmIva));
   $set('outputPulizieOspite', fmtEUR(pulizieAnnuo));
   toggleRow('outputPulizieOspite', pulizieAnnuo);
@@ -1310,6 +1314,7 @@ function calculateProfit(){
       pmIva: costoPmIva,
       pmIvaPct: ivaPmPct,
       pmPct: pPM,
+      pmVatMode,
       basePmMode,
       unaTantum: sicurezzaTotale,
       sicurezza:{
@@ -1567,6 +1572,12 @@ function restoreFormValues(state){
       el.value = value;
     }
   });
+
+  // I prospetti precedenti aggiungevano sempre IVA alla percentuale PM.
+  const vatSelect = document.getElementById('pmVatMode');
+  if(vatSelect) vatSelect.value = fields.pmVatMode === 'lordo' ? 'lordo' : 'netto';
+  const baseSelect = document.getElementById('basePmMode');
+  if(baseSelect && !baseSelect.value) baseSelect.value = 'ota-only';
 
   resetFixedExtras();
   fixedExtras.forEach(extra => {
@@ -2211,3 +2222,5 @@ document.addEventListener('DOMContentLoaded', () => {
     console.error('Prospect manager init error', err);
   });
 });
+
+I18N.onChange(() => calculateProfit());

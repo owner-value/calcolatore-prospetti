@@ -229,8 +229,14 @@
           <label><span data-i18n="calc.s4Ota">Commissioni OTA (%) <br>(Airbnb e Booking)</span>
             <input type="number" id="percentualeOta" value="20" min="0" max="100" step="0.1" oninput="calculateProfit()">
           </label>
-          <label><span data-i18n="calc.s4Pm">Commissione PM (% + IVA 22%)</span>
-            <input type="number" id="percentualePm" value="30" min="0" max="100" step="0.1" oninput="calculateProfit()">
+          <label><span id="pmCommissionLabel" data-i18n="calc.s4Pm">Commissione PM (% + IVA 22%)</span>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="number" id="percentualePm" value="30" min="0" max="100" step="0.1" oninput="calculateProfit()" style="min-width:0;flex:1">
+              <select id="pmVatMode" aria-label="IVA commissione PM" onchange="calculateProfit()" style="width:auto">
+                <option value="netto" data-i18n="calc.pmNet">Netto</option>
+                <option value="lordo" data-i18n="calc.pmGross">Lordo</option>
+              </select>
+            </div>
           </label>
           <label><span data-i18n="calc.s4Cedolare">Cedolare Secca (%)</span>
             <input type="number" id="percentualeCedolare" value="21" min="0" max="100" step="0.1" oninput="calculateProfit()">
@@ -242,7 +248,6 @@
               <option value="ota-only" data-i18n="calc.s4BaseOta">Lordo − OTA (default)</option>
               <option value="pulizie-ota" data-i18n="calc.s4BaseCleanOta">Lordo − Pulizie − OTA</option>
               <option value="pulizie-assicurazione-ota" data-i18n="calc.s4BaseCleanInsOta">Lordo − Pulizie − Assicurazione − OTA</option>
-              <option value="lordo" data-i18n="calc.s4BaseLordo">Lordo totale (nessuna deduzione)</option>
             </select>
           </label>
         </div>
@@ -256,7 +261,7 @@
           <label class="spese-input"><span data-i18n="calc.s6CostLabel">Costo (€)</span>
             <input type="number" id="costoRingSetup" value="100" min="0" step="0.01" oninput="calculateProfit()">
           </label>
-          <span class="spese-title" data-i18n="calc.s6Keybox">Keybox (€)</span>
+          <span class="spese-title" data-i18n="calc.s6Keybox">Keybox</span>
           <label class="spese-input"><span data-i18n="calc.s6CostLabel">Costo (€)</span>
             <input type="number" id="costoKeybox" value="15" min="0" step="0.01" oninput="calculateProfit()">
           </label>
